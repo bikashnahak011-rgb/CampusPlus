@@ -239,7 +239,7 @@ export default function LandingPage() {
             <span className="text-white font-bold">CampusPlus</span>
             <span className="text-gray-500 text-sm">— One Campus. One Platform. Zero Confusion.</span>
           </div>
-          <div className="flex items-center gap-20 text-sm">
+          <div className="flex items-center gap-5 text-sm">
             <button onClick={() => navigate('/about')} className="hover:text-white transition-colors">About</button>
             <button onClick={() => navigate('/login')} className="hover:text-white transition-colors">Sign In</button>
             <span>• Developed By CodeCampus for Students</span> 
