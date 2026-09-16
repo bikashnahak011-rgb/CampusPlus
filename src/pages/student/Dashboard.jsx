@@ -40,14 +40,14 @@ export default function StudentDashboard() {
   const recentItems = [...myComplaints.slice(0, 2), ...myRequests.slice(0, 1), ...myLeave.slice(0, 1)].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 4)
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col xl:flex-row gap-4 xl:gap-6">
       <div className="flex-1 min-w-0 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{getGreeting()}, {user?.name?.split(' ')[0]} 👋</h1>
           <p className="text-gray-500 mt-1">Here's what's happening on campus today.</p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {[
             { label: 'Attendance', value: `${avgAtt}%`, icon: ClipboardList, color: 'text-blue-600', bg: 'bg-blue-50', to: '/student/attendance' },
             { label: 'Pending Requests', value: pendingReqs, icon: FileText, color: 'text-orange-600', bg: 'bg-orange-50', to: '/student/documents' },
@@ -64,7 +64,7 @@ export default function StudentDashboard() {
 
         <div className="card">
           <h2 className="font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             {[
               { icon: MessageSquareWarning, label: 'Report a Problem', color: 'bg-red-50 text-red-600 hover:bg-red-100', to: '/student/complaints' },
               { icon: DoorOpen, label: 'Apply Leave', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100', to: '/student/leave' },
@@ -80,10 +80,7 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-4">
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">Attendance Overview</h2>
+        <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
               <button onClick={() => navigate('/student/attendance')} className="text-blue-600 text-xs hover:underline flex items-center gap-1">View Details <ChevronRight size={14} /></button>
             </div>
             <div className="flex items-center gap-4 mb-4">
@@ -131,10 +128,7 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-4">
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">Hostel</h2>
+        <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
               <button onClick={() => navigate('/student/hostel')} className="text-blue-600 text-xs hover:underline flex items-center gap-1">View Hostel <ChevronRight size={14} /></button>
             </div>
             <div className="flex items-center gap-3 mb-3">

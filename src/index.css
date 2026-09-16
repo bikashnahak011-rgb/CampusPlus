@@ -304,3 +304,14 @@ tr { transition: background 0.15s ease; }
 .notif-dot {
   animation: pulseSlow 1.5s ease-in-out infinite;
 }
+
+/* ── Mobile safe area bottom padding ── */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 4px);
+}
+
+/* ── Mobile card adjustments ── */
+@media (max-width: 640px) {
+  .card { padding: 14px; border-radius: 14px; }
+  .card:hover { transform: none; }
+}

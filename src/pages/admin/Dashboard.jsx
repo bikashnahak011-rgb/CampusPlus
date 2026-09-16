@@ -22,13 +22,13 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-500 text-sm mt-1">Campus overview and management</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map(({ label, value, icon: Icon, color, bg, change }) => (
           <div key={label} className="card">
             <div className="flex items-center justify-between mb-3">
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900">Recent Complaints</h2>
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-gray-900">Quick Actions</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {[
             { label: 'Manage Complaints', to: '/admin/complaints', color: 'bg-red-50 text-red-600 hover:bg-red-100' },
             { label: 'Review Requests', to: '/admin/requests', color: 'bg-blue-50 text-blue-600 hover:bg-blue-100' },
