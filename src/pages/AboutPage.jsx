@@ -26,7 +26,7 @@ const TEAM = [
     email: 'bikashnahak011@campusplus.dev',
   },
   {
-    name: 'Asish Khadenga',
+    name: 'Asish Khadanga',
     role: 'UI/UX Designer',
     desc: 'Designed the user experience and visual identity of CampusPlus. Focused on accessibility and mobile-first design.',
     avatar: 'AK',
@@ -58,7 +58,7 @@ const TEAM = [
    {
     name: 'CH Nainika',
     role: 'Presentaion Design',
-    desc: 'Explain about the website or Our Hackathon through Presentation and Also create Presentation for this Website.',
+    desc: 'Explain about the website or Our Hackathon Problem Through Presentation and Also create Presentation for this Website.',
     avatar: 'CHN',
     color: 'from-yellow-500 to-pink-600',
     github: '#',
