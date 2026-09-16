@@ -23,7 +23,7 @@ const TEAM = [
     color: 'from-blue-500 to-indigo-600',
     github: '#',
     linkedin: '#',
-    email: 'bikashnahak011@campusplus.dev',
+    email: 'bikashnahak011@gmail.com',
   },
   {
     name: 'Asish Khadanga',

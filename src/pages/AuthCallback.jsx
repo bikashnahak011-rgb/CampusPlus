@@ -1,74 +1,201 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import AppLogo from '../components/AppLogo'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
-  const [status, setStatus] = useState('Completing sign in...')
-  const done = useRef(false)
+  const { fetchProfile } = useAuth()
+
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (done.current) return
+    let mounted = true
 
-    const redirect = async (session) => {
-      if (done.current) return
-      done.current = true
-      setStatus('Welcome! Setting up your profile...')
+    const handleCallback = async () => {
       try {
-        const { data } = await supabase.from('profiles').select('role, name, roll_no').eq('id', session.user.id).single()
-        const role = data?.role || 'student'
-        const isComplete = data?.name && (role === 'admin' || data?.roll_no)
-        navigate(isComplete
-          ? (role === 'admin' ? '/admin/dashboard' : '/student/dashboard')
-          : (role === 'admin' ? '/admin/profile' : '/student/profile'),
-          { replace: true }
+        if (!supabase) {
+          throw new Error(
+            'Supabase is not configured. Check your .env file.'
+          )
+        }
+
+        console.log('GOOGLE CALLBACK STARTED')
+
+        const url = new URL(window.location.href)
+
+        const code = url.searchParams.get('code')
+        const authError = url.searchParams.get('error')
+        const authErrorDescription =
+          url.searchParams.get('error_description')
+
+        // Google/Supabase returned an OAuth error
+        if (authError) {
+          throw new Error(
+            authErrorDescription ||
+              authError ||
+              'Google authentication failed.'
+          )
+        }
+
+        // PKCE callback must contain a code
+        if (!code) {
+          console.log('No OAuth code found.')
+
+          const {
+            data: { session },
+            error: sessionError,
+          } = await supabase.auth.getSession()
+
+          if (sessionError) {
+            throw sessionError
+          }
+
+          if (session?.user) {
+            console.log(
+              'SESSION ALREADY EXISTS:',
+              session.user.email
+            )
+
+            await fetchProfile(session.user)
+
+            return
+          }
+
+          throw new Error(
+            'Google authentication callback did not contain a valid code.'
+          )
+        }
+
+        console.log('EXCHANGING GOOGLE CODE FOR SESSION')
+
+        const {
+          data,
+          error: exchangeError,
+        } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (exchangeError) {
+          console.error(
+            'CODE EXCHANGE ERROR:',
+            exchangeError
+          )
+
+          throw exchangeError
+        }
+
+        if (!data?.session?.user) {
+          throw new Error(
+            'Google login succeeded, but no user session was returned.'
+          )
+        }
+
+        console.log(
+          'GOOGLE AUTH SUCCESS:',
+          data.session.user.email
         )
-      } catch {
-        navigate('/student/profile', { replace: true })
+
+        // Load profile and role
+        await fetchProfile(data.session.user)
+
+        if (!mounted) return
+
+        // Clean callback URL
+        window.history.replaceState(
+          {},
+          document.title,
+          '/auth/callback'
+        )
+
+        // Get final user profile
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (!session?.user) {
+          throw new Error(
+            'Session disappeared after Google login.'
+          )
+        }
+
+        // Read profile directly to determine dashboard
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle()
+
+        const role = profile?.role || 'student'
+
+        if (role === 'admin') {
+          navigate('/admin/dashboard', {
+            replace: true,
+          })
+        } else {
+          navigate('/student/dashboard', {
+            replace: true,
+          })
+        }
+      } catch (err) {
+        console.error(
+          'GOOGLE CALLBACK ERROR:',
+          err
+        )
+
+        if (!mounted) return
+
+        setError(
+          err?.message ||
+            'Google authentication failed.'
+        )
       }
     }
 
-    if (!supabase) { navigate('/login', { replace: true }); return }
+    handleCallback()
 
-    // PKCE flow — exchange ?code= for session
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
-        if (!error && data?.session) redirect(data.session)
-        else if (!done.current) { done.current = true; navigate('/login', { replace: true }) }
-      })
-      return
+    return () => {
+      mounted = false
     }
+  }, [navigate, fetchProfile])
 
-    // Fallback: check existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) redirect(session)
-      else if (!done.current) { done.current = true; navigate('/login', { replace: true }) }
-    })
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="text-red-500 text-5xl mb-4">
+            !
+          </div>
 
-    const timeout = setTimeout(() => {
-      if (!done.current) { done.current = true; navigate('/login', { replace: true }) }
-    }, 8000)
+          <h1 className="text-xl font-bold text-gray-900 mb-3">
+            Google Sign-In Failed
+          </h1>
 
-    return () => clearTimeout(timeout)
-  }, [navigate])
+          <p className="text-sm text-gray-600 mb-6">
+            {error}
+          </p>
+
+          <button
+            onClick={() => navigate('/login', { replace: true })}
+            className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+          >
+            Back to Login
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center animated-gradient">
-      <div className="flex flex-col items-center gap-5 animate-fade-in">
-        <div className="animate-pulse-slow" style={{ filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.25))' }}>
-          <AppLogo size={56} />
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex gap-1.5">
-            <span className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-2 h-2 bg-blue-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-          </div>
-          <p className="text-blue-200 text-sm font-medium">{status}</p>
-        </div>
+      <div className="text-center text-white">
+        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-5" />
+
+        <h1 className="text-xl font-bold">
+          Signing you in...
+        </h1>
+
+        <p className="text-blue-200 text-sm mt-2">
+          Completing Google authentication
+        </p>
       </div>
     </div>
   )
