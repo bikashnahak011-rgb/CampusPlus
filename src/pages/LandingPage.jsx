@@ -215,7 +215,7 @@ export default function LandingPage() {
                   <h3 className="font-semibold text-gray-900 mb-2">{title}</h3>
                   <p className="text-gray-500 text-sm">{desc}</p>
                 </div>
-                {i < 3 && <ChevronRight size={24} className="hidden lg:block absolute top-1/2 -right-3 -translate-y-1/2 text-gray-300 z-10" />}
+                {i < 3 && <ChevronRight size={24} className="hidden lg:block absolute top-1/2 -right-6 -translate-y-1/2 text-gray-300 z-10" />}
               </div>
             ))}
           </div>
