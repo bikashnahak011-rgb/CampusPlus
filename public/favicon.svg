@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af"/>
+      <stop offset="100%" style="stop-color:#3730a3"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#bfdbfe"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Shine overlay -->
+  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
+  <!-- Subtle inner border -->
+  <rect x="2" y="2" width="508" height="508" rx="110" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
+
+  <!-- Graduation cap (mortarboard) -->
+  <!-- Board top (diamond/rhombus) -->
+  <polygon points="256,130 390,195 256,260 122,195" fill="url(#cap)" filter="url(#shadow)"/>
+  <!-- Cap top highlight -->
+  <polygon points="256,130 390,195 256,195" fill="rgba(255,255,255,0.15)"/>
+
+  <!-- Left side of cap body -->
+  <path d="M 160 215 L 160 295 Q 160 330 256 345 Q 352 330 352 295 L 352 215 L 256 260 Z" fill="url(#cap)" opacity="0.95"/>
+  <!-- Cap body shading -->
+  <path d="M 160 215 L 256 260 L 256 345 Q 160 330 160 295 Z" fill="rgba(0,0,0,0.08)"/>
+
+  <!-- Tassel string -->
+  <line x1="390" y1="195" x2="390" y2="290" stroke="#93c5fd" stroke-width="6" stroke-linecap="round"/>
+  <!-- Tassel ball -->
+  <circle cx="390" cy="300" r="12" fill="#60a5fa"/>
+  <!-- Tassel fringe -->
+  <line x1="382" y1="312" x2="378" y2="335" stroke="#93c5fd" stroke-width="4" stroke-linecap="round"/>
+  <line x1="390" y1="312" x2="390" y2="338" stroke="#93c5fd" stroke-width="4" stroke-linecap="round"/>
+  <line x1="398" y1="312" x2="402" y2="335" stroke="#93c5fd" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- "C1" text below cap -->
+  <text x="256" y="430" font-family="'Arial Black', Arial, sans-serif" font-weight="900" font-size="88" fill="white" text-anchor="middle" letter-spacing="-4" opacity="0.95">C1</text>
+  <!-- Underline accent -->
+  <rect x="196" y="442" width="120" height="5" rx="3" fill="#60a5fa" opacity="0.8"/>
+</svg>

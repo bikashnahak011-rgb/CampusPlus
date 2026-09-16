@@ -1,0 +1,14 @@
+{
+  "name": "CampusPlus",
+  "short_name": "CampusPlus",
+  "description": "One Campus. One Platform. Zero Confusion.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e40af",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/favicon.svg",  "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
