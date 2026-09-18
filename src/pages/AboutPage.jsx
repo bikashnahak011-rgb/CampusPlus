@@ -57,8 +57,8 @@ const TEAM = [
   },
    {
     name: 'CH Nainika',
-    role: 'Presentaion Design',
-    desc: 'Explain about the website or Our Hackathon Problem Through Presentation and Also create Presentation for this Website.',
+    role: 'Presentaion Creator',
+    desc: 'Explain about the website or our Hackathon problem through presentation and also create presentation for this problem.',
     avatar: 'CHN',
     color: 'from-yellow-500 to-pink-600',
     github: '#',
