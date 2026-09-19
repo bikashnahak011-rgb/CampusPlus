@@ -30,12 +30,12 @@ export default function StudentSidebar({ open, onClose }) {
   return (
     <>
       {open && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={onClose} />}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-blue-900 to-blue-950 z-40 flex flex-col transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 overflow-hidden`}>
+      <aside className={`sidebar-surface fixed top-0 left-0 h-full w-64 z-40 flex flex-col transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 overflow-hidden`}>
         <div className="flex items-center justify-between p-5 border-b border-white/10">
           <div className="flex items-center gap-2">
             <AppLogo size={32} showText />
           </div>
-          <button onClick={onClose} className="lg:hidden text-blue-300 hover:text-white"><X size={20} /></button>
+          <button onClick={onClose} className="lg:hidden text-violet-200 hover:text-white"><X size={20} /></button>
         </div>
         <nav className="flex-1 overflow-y-auto scrollbar-hide py-3 px-3 space-y-0.5">
           {NAV.map(({ to, icon: Icon, label }) => (
@@ -62,10 +62,10 @@ export default function StudentSidebar({ open, onClose }) {
               ? <img src={user.avatar_url} alt={user.name} className="w-8 h-8 rounded-full mb-1 object-cover" />
               : null
             }
-            <p className="text-blue-200 text-xs font-medium truncate">{user?.name}</p>
-            <p className="text-blue-400 text-xs truncate">{user?.roll_no || user?.email?.split('@')[0]}</p>
+            <p className="text-violet-100 text-xs font-medium truncate">{user?.name}</p>
+            <p className="text-violet-300 text-xs truncate">{user?.roll_no || user?.email?.split('@')[0]}</p>
           </div>
-          <button onClick={async () => { await signOut(); navigate('/') }} className="sidebar-link w-full text-red-300 hover:text-red-200 hover:bg-red-500/10">
+          <button onClick={async () => { await signOut(); navigate('/') }} className="sidebar-link logout-link w-full text-red-300 hover:text-red-200 hover:bg-red-500/10">
             <LogOut size={18} /> Logout
           </button>
         </div>

@@ -13,6 +13,7 @@ import {
 
 import { useAuth } from '../contexts/AuthContext'
 import AppLogo from '../components/AppLogo'
+import Ambient3DBackground from '../components/Ambient3DBackground'
 
 export default function LoginPage() {
 
@@ -419,14 +420,16 @@ export default function LoginPage() {
 
   return (
 
-    <div className="min-h-screen animated-gradient flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+    <div className="login-page min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+
+      <Ambient3DBackground variant="login" />
 
       {/* Background decoration */}
 
-      <div className="hidden sm:block absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-float pointer-events-none" />
+      <div className="hidden sm:block absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl animate-float pointer-events-none" />
 
       <div
-        className="hidden sm:block absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-float pointer-events-none"
+        className="hidden sm:block absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl animate-float pointer-events-none"
         style={{
           animationDelay: '1.5s'
         }}
@@ -438,8 +441,8 @@ export default function LoginPage() {
         {/* Back button */}
 
         <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-blue-300 hover:text-white mb-4 sm:mb-6 transition-all text-sm hover:-translate-x-1 duration-200"
+          onClick={() => navigate('/landing')}
+          className="flex items-center gap-2 text-violet-100 hover:text-white mb-4 sm:mb-6 transition-all text-sm hover:-translate-x-1 duration-200"
         >
 
           <ArrowLeft size={16} />
@@ -452,16 +455,16 @@ export default function LoginPage() {
         {/* Login Card */}
 
         <div
-          className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-scale-in"
+          className="login-card bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-scale-in"
           style={{
             boxShadow:
-              '0 25px 60px rgba(0,0,0,0.3), 0 0 40px rgba(59,130,246,0.15)'
+              '0 28px 70px rgba(11,5,35,0.42), 0 0 32px rgba(139,92,246,0.12)'
           }}
         >
 
           {/* Header */}
 
-          <div className="animated-gradient px-6 py-8 sm:p-8 text-center relative overflow-hidden">
+          <div className="login-header px-6 py-8 sm:p-8 text-center relative overflow-hidden">
 
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
@@ -484,11 +487,11 @@ export default function LoginPage() {
 
 
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              CampusPlus
+              NexCampus
             </h1>
 
 
-            <p className="text-blue-200 text-xs sm:text-sm mt-1">
+            <p className="text-violet-100 text-xs sm:text-sm mt-1">
               One Campus. One Platform. Zero Confusion.
             </p>
 
@@ -515,7 +518,7 @@ export default function LoginPage() {
                 }}
                 className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 ${
                   role === 'student'
-                    ? 'bg-white text-blue-600 shadow-sm'
+                    ? 'bg-white text-violet-700 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -538,7 +541,7 @@ export default function LoginPage() {
                 }}
                 className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 ${
                   role === 'admin'
-                    ? 'bg-white text-blue-600 shadow-sm'
+                    ? 'bg-white text-fuchsia-700 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -583,7 +586,7 @@ export default function LoginPage() {
                     placeholder="Enter your email"
                     autoComplete="email"
                     disabled={loading}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full pl-10 pr-4 py-3 border border-violet-100 rounded-xl outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:bg-violet-50"
                   />
 
                 </div>
@@ -622,7 +625,7 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     autoComplete="current-password"
                     disabled={loading}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full pl-10 pr-12 py-3 border border-violet-100 rounded-xl outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:bg-violet-50"
                   />
 
 
@@ -665,7 +668,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-700 via-purple-700 to-fuchsia-600 hover:from-violet-800 hover:via-purple-800 hover:to-fuchsia-700 disabled:opacity-60 text-white font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-violet-900/25"
               >
 
                 {loading ? (
@@ -775,8 +778,8 @@ export default function LoginPage() {
               Don't have an account?{' '}
 
               <a
-                href="mailto:admin@campusplus.dev"
-                className="text-blue-600 font-medium hover:underline"
+                href="mailto:admin@nexcampus.dev"
+                className="text-emerald-700 font-medium hover:underline"
               >
                 Contact your administrator
               </a>
@@ -786,9 +789,9 @@ export default function LoginPage() {
 
             {/* Demo Login */}
 
-            <div className="mt-5 p-4 rounded-xl bg-blue-50 border border-blue-100">
+            <div className="mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-100">
 
-              <p className="text-xs font-semibold text-blue-700 mb-3">
+              <p className="text-xs font-semibold text-emerald-700 mb-3">
                 Demo Login
               </p>
 
@@ -799,7 +802,7 @@ export default function LoginPage() {
                 onClick={() =>
                   handleDemoLogin('student')
                 }
-                className="w-full text-left text-xs text-blue-600 hover:text-blue-800 mb-2 disabled:opacity-50"
+                className="w-full text-left text-xs text-emerald-700 hover:text-emerald-800 mb-2 disabled:opacity-50"
               >
                 <strong>Student:</strong>{' '}
                 student@demo.com / student123
@@ -812,7 +815,7 @@ export default function LoginPage() {
                 onClick={() =>
                   handleDemoLogin('admin')
                 }
-                className="w-full text-left text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                className="w-full text-left text-xs text-amber-700 hover:text-amber-800 disabled:opacity-50"
               >
                 <strong>Admin:</strong>{' '}
                 admin@demo.com / admin123

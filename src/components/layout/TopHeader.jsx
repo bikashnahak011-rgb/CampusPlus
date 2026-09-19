@@ -36,12 +36,12 @@ export default function TopHeader({ onMenuClick }) {
             value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && searchQuery.trim() && navigate(`/student/search?q=${encodeURIComponent(searchQuery)}`)}
             placeholder="Search..."
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+              className="w-full pl-9 pr-4 py-2 bg-violet-50 border border-violet-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white"
           />
         </div>
 
         {/* Mobile: show app name */}
-        <span className="sm:hidden flex-1 text-sm font-bold text-gray-800">CampusPlus</span>
+        <span className="sm:hidden flex-1 text-sm font-bold text-gray-800">NexCampus</span>
 
         <div className="flex items-center gap-1 ml-auto" ref={ref}>
           {/* Mobile search toggle */}
@@ -66,7 +66,7 @@ export default function TopHeader({ onMenuClick }) {
               <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl w-72 sm:w-80 z-50">
                 <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-100">
                   <span className="font-semibold text-sm">Notifications</span>
-                  <button onClick={() => { navigate('/student/notifications'); setShowNotifs(false) }} className="text-blue-600 text-xs hover:underline">View all</button>
+                  <button onClick={() => { navigate('/student/notifications'); setShowNotifs(false) }} className="text-violet-700 text-xs hover:underline">View all</button>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {myNotifs.length === 0
@@ -74,7 +74,7 @@ export default function TopHeader({ onMenuClick }) {
                     : myNotifs.map(n => (
                       <div key={n.id}
                         onClick={() => { markRead(n.id); navigate(n.link || '/student/notifications'); setShowNotifs(false) }}
-                        className={`p-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 ${!n.read ? 'bg-blue-50/40' : ''}`}
+                        className={`p-3 border-b border-gray-50 cursor-pointer hover:bg-violet-50 ${!n.read ? 'bg-violet-50/40' : ''}`}
                       >
                         <p className="text-sm font-medium text-gray-800">{n.title}</p>
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
@@ -123,7 +123,7 @@ export default function TopHeader({ onMenuClick }) {
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) { navigate(`/student/search?q=${encodeURIComponent(searchQuery)}`); setShowSearch(false) } }}
               placeholder="Search complaints, requests..."
-              className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-8 pr-4 py-2 bg-violet-50 border border-violet-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
           <button onClick={() => setShowSearch(false)} className="p-1.5 text-gray-500"><X size={18} /></button>

@@ -56,7 +56,7 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 text-sm mt-1">Customize your CampusPlus experience</p>
+        <p className="text-gray-500 text-sm mt-1">Customize your NexCampus experience</p>
       </div>
 
       <div className="card space-y-3">

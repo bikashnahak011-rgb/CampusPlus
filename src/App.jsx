@@ -92,23 +92,23 @@ function Spinner() {
 
         <div className="flex gap-1.5">
           <span
-            className="w-2 h-2 bg-blue-300 rounded-full animate-bounce"
+            className="w-2 h-2 bg-emerald-200 rounded-full animate-bounce"
             style={{ animationDelay: '0ms' }}
           />
 
           <span
-            className="w-2 h-2 bg-blue-300 rounded-full animate-bounce"
+            className="w-2 h-2 bg-amber-200 rounded-full animate-bounce"
             style={{ animationDelay: '150ms' }}
           />
 
           <span
-            className="w-2 h-2 bg-blue-300 rounded-full animate-bounce"
+            className="w-2 h-2 bg-emerald-300 rounded-full animate-bounce"
             style={{ animationDelay: '300ms' }}
           />
         </div>
 
-        <p className="text-blue-200 text-sm">
-          Loading CampusPlus...
+        <p className="text-emerald-100 text-sm">
+          Loading NexCampus...
         </p>
 
       </div>
@@ -239,11 +239,7 @@ function Root() {
     )
   }
 
-  /*
-    New visitor sees landing page.
-  */
-
-  return <LandingPage />
+  return <Navigate to="/login" replace />
 }
 
 
@@ -279,6 +275,11 @@ export default function App() {
               <Route
                 path="/login"
                 element={<LoginRoute />}
+              />
+
+              <Route
+                path="/landing"
+                element={<LandingPage />}
               />
 
               {/* ================= ABOUT ================= */}

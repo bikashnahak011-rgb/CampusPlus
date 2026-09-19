@@ -63,9 +63,9 @@ export default function MessPage() {
       </div>
 
       {activeDay === today && (
-        <div className="card">
+        <div className="card animate-slide-up">
           <h2 className="font-semibold text-gray-900 mb-4">How was today's meal?</h2>
-          <form onSubmit={handleFeedback} className="space-y-4">
+          <form onSubmit={handleFeedback} className="space-y-4 max-w-2xl">
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map(n => (
                 <button key={n} type="button" onClick={() => setRating(n)} onMouseEnter={() => setHoverRating(n)} onMouseLeave={() => setHoverRating(0)} className="transition-transform hover:scale-110">
@@ -75,7 +75,7 @@ export default function MessPage() {
               {rating > 0 && <span className="text-sm text-gray-500 ml-2">{['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating]}</span>}
             </div>
             <textarea value={feedbackText} onChange={e => setFeedbackText(e.target.value)} rows={2} placeholder="Any comments about today's meal? (optional)" className="input resize-none" />
-            <button type="submit" disabled={submitting || !rating} className="btn-primary">
+            <button type="submit" disabled={submitting || !rating} className="btn-primary sm:w-auto sm:px-6">
               {submitting ? <><Loader2 size={16} className="animate-spin" /> Submitting...</> : <><Send size={16} /> Submit Feedback</>}
             </button>
           </form>

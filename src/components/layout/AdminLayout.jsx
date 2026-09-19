@@ -4,6 +4,7 @@ import { Menu, Bell, ChevronDown, LogOut, Settings, Search } from 'lucide-react'
 import AdminSidebar from './AdminSidebar'
 import AdminMobileBottomNav from '../AdminMobileBottomNav'
 import { useAuth } from '../../contexts/AuthContext'
+import Ambient3DBackground from '../Ambient3DBackground'
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -12,9 +13,10 @@ export default function AdminLayout() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-violet-50 flex relative overflow-hidden">
+      <Ambient3DBackground />
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative z-10">
 
         {/* Header */}
         <header className="h-14 sm:h-16 bg-white border-b border-gray-100 flex items-center px-3 sm:px-4 gap-2 sticky top-0 z-20 shadow-sm">
@@ -27,7 +29,7 @@ export default function AdminLayout() {
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               placeholder="Search students, complaints..."
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-9 pr-4 py-2 bg-violet-50 border border-violet-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
 
@@ -43,7 +45,7 @@ export default function AdminLayout() {
                 onClick={() => setShowProfile(!showProfile)}
                 className="flex items-center gap-1.5 pl-1.5 pr-2 py-1.5 hover:bg-gray-100 rounded-xl"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-violet-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold flex-shrink-0">
                   {user?.name?.[0] || 'A'}
                 </div>
                 <span className="text-sm font-medium text-gray-700 hidden md:block max-w-[90px] truncate">{user?.name}</span>
@@ -62,7 +64,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Main content — pb-20 on mobile for bottom nav */}
-        <main className="flex-1 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 animate-fade-in">
+        <main className="dashboard-main flex-1 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 animate-fade-in">
           <div className="page-enter"><Outlet /></div>
         </main>
       </div>

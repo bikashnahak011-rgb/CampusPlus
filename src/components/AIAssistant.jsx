@@ -1,46 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useApp } from '../contexts/AppContext'
-import { DEMO_MESS_MENU, DEMO_SUBJECTS } from '../data/demoData'
+import { askCampusAssistant } from '../lib/aiService'
 
 const QUICK = ["What is today's mess menu?", "How do I apply for a gate pass?", "What is my attendance?", "How to report a complaint?"]
-
-function getResponse(msg, user) {
-  const lower = msg.toLowerCase()
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
-  const menu = DEMO_MESS_MENU[today]
-  if (lower.includes('mess') || lower.includes('menu') || lower.includes('food')) {
-    return `Today is ${today}. Here's the menu:\n🌅 Breakfast: ${menu?.breakfast}\n☀️ Lunch: ${menu?.lunch}\n🌙 Dinner: ${menu?.dinner}\n\nView the full weekly menu in the Mess section.`
-  }
-  if (lower.includes('attendance')) {
-    const avg = Math.round(DEMO_SUBJECTS.reduce((s, sub) => s + (sub.present / sub.total) * 100, 0) / DEMO_SUBJECTS.length)
-    const low = DEMO_SUBJECTS.filter(s => (s.present / s.total) * 100 < 80)
-    return `Your overall attendance is ~${avg}%. ${low.length > 0 ? `⚠️ ${low.map(s => s.name).join(', ')} ${low.length > 1 ? 'are' : 'is'} below 80%.` : 'All subjects are above 80%.'}\n\nGo to Attendance page for details.`
-  }
-  if (lower.includes('gate pass') || lower.includes('gatepass')) {
-    return `To apply for a Gate Pass:\n1. Go to Leave & Gate Pass in the sidebar\n2. Click "New Request"\n3. Select "Gate Pass"\n4. Fill in destination, date, and time\n5. Submit for approval\n\nYou'll get notified once approved.`
-  }
-  if (lower.includes('bonafide') || lower.includes('certificate') || lower.includes('document')) {
-    return `To request a Bonafide Certificate:\n1. Go to Documents in the sidebar\n2. Click "New Request"\n3. Select "Bonafide Certificate"\n4. Enter the reason\n5. Submit\n\nAdmin will review and you'll be notified when ready.`
-  }
-  if (lower.includes('complaint') || lower.includes('problem') || lower.includes('issue') || lower.includes('water') || lower.includes('electric') || lower.includes('leak')) {
-    return `To report a problem:\n1. Go to Complaints in the sidebar\n2. Click "Report a Problem"\n3. Describe your issue — AI will auto-categorize it\n4. Submit\n\nYou'll get a complaint ID and can track status in real-time.`
-  }
-  if (lower.includes('fee') || lower.includes('payment') || lower.includes('due')) {
-    return `View your fee details in Fees & Dues section.\nPending amount: ₹15,000\n\nFor payment, visit the accounts office or use the online payment portal.`
-  }
-  if (lower.includes('hostel') || lower.includes('room') || lower.includes('warden')) {
-    return `You are in Hostel Block A, Room 203.\nWarden: Mr. Suresh Nair (📞 9876500001)\n\nFor hostel issues, use the Complaints section or visit the Hostel page.`
-  }
-  if (lower.includes('leave')) {
-    return `To apply for leave:\n1. Go to Leave & Gate Pass\n2. Click "New Request"\n3. Select "Leave"\n4. Fill in dates, destination, and reason\n5. Submit\n\nLeave requests need warden and admin approval.`
-  }
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-    return `Hello ${user?.name?.split(' ')[0] || 'there'}! 👋 I'm your Campus AI assistant.\n\nI can help with:\n• Mess menu\n• Attendance info\n• Complaints & requests\n• Gate pass & leave\n• Documents & fees\n\nWhat do you need?`
-  }
-  return `I can help with campus services like mess menu, attendance, complaints, gate pass, documents, and fees. Try asking something specific or use the quick questions below!`
-}
 
 export default function AIAssistant() {
   const [open, setOpen] = useState(false)
@@ -58,9 +21,14 @@ export default function AIAssistant() {
     setInput('')
     setMessages(p => [...p, { id: Date.now(), role: 'user', text: msg }])
     setLoading(true)
-    await new Promise(r => setTimeout(r, 500))
-    setMessages(p => [...p, { id: Date.now() + 1, role: 'assistant', text: getResponse(msg, user) }])
-    setLoading(false)
+    try {
+      const reply = await askCampusAssistant(msg, user)
+      setMessages(p => [...p, { id: Date.now() + 1, role: 'assistant', text: reply }])
+    } catch {
+      setMessages(p => [...p, { id: Date.now() + 1, role: 'assistant', text: 'I hit a temporary issue. Please try again in a moment.' }])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

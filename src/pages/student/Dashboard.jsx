@@ -45,14 +45,14 @@ function classStatus(time) {
   if (diff > 30) {
     return {
       label: 'Upcoming',
-      cls: 'bg-blue-100 text-blue-700'
+      cls: 'bg-amber-100 text-amber-700'
     }
   }
 
   if (diff >= -60) {
     return {
       label: 'Current',
-      cls: 'bg-green-100 text-green-700'
+      cls: 'bg-violet-100 text-violet-700'
     }
   }
 
@@ -162,16 +162,16 @@ export default function StudentDashboard() {
               label: 'Attendance',
               value: `${avgAtt}%`,
               icon: ClipboardList,
-              color: 'text-blue-600',
-              bg: 'bg-blue-50',
+              color: 'text-emerald-700',
+              bg: 'bg-emerald-50',
               to: '/student/attendance'
             },
             {
               label: 'Pending Requests',
               value: pendingReqs,
               icon: FileText,
-              color: 'text-orange-600',
-              bg: 'bg-orange-50',
+              color: 'text-amber-700',
+              bg: 'bg-amber-50',
               to: '/student/documents'
             },
             {
@@ -186,8 +186,8 @@ export default function StudentDashboard() {
               label: "Today's Classes",
               value: todayClasses.length,
               icon: BookOpen,
-              color: 'text-green-600',
-              bg: 'bg-green-50',
+              color: 'text-teal-700',
+              bg: 'bg-teal-50',
               to: '/student/timetable'
             }
           ].map(
@@ -262,21 +262,21 @@ export default function StudentDashboard() {
                 icon: DoorOpen,
                 label: 'Apply Gate Pass',
                 color:
-                  'bg-green-50 text-green-600 hover:bg-green-100',
+                  'bg-violet-50 text-violet-700 hover:bg-violet-100',
                 to: '/student/leave'
               },
               {
                 icon: ClipboardList,
                 label: 'View Attendance',
                 color:
-                  'bg-orange-50 text-orange-600 hover:bg-orange-100',
+                  'bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100',
                 to: '/student/attendance'
               },
               {
                 icon: UtensilsCrossed,
                 label: 'View Mess Menu',
                 color:
-                  'bg-yellow-50 text-yellow-600 hover:bg-yellow-100',
+                  'bg-violet-50 text-violet-700 hover:bg-violet-100',
                 to: '/student/mess'
               }
             ].map(
@@ -320,7 +320,7 @@ export default function StudentDashboard() {
                 onClick={() =>
                   navigate('/student/attendance')
                 }
-                className="text-blue-600 text-xs hover:underline flex items-center gap-1"
+                className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
               >
                 View Details
                 <ChevronRight size={14} />
@@ -350,7 +350,7 @@ export default function StudentDashboard() {
                     cy="18"
                     r="15.9"
                     fill="none"
-                    stroke="#2563eb"
+                    stroke="#0f766e"
                     strokeWidth="3"
                     strokeDasharray={`${avgAtt} ${100 - avgAtt}`}
                     strokeLinecap="round"
@@ -368,7 +368,7 @@ export default function StudentDashboard() {
               <div className="space-y-1">
 
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <div className="w-2 h-2 bg-emerald-600 rounded-full" />
 
                   <span className="text-sm text-gray-600">
                     Present:{' '}
@@ -402,7 +402,7 @@ export default function StudentDashboard() {
             <div className="w-full bg-gray-100 rounded-full h-2">
 
               <div
-                className="bg-blue-600 h-2 rounded-full"
+                className="bg-gradient-to-r from-emerald-600 to-amber-500 h-2 rounded-full"
                 style={{
                   width: `${avgAtt}%`
                 }}
@@ -441,7 +441,7 @@ export default function StudentDashboard() {
                 onClick={() =>
                   navigate('/student/timetable')
                 }
-                className="text-blue-600 text-xs hover:underline flex items-center gap-1"
+                className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
               >
                 Full Timetable
                 <ChevronRight size={14} />
