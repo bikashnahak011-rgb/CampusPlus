@@ -33,11 +33,11 @@ export default function AIAssistant() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="fixed bottom-6 right-6 z-40 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-4 py-3 shadow-xl flex items-center gap-2 transition-all hover:scale-105">
+      <button onClick={() => setOpen(true)} aria-label="Open Campus AI assistant" className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-3 sm:px-4 py-3 shadow-xl flex items-center gap-2 transition-all hover:scale-105">
         <MessageCircle size={20} /><span className="text-sm font-medium hidden sm:block">Ask Campus AI</span>
       </button>
       {open && (
-        <div className="fixed bottom-20 right-6 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col animate-slide-up" style={{ height: 480 }}>
+        <div className="fixed inset-x-3 bottom-20 sm:inset-x-auto sm:bottom-20 sm:right-6 z-50 w-auto sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col animate-slide-up" style={{ height: 'min(480px, calc(100dvh - 7rem))' }}>
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><Bot size={16} className="text-white" /></div>

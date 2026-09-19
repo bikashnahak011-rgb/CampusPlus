@@ -53,7 +53,7 @@ export default function AdminComplaints() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by ID, student, category..." className="input pl-9" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by ID, student, category..." className="input search-input" />
           </div>
           <div className="flex gap-2 flex-wrap">
             {FILTERS.map(f => (

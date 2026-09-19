@@ -23,6 +23,21 @@ export default function AuthCallback() {
       return
     }
 
+    const requestedRole = localStorage.getItem('campusplus_oauth_role')
+    localStorage.removeItem('campusplus_oauth_role')
+
+    if (requestedRole === 'admin' && user.role !== 'admin') {
+      console.error('Google account is not assigned the admin role', user.email)
+      setError(`This Google account (${user.email || 'unknown email'}) is not assigned the admin role in Supabase. Update public.profiles.role to admin, then sign in again.`)
+      return
+    }
+
+    if (user.role !== 'admin' && user.role !== 'student') {
+      console.error('Authenticated user has no valid profile role')
+      setError('Your Google account is authenticated, but it has no campus role yet. Ask an administrator to set your profile role to admin or student.')
+      return
+    }
+
     console.log('GOOGLE LOGIN SUCCESS')
     console.log('User:', user.email)
     console.log('Role:', user.role)

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   GraduationCap,
@@ -23,7 +24,8 @@ import {
   Smartphone,
   Info,
   Sparkles,
-  CalendarCheck2,
+  Menu,
+  X,
 } from 'lucide-react'
 import AppLogo from '../components/AppLogo'
 import Ambient3DBackground from '../components/Ambient3DBackground'
@@ -51,15 +53,11 @@ const workflowSteps = [
   { num: '04', title: 'Outcome is tracked', desc: 'Students stay informed until every notice, complaint, or request is fully resolved.' },
 ]
 
-const stats = [
-  { label: 'Students served', value: '24K+' },
-  { label: 'Avg. response time', value: '8 min' },
-  { label: 'Repeat issue reduction', value: '43%' },
-]
-
 export default function LandingPage() {
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const closeMenu = () => setMenuOpen(false)
 
   return (
     <div className="public-page page-shell min-h-screen flex flex-col text-slate-900">
@@ -69,7 +67,7 @@ export default function LandingPage() {
       <div className="hero-orb three" />
 
       <nav className="landing-nav sticky top-0 z-50 border-b border-violet-100 bg-white/85 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 h-16 sm:h-20 flex items-center justify-between">
           <button onClick={() => navigate('/landing')} className="flex items-center gap-3 text-violet-900">
             <AppLogo size={29} showText />
           </button>
@@ -83,19 +81,32 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <button onClick={() => navigate('/login')} className="primary-button text-sm px-5 py-3">
-            Get Started
-            <ArrowRight size={16} />
-          </button>
+          <div className="landing-nav-actions">
+            <button onClick={() => navigate('/login')} className="primary-button text-sm px-4 py-2">
+              <span>Get Started</span>
+              <ArrowRight size={16} />
+            </button>
+            <button onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} className="md:hidden rounded-xl p-2 text-violet-900 hover:bg-violet-50">
+              {menuOpen ? <X size={21} /> : <Menu size={21} />}
+            </button>
+          </div>
         </div>
+        {menuOpen && (
+          <div className="md:hidden border-t border-violet-100 bg-white/95 px-4 py-3 shadow-lg">
+            {[['features', 'Features'], ['how-it-works', 'How it works'], ['admin', 'For admins']].map(([id, label]) => (
+              <button key={id} onClick={() => { scrollTo(id); closeMenu() }} className="block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">{label}</button>
+            ))}
+            <button onClick={() => navigate('/about')} className="block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">About NexCampus</button>
+          </div>
+        )}
       </nav>
 
       <main className="flex-1">
-        <section className="relative overflow-hidden bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 text-violet-950">
+        <section className="landing-hero relative overflow-hidden bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 text-violet-950">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(196,181,253,0.35),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(244,114,182,0.16),_transparent_30%)]" />
           <div className="relative max-w-7xl mx-auto px-4 py-20 sm:py-24 lg:py-28">
             <div className="grid items-center gap-16 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="animate-fade-in">
+              <div className="landing-hero-copy animate-fade-in">
                 <div className="section-tag bg-white/70 border-violet-200 text-violet-700">
                   <Sparkles size={15} />
                   One campus. One platform. Zero confusion.
@@ -131,38 +142,37 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="relative animate-float">
-                <div className="glass-panel rounded-[32px] p-4 sm:p-6 border border-white/10 bg-white/8 shadow-[0_30px_90px_rgba(16,60,48,0.35)]">
-                  <div className="rounded-[26px] bg-gradient-to-br from-violet-700 via-purple-700 to-fuchsia-500 p-5 text-white">
-                    <div className="flex items-center justify-between border-b border-white/15 pb-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-violet-100">Today</p>
-                        <h3 className="mt-2 text-2xl font-black">Campus overview</h3>
-                      </div>
-                      <div className="rounded-2xl bg-white/10 p-2.5">
-                        <CalendarCheck2 size={22} />
-                      </div>
+              <div className="landing-hero-preview relative animate-float">
+                <div className="campus-viewport" aria-label="Illustrated 3D university campus preview">
+                  <div className="campus-skyline" />
+                  <div className="campus-ground">
+                    <div className="campus-path campus-path-main" />
+                    <div className="campus-path campus-path-side" />
+                    <div className="campus-building campus-building-library">
+                      <div className="campus-building-roof" />
+                      <div className="campus-building-face"><span /><span /><span /><span /><span /><span /></div>
+                      <div className="campus-building-label"><GraduationCap size={12} /> Library</div>
                     </div>
-
-                    <div className="mt-5 grid gap-3">
-                      {stats.map((item) => (
-                        <div key={item.label} className="metric-box bg-white/10 border border-white/10 rounded-2xl">
-                          <p className="text-xs uppercase tracking-[0.18em] text-violet-100">{item.label}</p>
-                          <p className="mt-2 text-3xl font-black">{item.value}</p>
-                        </div>
-                      ))}
+                    <div className="campus-building campus-building-hall">
+                      <div className="campus-building-roof" />
+                      <div className="campus-building-face"><span /><span /><span /><span /></div>
+                      <div className="campus-building-label"><Building2 size={12} /> Student Hall</div>
                     </div>
+                    <div className="campus-building campus-building-science">
+                      <div className="campus-building-roof" />
+                      <div className="campus-building-face"><span /><span /><span /><span /></div>
+                    </div>
+                    <div className="campus-tree campus-tree-one" />
+                    <div className="campus-tree campus-tree-two" />
+                    <div className="campus-tree campus-tree-three" />
+                    <div className="campus-lamp campus-lamp-one" />
+                    <div className="campus-lamp campus-lamp-two" />
+                    <div className="campus-pin campus-pin-one"><span>01</span></div>
+                    <div className="campus-pin campus-pin-two"><span>02</span></div>
                   </div>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-slate-900/80 p-4 text-white border border-white/10">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Open complaints</p>
-                      <p className="mt-2 text-3xl font-black">184</p>
-                    </div>
-                    <div className="rounded-2xl bg-white/70 p-4 text-slate-900 border border-slate-200">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Attendance health</p>
-                      <p className="mt-2 text-3xl font-black text-emerald-700">92%</p>
-                    </div>
+                  <div className="campus-viewport-footer">
+                    <div><p>Explore your campus</p><span>One connected university experience</span></div>
+                    <div className="campus-status"><i /> Live</div>
                   </div>
                 </div>
               </div>
@@ -352,7 +362,7 @@ export default function LandingPage() {
                     <p className="mt-3 text-sm leading-6 text-slate-600">{desc}</p>
                   </div>
                   {index < workflowSteps.length - 1 && (
-                    <ChevronRight className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 text-slate-300" size={24} />
+                    <ChevronRight className="hidden lg:block absolute -right-6 top-1/2 -translate-y-1/2 text-slate-300" size={24} />
                   )}
                 </div>
               ))}

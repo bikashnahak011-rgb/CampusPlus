@@ -93,13 +93,13 @@ export default function AboutPage() {
     <div className="public-page page-shell min-h-screen flex flex-col bg-violet-50">
       <Ambient3DBackground variant="public" />
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-violet-100">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <button onClick={() => navigate('/landing')} className="flex items-center gap-2 text-violet-800 hover:text-violet-950 transition-colors text-sm font-medium">
-            <ArrowLeft size={16} /> Back to Home
+      <nav className="about-nav sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-violet-100">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+          <button onClick={() => navigate('/landing')} className="about-nav-back flex items-center gap-2 text-violet-800 hover:text-violet-950 transition-colors text-sm font-medium">
+            <ArrowLeft size={16} /> <span>Back to Home</span>
           </button>
-          <AppLogo size={32} showText />
-          <button onClick={() => navigate('/login')} className="primary-button text-sm px-4 py-2">Sign In</button>
+          <button onClick={() => navigate('/landing')} className="about-nav-brand"><AppLogo size={28} showText /></button>
+          <button onClick={() => navigate('/login')} className="primary-button about-nav-signin text-sm px-4 py-2">Sign In</button>
         </div>
       </nav>
 

@@ -33,7 +33,7 @@ export default function StudentSidebar({ open, onClose }) {
       <aside className={`sidebar-surface fixed top-0 left-0 h-full w-64 z-40 flex flex-col transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 overflow-hidden`}>
         <div className="flex items-center justify-between p-5 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <AppLogo size={32} showText />
+            <AppLogo size={32} showText lightText />
           </div>
           <button onClick={onClose} className="lg:hidden text-violet-200 hover:text-white"><X size={20} /></button>
         </div>

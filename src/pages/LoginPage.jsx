@@ -259,6 +259,8 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
+    localStorage.setItem('campusplus_oauth_role', role)
+
     try {
 
       /*

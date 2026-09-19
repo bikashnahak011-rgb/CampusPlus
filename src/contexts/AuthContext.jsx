@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
@@ -40,6 +40,7 @@ const DEMO_STORAGE_KEY = 'campusplus_demo_user'
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const authCheckComplete = useRef(false)
 
   /*
     ============================
@@ -49,6 +50,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true
+    authCheckComplete.current = false
 
     const initializeAuth = async () => {
       try {
@@ -76,6 +78,7 @@ export function AuthProvider({ children }) {
                 })
 
                 setLoading(false)
+                authCheckComplete.current = true
               }
 
               return
@@ -95,6 +98,7 @@ export function AuthProvider({ children }) {
           if (mounted) {
             setUser(null)
             setLoading(false)
+            authCheckComplete.current = true
           }
 
           return
@@ -110,6 +114,7 @@ export function AuthProvider({ children }) {
           if (mounted) {
             setUser(null)
             setLoading(false)
+            authCheckComplete.current = true
           }
         }
       } catch (error) {
@@ -118,6 +123,7 @@ export function AuthProvider({ children }) {
         if (mounted) {
           setUser(null)
           setLoading(false)
+          authCheckComplete.current = true
         }
       }
     }
@@ -140,6 +146,10 @@ export function AuthProvider({ children }) {
           */
 
           if (localStorage.getItem(DEMO_STORAGE_KEY)) {
+            return
+          }
+
+          if (event === 'INITIAL_SESSION' && !authCheckComplete.current) {
             return
           }
 
@@ -197,7 +207,7 @@ export function AuthProvider({ children }) {
 
         setUser({
           ...authUser,
-          role: 'student',
+          role: null,
           name:
             authUser.user_metadata?.full_name ||
             authUser.email ||
@@ -248,7 +258,7 @@ export function AuthProvider({ children }) {
 
       setUser({
         ...authUser,
-        role: 'student',
+        role: null,
         name:
           authUser.user_metadata?.full_name ||
           authUser.email ||
