@@ -4,6 +4,29 @@ import { INITIAL_COMPLAINTS, INITIAL_REQUESTS, INITIAL_LEAVE, INITIAL_NOTIFICATI
 const AppContext = createContext(null)
 let cmpNum = 2032, reqNum = 1046, lvNum = 302
 
+const INITIAL_BUS_ROUTES = [
+  {
+    id: 'bus-01',
+    number: '01',
+    name: 'Berhampur - Campus',
+    status: 'Running today',
+    departure: '7:30 AM',
+    arrival: '8:20 AM',
+    frequency: 'Every 45 min',
+    stops: ['Berhampur', 'Kanisi', 'Campus'],
+    notice: '',
+  },
+]
+
+const INITIAL_CAMPUS_ROOMS = [
+  { id: 'room-cs101', code: 'CS-101', name: 'Programming Classroom', type: 'Classroom', building: 'Computer Science Block', floor: 'Ground Floor', capacity: 60, status: 'Available', note: 'Next class at 11:00 AM' },
+  { id: 'room-cs102', code: 'CS-102', name: 'Database Classroom', type: 'Classroom', building: 'Computer Science Block', floor: 'Ground Floor', capacity: 60, status: 'In use', note: 'Database Management class in progress' },
+  { id: 'room-cs-lab1', code: 'CS-Lab1', name: 'Programming Lab 1', type: 'Lab', building: 'Computer Science Block', floor: 'First Floor', capacity: 40, status: 'Available', note: 'Open for practical work' },
+  { id: 'room-cs-lab2', code: 'CS-Lab2', name: 'Networks Lab', type: 'Lab', building: 'Computer Science Block', floor: 'First Floor', capacity: 40, status: 'In use', note: 'Software Engineering practical' },
+  { id: 'room-lib', code: 'LIB-01', name: 'Central Library', type: 'Library', building: 'Learning Commons', floor: 'Ground Floor', capacity: 180, status: 'Available', note: 'Quiet study area available' },
+  { id: 'room-faculty', code: 'FC-02', name: 'Faculty Chamber 2', type: 'Faculty Chamber', building: 'Academic Block', floor: 'Second Floor', capacity: 8, status: 'In use', note: 'Faculty office hours: 2:00 - 4:00 PM' },
+]
+
 export function AppProvider({ children }) {
   const [liteMode, setLiteMode] = useState(() => localStorage.getItem('cp_lite') === 'true')
   const [complaints, setComplaints] = useState(INITIAL_COMPLAINTS)
@@ -12,6 +35,8 @@ export function AppProvider({ children }) {
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
   const [notices, setNotices] = useState(INITIAL_NOTICES)
   const [messFeedback, setMessFeedback] = useState([])
+  const [busRoutes, setBusRoutes] = useState(INITIAL_BUS_ROUTES)
+  const [campusRooms, setCampusRooms] = useState(INITIAL_CAMPUS_ROOMS)
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
@@ -74,6 +99,12 @@ export function AppProvider({ children }) {
   const markAllRead = useCallback(() => setNotifications(p => p.map(n => ({ ...n, read: true }))), [])
   const addNotice = useCallback((data, adminName) => setNotices(p => [{ id: `nc${Date.now()}`, ...data, created_by: adminName, created_at: new Date().toISOString() }, ...p]), [])
   const addMessFeedback = useCallback((data, studentId) => setMessFeedback(p => [...p, { id: `mf${Date.now()}`, student_id: studentId, ...data, created_at: new Date().toISOString() }]), [])
+  const updateBusRoute = useCallback((id, data) => {
+    setBusRoutes(p => p.map(route => route.id === id ? { ...route, ...data } : route))
+  }, [])
+  const updateCampusRoom = useCallback((id, data) => {
+    setCampusRooms(p => p.map(room => room.id === id ? { ...room, ...data } : room))
+  }, [])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -86,6 +117,8 @@ export function AppProvider({ children }) {
       notifications, markRead, markAllRead, unreadCount,
       notices, addNotice,
       messFeedback, addMessFeedback,
+      busRoutes, updateBusRoute,
+      campusRooms, updateCampusRoom,
       searchQuery, setSearchQuery,
       students: DEMO_STUDENTS_ADMIN,
     }}>

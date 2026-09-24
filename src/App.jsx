@@ -47,6 +47,8 @@ import NotificationsPage from './pages/student/Notifications'
 import ProfilePage from './pages/student/Profile'
 import SettingsPage from './pages/student/Settings'
 import SearchPage from './pages/student/Search'
+import BusRoutesPage from './pages/student/BusRoutes'
+import RoomFinderPage from './pages/student/RoomFinder'
 
 
 /*
@@ -67,6 +69,8 @@ import AdminAnalytics from './pages/admin/Analytics'
 import AdminAIInsights from './pages/admin/AIInsights'
 import AdminSettings from './pages/admin/Settings'
 import AdminProfile from './pages/admin/Profile'
+import AdminBusRoutes from './pages/admin/BusRoutes'
+import AdminRoomFinder from './pages/admin/RoomFinder'
 
 
 /*
@@ -331,6 +335,16 @@ export default function App() {
                 />
 
                 <Route
+                  path="bus-routes"
+                  element={<BusRoutesPage />}
+                />
+
+                <Route
+                  path="room-finder"
+                  element={<RoomFinderPage />}
+                />
+
+                <Route
                   path="attendance"
                   element={<AttendancePage />}
                 />
@@ -444,6 +458,16 @@ export default function App() {
                 <Route
                   path="mess"
                   element={<AdminMess />}
+                />
+
+                <Route
+                  path="bus-routes"
+                  element={<AdminBusRoutes />}
+                />
+
+                <Route
+                  path="room-finder"
+                  element={<AdminRoomFinder />}
                 />
 
                 <Route

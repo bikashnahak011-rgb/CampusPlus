@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Grid3X3, ClipboardList, Calendar, Building2, UtensilsCrossed, MessageSquareWarning, DoorOpen, FileText, CreditCard, Bell, User, Settings, LogOut, X, Zap } from 'lucide-react'
+import { LayoutDashboard, Grid3X3, ClipboardList, Calendar, Building2, UtensilsCrossed, BusFront, MapPinned, MessageSquareWarning, DoorOpen, FileText, CreditCard, Bell, User, Settings, LogOut, X, Zap } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import AppLogo from '../AppLogo'
@@ -13,6 +13,8 @@ const NAV = [
   { to: '/student/timetable', icon: Calendar, label: 'Timetable' },
   { to: '/student/hostel', icon: Building2, label: 'Hostel' },
   { to: '/student/mess', icon: UtensilsCrossed, label: 'Mess' },
+  { to: '/student/bus-routes', icon: BusFront, label: 'Bus Routes' },
+  { to: '/student/room-finder', icon: MapPinned, label: 'Room Finder' },
   { to: '/student/complaints', icon: MessageSquareWarning, label: 'Complaints' },
   { to: '/student/leave', icon: DoorOpen, label: 'Leave & Gate Pass' },
   { to: '/student/documents', icon: FileText, label: 'Documents' },
