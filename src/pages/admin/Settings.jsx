@@ -27,7 +27,6 @@ const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) =
 
 export default function AdminSettings() {
   const { liteMode, setLiteMode } = useApp()
-  const [adminNotifs, setAdminNotifs] = useState(() => localStorage.getItem('cp_admin_notif') !== 'false')
   const [largeText, setLargeText] = useState(() => localStorage.getItem('cp_large_text') === 'true')
   const [highContrast, setHighContrast] = useState(() => localStorage.getItem('cp_contrast') === 'true')
 
@@ -41,12 +40,6 @@ export default function AdminSettings() {
     setHighContrast(v)
     localStorage.setItem('cp_contrast', v)
     document.body.classList.toggle('high-contrast', v)
-  }
-
-  const handleAdminNotifs = (v) => {
-    setAdminNotifs(v)
-    localStorage.setItem('cp_admin_notif', v)
-    if (v && 'Notification' in window) Notification.requestPermission()
   }
 
   return (
@@ -63,7 +56,7 @@ export default function AdminSettings() {
           <div>
             <p className="text-sm font-medium text-gray-900">Supabase Connection</p>
             <p className={`text-xs ${configured ? 'text-green-600' : 'text-yellow-600'}`}>
-              {configured ? '✓ Connected' : '⚠ Demo Mode — Configure .env to connect'}
+              {configured ? 'Credentials configured; database connection is checked when data loads.' : 'Not configured. Add Supabase URL and anon key to the deployment environment.'}
             </p>
           </div>
         </div>
@@ -71,7 +64,7 @@ export default function AdminSettings() {
           <Shield size={20} className="text-blue-600" />
           <div>
             <p className="text-sm font-medium text-gray-900">Row Level Security</p>
-            <p className="text-xs text-blue-600">Enabled — Students can only access their own data</p>
+            <p className="text-xs text-blue-600">Apply the Supabase schema and production hardening migrations to enforce role-based policies.</p>
           </div>
         </div>
       </div>
@@ -88,11 +81,10 @@ export default function AdminSettings() {
 
       <div className="card space-y-3">
         <h2 className="font-semibold text-gray-900 mb-2">Notifications</h2>
-        <Toggle
-          value={adminNotifs} onChange={handleAdminNotifs}
-          label="Admin Notifications" desc="Get alerts for new complaints and requests"
-          icon={Bell} accent="blue"
-        />
+        <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
+          <Bell size={20} className="shrink-0 text-blue-600" />
+          <div><p className="text-sm font-medium text-gray-900">In-app request and complaint alerts</p><p className="text-xs text-gray-600">Review live records in their admin sections. Desktop push alerts while this app is closed are not configured.</p></div>
+        </div>
       </div>
 
       <div className="card space-y-3">

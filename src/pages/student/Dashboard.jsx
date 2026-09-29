@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ClipboardList,
@@ -8,7 +9,6 @@ import {
   FileText,
   DoorOpen,
   ChevronRight,
-  Bell,
   Calendar,
   AlertCircle
 } from 'lucide-react'
@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import { StatusBadge } from '../../components/ui/States'
+import { supabase } from '../../lib/supabase'
 import {
   DEMO_SUBJECTS,
   DEMO_TIMETABLE,
@@ -70,22 +71,70 @@ export default function StudentDashboard() {
     requests,
     leaveRequests,
     notifications,
-    notices
+    notices,
+    messMenu
   } = useApp()
 
   const navigate = useNavigate()
+  const [academicData, setAcademicData] = useState({ subjects: [], classes: [], events: [] })
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long'
   })
 
-  const todayClasses = DEMO_TIMETABLE
-    .filter(t => t.day === today)
-    .slice(0, 4)
+  useEffect(() => {
+    if (!user) return
+    if (user.isDemo) {
+      setAcademicData({ subjects: DEMO_SUBJECTS, classes: DEMO_TIMETABLE, events: DEMO_EVENTS })
+      return
+    }
+    if (!supabase) {
+      setAcademicData({ subjects: [], classes: [], events: [] })
+      return
+    }
 
-  const menu =
-    DEMO_MESS_MENU[today] ||
-    DEMO_MESS_MENU['Monday']
+    let active = true
+    const loadAcademicData = async () => {
+      const scheduleQuery = user.department
+        ? supabase.from('timetable').select('id,day,time,room,subject:subjects(name,faculty)').eq('department', user.department).order('time')
+        : Promise.resolve({ data: [], error: null })
+      const [attendanceResult, scheduleResult, eventsResult] = await Promise.all([
+        supabase.from('attendance').select('subject_id,total_classes,present_classes,subject:subjects(id,name,code,faculty)').eq('student_id', user.id),
+        scheduleQuery,
+        supabase.from('events').select('id,title,event_date,type').gte('event_date', new Date().toISOString()).order('event_date').limit(5),
+      ])
+      if (!active) return
+      if (attendanceResult.error) console.error('Failed to load dashboard attendance:', attendanceResult.error.message)
+      if (scheduleResult.error) console.error('Failed to load dashboard timetable:', scheduleResult.error.message)
+      if (eventsResult.error) console.error('Failed to load campus events:', eventsResult.error.message)
+      setAcademicData({
+        subjects: (attendanceResult.data || []).map(row => {
+          const subject = Array.isArray(row.subject) ? row.subject[0] : row.subject
+          return { ...subject, total: Number(row.total_classes) || 0, present: Number(row.present_classes) || 0 }
+        }).filter(subject => subject.id),
+        classes: (scheduleResult.data || []).map(row => {
+          const subject = Array.isArray(row.subject) ? row.subject[0] : row.subject
+          return { ...row, subject: subject?.name || 'Subject', faculty: subject?.faculty || 'Faculty not assigned' }
+        }),
+        events: (eventsResult.data || []).map(event => ({ ...event, date: event.event_date })),
+      })
+    }
+
+    loadAcademicData()
+    const refreshInterval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') loadAcademicData()
+    }, 5000)
+
+    return () => {
+      active = false
+      window.clearInterval(refreshInterval)
+    }
+  }, [user])
+
+  const todayClasses = academicData.classes.filter(item => item.day === today).slice(0, 4)
+  const menu = user?.isDemo
+    ? DEMO_MESS_MENU[today] || DEMO_MESS_MENU.Monday
+    : messMenu[today]
 
   const myComplaints = complaints.filter(
     c => c.student_id === user?.id
@@ -112,13 +161,12 @@ export default function StudentDashboard() {
     )
   ].length
 
-  const avgAtt = Math.round(
-    DEMO_SUBJECTS.reduce(
-      (s, sub) =>
-        s + (sub.present / sub.total) * 100,
-      0
-    ) / DEMO_SUBJECTS.length
-  )
+  const attendanceTotal = academicData.subjects.reduce((sum, subject) => sum + subject.total, 0)
+  const attendancePresent = academicData.subjects.reduce((sum, subject) => sum + subject.present, 0)
+  const attendanceAbsent = attendanceTotal - attendancePresent
+  const avgAtt = attendanceTotal ? Math.round((attendancePresent / attendanceTotal) * 100) : null
+  const attendanceGauge = avgAtt ?? 0
+  const hasLowAttendance = academicData.subjects.some(subject => subject.total > 0 && (subject.present / subject.total) * 100 < 80)
 
   const myNotifs = notifications
     .filter(n => n.user_id === user?.id)
@@ -160,7 +208,7 @@ export default function StudentDashboard() {
           {[
             {
               label: 'Attendance',
-              value: `${avgAtt}%`,
+              value: avgAtt === null ? '—' : `${avgAtt}%`,
               icon: ClipboardList,
               color: 'text-emerald-700',
               bg: 'bg-emerald-50',
@@ -352,14 +400,14 @@ export default function StudentDashboard() {
                     fill="none"
                     stroke="#0f766e"
                     strokeWidth="3"
-                    strokeDasharray={`${avgAtt} ${100 - avgAtt}`}
+                    strokeDasharray={`${attendanceGauge} ${100 - attendanceGauge}`}
                     strokeLinecap="round"
                   />
                 </svg>
 
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-sm font-bold text-gray-900">
-                    {avgAtt}%
+                    {avgAtt === null ? '—' : `${avgAtt}%`}
                   </span>
                 </div>
 
@@ -372,11 +420,7 @@ export default function StudentDashboard() {
 
                   <span className="text-sm text-gray-600">
                     Present:{' '}
-                    {DEMO_SUBJECTS.reduce(
-                      (s, sub) =>
-                        s + sub.present,
-                      0
-                    )}
+                    {attendancePresent}
                   </span>
                 </div>
 
@@ -385,13 +429,7 @@ export default function StudentDashboard() {
 
                   <span className="text-sm text-gray-600">
                     Absent:{' '}
-                    {DEMO_SUBJECTS.reduce(
-                      (s, sub) =>
-                        s +
-                        (sub.total -
-                          sub.present),
-                      0
-                    )}
+                    {attendanceAbsent}
                   </span>
                 </div>
 
@@ -404,18 +442,13 @@ export default function StudentDashboard() {
               <div
                 className="bg-gradient-to-r from-emerald-600 to-amber-500 h-2 rounded-full"
                 style={{
-                  width: `${avgAtt}%`
+                  width: `${attendanceGauge}%`
                 }}
               />
 
             </div>
 
-            {DEMO_SUBJECTS.some(
-              s =>
-                (s.present / s.total) *
-                  100 <
-                80
-            ) && (
+            {hasLowAttendance && (
               <div className="mt-3 flex items-center gap-2 text-orange-600 text-xs bg-orange-50 rounded-xl p-2">
 
                 <AlertCircle size={14} />
@@ -452,7 +485,7 @@ export default function StudentDashboard() {
             {todayClasses.length === 0 ? (
 
               <p className="text-gray-400 text-sm text-center py-6">
-                No classes today
+                user?.department ? `No classes scheduled for ${today}.` : 'Add your department to your profile to see classes.'
               </p>
 
             ) : (
@@ -543,14 +576,12 @@ export default function StudentDashboard() {
               <div>
 
                 <p className="font-semibold text-gray-900">
-                  Block {DEMO_HOSTEL.block},
-                  Room {DEMO_HOSTEL.room}
+                  Block {user?.hostel_block || 'Not assigned'},
+                  Room {user?.room_number || 'Not assigned'}
                 </p>
 
                 <p className="text-xs text-gray-500">
-                  Floor {DEMO_HOSTEL.floor} •{' '}
-                  {DEMO_HOSTEL.roommates.length}{' '}
-                  roommates
+                  {user?.isDemo ? `Floor ${DEMO_HOSTEL.floor} • ${DEMO_HOSTEL.roommates.length} roommates` : 'Current profile assignment'}
                 </p>
 
               </div>
@@ -591,7 +622,7 @@ export default function StudentDashboard() {
 
             </div>
 
-            <div className="space-y-2">
+            {menu ? <div className="space-y-2">
 
               {[
                 ['🌅', 'Breakfast', menu.breakfast],
@@ -620,7 +651,7 @@ export default function StudentDashboard() {
                 )
               )}
 
-            </div>
+            </div> : <p className="py-3 text-sm text-gray-500">No menu has been published for today.</p>}
 
           </div>
 
@@ -784,7 +815,7 @@ export default function StudentDashboard() {
 
           <div className="space-y-2">
 
-            {DEMO_EVENTS.map(e => (
+            {academicData.events.length === 0 ? <p className="py-3 text-xs text-gray-500">No upcoming events have been published.</p> : academicData.events.map(e => (
 
               <div
                 key={e.id}

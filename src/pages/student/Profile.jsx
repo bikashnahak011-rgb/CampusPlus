@@ -45,8 +45,7 @@ export default function ProfilePage() {
     if (!form.roll_no) { toast('Roll number is required', 'error'); return }
     setSaving(true)
     try {
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
+      const { data, error } = await supabase.from('profiles').update({
         name: form.name,
         phone: form.phone,
         roll_no: form.roll_no,
@@ -58,9 +57,9 @@ export default function ProfilePage() {
         semester: form.semester ? parseInt(form.semester) : null,
         hostel_block: form.hostel_block,
         room_number: form.room_number,
-        role: 'student',
-      })
+      }).eq('id', user.id).select('id').maybeSingle()
       if (error) throw error
+      if (!data) throw new Error('Profile record is missing. Contact your campus administrator.')
       await fetchProfile(user)
       toast('Profile saved!', 'success')
       setEditing(false)

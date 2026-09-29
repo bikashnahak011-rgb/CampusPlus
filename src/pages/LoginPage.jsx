@@ -444,7 +444,7 @@ export default function LoginPage() {
 
         <button
           onClick={() => navigate('/landing')}
-          className="flex items-center gap-2 text-violet-100 hover:text-white mb-4 sm:mb-6 transition-all text-sm hover:-translate-x-1 duration-200"
+          className="flex items-center gap-2 text-black-100 hover:text-white mb-4 sm:mb-6 transition-all text-sm hover:-translate-x-1 duration-200"
         >
 
           <ArrowLeft size={16} />
@@ -789,9 +789,8 @@ export default function LoginPage() {
             </p>
 
 
-            {/* Demo Login */}
-
-            <div className="mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+            {import.meta.env.DEV && (
+              <div className="mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-100">
 
               <p className="text-xs font-semibold text-emerald-700 mb-3">
                 Demo Login
@@ -823,7 +822,8 @@ export default function LoginPage() {
                 admin@demo.com / admin123
               </button>
 
-            </div>
+              </div>
+            )}
 
           </div>
 

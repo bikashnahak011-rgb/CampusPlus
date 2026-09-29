@@ -60,7 +60,12 @@ export function AuthProvider({ children }) {
         demo login.
         */
 
-        const savedDemoUser = localStorage.getItem(DEMO_STORAGE_KEY)
+        const savedDemoUser = import.meta.env.DEV
+          ? localStorage.getItem(DEMO_STORAGE_KEY)
+          : null
+        if (!import.meta.env.DEV) {
+          localStorage.removeItem(DEMO_STORAGE_KEY)
+        }
 
         if (savedDemoUser) {
           try {
@@ -286,7 +291,7 @@ export function AuthProvider({ children }) {
       DEMO LOGIN
     */
 
-    if (DEMO_USERS[normalizedEmail]) {
+    if (import.meta.env.DEV && DEMO_USERS[normalizedEmail]) {
       if (DEMO_PASSWORDS[normalizedEmail] !== password) {
         return {
           error: {

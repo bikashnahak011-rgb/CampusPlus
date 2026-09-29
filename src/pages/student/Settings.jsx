@@ -24,7 +24,6 @@ const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) =
 
 export default function SettingsPage() {
   const { liteMode, setLiteMode } = useApp()
-  const [notifications, setNotifications] = useState(() => localStorage.getItem('cp_notif') !== 'false')
   const [largeText, setLargeText] = useState(() => localStorage.getItem('cp_large_text') === 'true')
   const [highContrast, setHighContrast] = useState(() => localStorage.getItem('cp_contrast') === 'true')
   const [regionalLang, setRegionalLang] = useState(() => localStorage.getItem('cp_lang') === 'true')
@@ -39,12 +38,6 @@ export default function SettingsPage() {
     setHighContrast(v)
     localStorage.setItem('cp_contrast', v)
     document.body.classList.toggle('high-contrast', v)
-  }
-
-  const handleNotifications = (v) => {
-    setNotifications(v)
-    localStorage.setItem('cp_notif', v)
-    if (v && 'Notification' in window) Notification.requestPermission()
   }
 
   const handleRegionalLang = (v) => {
@@ -71,11 +64,10 @@ export default function SettingsPage() {
 
       <div className="card space-y-3">
         <h2 className="font-semibold text-gray-900 mb-2">Notifications</h2>
-        <Toggle
-          value={notifications} onChange={handleNotifications}
-          label="Push Notifications" desc="Get notified about complaints and requests"
-          icon={Bell} accent="blue"
-        />
+        <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
+          <Bell size={20} className="shrink-0 text-blue-600" />
+          <div><p className="text-sm font-medium text-gray-900">In-app notifications</p><p className="text-xs text-gray-600">Alerts appear in the bell and Notifications page while you are signed in. Browser push while the app is closed is not configured.</p></div>
+        </div>
       </div>
 
       <div className="card space-y-3">

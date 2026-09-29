@@ -2,6 +2,7 @@ from . import ai_service, db_helpers
 from .attendance_service import analyze_attendance
 from .clustering_service import analyze_complaints
 from .mess_service import forecast_meals
+from ..config import get_settings
 
 
 async def build_action_center() -> dict:
@@ -22,6 +23,7 @@ async def build_action_center() -> dict:
     forecast = await forecast_meals()
     return {
         "attendance_below_required": len(attendance.warnings),
+        "attendance_required": get_settings().attendance_required,
         "unresolved_complaints": len(unresolved),
         "high_priority_complaints": len(high_priority),
         "complaint_hotspots": len(hotspots),
@@ -33,4 +35,4 @@ async def build_action_center() -> dict:
 
 async def copilot_answer(question: str) -> dict:
     stats = await build_action_center()
-    return {"answer": ai_service.answer_query(question, stats), "data_used": stats}
+    return {"answer": await ai_service.answer_query_with_ai(question, stats), "data_used": stats}

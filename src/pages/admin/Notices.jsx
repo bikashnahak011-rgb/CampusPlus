@@ -19,12 +19,16 @@ export default function AdminNotices() {
     e.preventDefault()
     if (!form.title || !form.content) { toast('Please fill all fields.','warning'); return }
     setSubmitting(true)
-    await new Promise(r => setTimeout(r, 600))
-    addNotice(form, user?.name)
-    setSubmitting(false)
-    setShowForm(false)
-    setForm({ title:'', content:'', target:'All Students', important:false })
-    toast('✓ Notice published successfully.','success')
+    try {
+      await addNotice(form, user?.name)
+      setShowForm(false)
+      setForm({ title:'', content:'', target:'All Students', important:false })
+      toast('Notice published successfully.','success')
+    } catch (error) {
+      toast(error.message, 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

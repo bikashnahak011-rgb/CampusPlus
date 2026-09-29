@@ -44,7 +44,7 @@ export default function PWAInstallPrompt() {
           <Smartphone size={20} className="text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800">Install CampusOne</p>
+          <p className="text-sm font-semibold text-gray-800">Install NexCampus</p>
           <p className="text-xs text-gray-500">Add to home screen for quick access</p>
         </div>
         <button onClick={install} className="shrink-0 bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-xl hover:bg-blue-700 flex items-center gap-1">

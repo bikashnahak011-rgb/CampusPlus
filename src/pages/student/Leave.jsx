@@ -25,12 +25,16 @@ export default function LeavePage() {
     e.preventDefault()
     if (!form.reason || !form.destination || !form.from_date || !form.to_date) { toast('Please fill all required fields.', 'warning'); return }
     setSubmitting(true)
-    await new Promise(r => setTimeout(r, 700))
-    const id = submitLeave(form, user.id, user.name)
-    setSubmitting(false)
-    setShowForm(false)
-    setForm(EMPTY)
-    toast(`✓ ${form.type} ${id} submitted successfully.`, 'success')
+    try {
+      const id = await submitLeave(form, user.id, user.name)
+      setShowForm(false)
+      setForm(EMPTY)
+      toast(`${form.type} ${id} submitted successfully.`, 'success')
+    } catch (error) {
+      toast(error.message, 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

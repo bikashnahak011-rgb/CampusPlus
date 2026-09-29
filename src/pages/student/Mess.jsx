@@ -3,7 +3,6 @@ import { Star, Send, Loader2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import { useToast } from '../../components/ui/Toast'
-import { DEMO_MESS_MENU } from '../../data/demoData'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const MEALS = [
@@ -21,20 +20,25 @@ export default function MessPage() {
   const [feedbackText, setFeedbackText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { user } = useAuth()
-  const { addMessFeedback } = useApp()
+  const { messMenu, addMessFeedback } = useApp()
   const toast = useToast()
 
-  const menu = DEMO_MESS_MENU[activeDay]
+  const menu = messMenu[activeDay]
 
   const handleFeedback = async (e) => {
     e.preventDefault()
     if (!rating) { toast('Please select a rating.', 'warning'); return }
     setSubmitting(true)
-    await new Promise(r => setTimeout(r, 600))
-    addMessFeedback({ day: activeDay, rating, comment: feedbackText }, user?.id)
-    setRating(0); setFeedbackText('')
-    setSubmitting(false)
-    toast('✓ Feedback submitted. Thank you!', 'success')
+    try {
+      await addMessFeedback({ day: activeDay, rating, comment: feedbackText }, user?.id)
+      setRating(0)
+      setFeedbackText('')
+      toast('Feedback submitted. Thank you!', 'success')
+    } catch (error) {
+      toast(error.message, 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -49,7 +53,7 @@ export default function MessPage() {
             </button>
           ))}
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {!menu ? <p className="py-8 text-center text-sm text-gray-500">No meal menu has been published for {activeDay}.</p> : <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {MEALS.map(({ key, label, emoji, time }) => (
             <div key={key} className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-3">
@@ -59,7 +63,7 @@ export default function MessPage() {
               <p className="text-sm text-gray-700">{menu[key]}</p>
             </div>
           ))}
-        </div>
+        </div>}
       </div>
 
       {activeDay === today && (

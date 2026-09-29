@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone, User, Droplets, Zap, Sparkles, Wrench, AlertCircle, Plus } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
+import { supabase } from '../../lib/supabase'
 import { StatusBadge } from '../../components/ui/States'
 import { DEMO_HOSTEL } from '../../data/demoData'
 
@@ -16,6 +18,91 @@ export default function HostelPage() {
   const { user } = useAuth()
   const { complaints } = useApp()
   const navigate = useNavigate()
+  const [hostel, setHostel] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!user) return
+    if (user.isDemo) {
+      setHostel(DEMO_HOSTEL)
+      setLoading(false)
+      setError('')
+      return
+    }
+    if (!supabase) {
+      setHostel(null)
+      setLoading(false)
+      setError('Live hostel information is unavailable because Supabase is not configured.')
+      return
+    }
+    if (!user.hostel_block) {
+      setHostel(null)
+      setLoading(false)
+      setError('No hostel block is assigned to your profile. Contact the hostel office.')
+      return
+    }
+
+    let active = true
+    setLoading(true)
+    setError('')
+    const loadHostel = async () => {
+      const { data: hostelData, error: hostelError } = await supabase
+        .from('hostels')
+        .select('id,block,warden_name,warden_phone,total_rooms')
+        .eq('block', user.hostel_block)
+        .maybeSingle()
+      if (!active) return
+      if (hostelError) {
+        setError(`Could not load hostel information: ${hostelError.message}`)
+        setHostel(null)
+        setLoading(false)
+        return
+      }
+      if (!hostelData) {
+        setHostel(null)
+        setLoading(false)
+        return
+      }
+
+      let roomData = null
+      if (user.room_number) {
+        const { data, error: roomError } = await supabase.from('rooms')
+          .select('room_number,floor,capacity')
+          .eq('hostel_id', hostelData.id)
+          .eq('room_number', user.room_number)
+          .maybeSingle()
+        if (roomError) {
+          setError(`Could not load room information: ${roomError.message}`)
+          setHostel(null)
+          setLoading(false)
+          return
+        }
+        roomData = data
+      }
+
+      setHostel({
+        block: hostelData.block,
+        room: roomData?.room_number || user.room_number || '',
+        floor: roomData?.floor,
+        capacity: roomData?.capacity,
+        warden: hostelData.warden_name,
+        warden_phone: hostelData.warden_phone,
+        roommates: [],
+      })
+      setLoading(false)
+    }
+
+    loadHostel()
+    const refreshInterval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') loadHostel()
+    }, 5000)
+    return () => {
+      active = false
+      window.clearInterval(refreshInterval)
+    }
+  }, [user])
+
   const activeComplaints = complaints.filter(c => c.student_id === user?.id && !['Resolved', 'Closed'].includes(c.status))
 
   return (
@@ -25,11 +112,16 @@ export default function HostelPage() {
         <button onClick={() => navigate('/student/complaints')} className="btn-primary"><Plus size={18} /> Report Hostel Problem</button>
       </div>
 
+      {loading && <div className="card text-sm text-gray-500">Loading hostel information...</div>}
+      {error && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{error}</div>}
+      {!loading && !error && !hostel && <div className="card text-center py-8 text-sm text-gray-500">Hostel information has not been published for your block.</div>}
+
+      {!loading && !error && hostel && <>
       <div className="grid lg:grid-cols-2 gap-4">
         <div className="card">
           <h2 className="font-semibold text-gray-900 mb-4">Room Information</h2>
           <div className="grid grid-cols-2 gap-3">
-            {[['Hostel Block', `Block ${DEMO_HOSTEL.block}`], ['Room Number', DEMO_HOSTEL.room], ['Floor', `Floor ${DEMO_HOSTEL.floor}`], ['Capacity', '3 Students']].map(([l, v]) => (
+            {[['Hostel Block', `Block ${hostel.block}`], ['Room Number', hostel.room || 'Not assigned'], ['Floor', hostel.floor ? `Floor ${hostel.floor}` : 'Not listed'], ['Capacity', hostel.capacity ? `${hostel.capacity} Students` : 'Not listed']].map(([l, v]) => (
               <div key={l} className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-gray-400 mb-0.5">{l}</p><p className="font-semibold text-gray-900">{v}</p></div>
             ))}
           </div>
@@ -39,13 +131,13 @@ export default function HostelPage() {
           <h2 className="font-semibold text-gray-900 mb-4">Warden Information</h2>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><User size={22} className="text-blue-600" /></div>
-            <div><p className="font-semibold text-gray-900">{DEMO_HOSTEL.warden}</p><p className="text-xs text-gray-500">Block {DEMO_HOSTEL.block} Warden</p></div>
+            <div><p className="font-semibold text-gray-900">{hostel.warden || 'Warden not listed'}</p><p className="text-xs text-gray-500">Block {hostel.block} Warden</p></div>
           </div>
-          <a href={`tel:${DEMO_HOSTEL.warden_phone}`} className="flex items-center gap-2 text-blue-600 text-sm hover:underline"><Phone size={15} />{DEMO_HOSTEL.warden_phone}</a>
+          {hostel.warden_phone && <a href={`tel:${hostel.warden_phone}`} className="flex items-center gap-2 text-blue-600 text-sm hover:underline"><Phone size={15} />{hostel.warden_phone}</a>}
         </div>
       </div>
 
-      <div className="card">
+      {user?.isDemo ? <div className="card">
         <h2 className="font-semibold text-gray-900 mb-4">Roommates</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           {DEMO_HOSTEL.roommates.map(r => (
@@ -56,9 +148,9 @@ export default function HostelPage() {
             </div>
           ))}
         </div>
-      </div>
+      </div> : <div className="card text-sm text-gray-500">Roommate details are not available in the published hostel directory.</div>}
 
-      <div className="card">
+      {user?.isDemo ? <div className="card">
         <h2 className="font-semibold text-gray-900 mb-4">Hostel Services</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {SERVICES.map(({ icon: Icon, label, status, color, bg }) => (
@@ -69,7 +161,8 @@ export default function HostelPage() {
             </div>
           ))}
         </div>
-      </div>
+      </div> : <div className="card text-sm text-gray-500">Live hostel service statuses are not configured. Use “Report Hostel Problem” to submit a maintenance issue.</div>}
+      </>}
 
       <div className="card">
         <h2 className="font-semibold text-gray-900 mb-4">Active Complaints</h2>

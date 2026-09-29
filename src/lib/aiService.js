@@ -1,6 +1,5 @@
 import { DEMO_MESS_MENU, DEMO_SUBJECTS } from '../data/demoData.js'
-
-const env = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
+import { requestBackend } from './backendApi.js'
 
 const KEYWORDS = {
   Water: ['water', 'pipe', 'leak', 'tap', 'drain', 'flood', 'plumb', 'wet', 'drip', 'overflow', 'supply', 'geyser', 'hot water'],
@@ -58,7 +57,6 @@ function normalizeResult(result) {
     department,
     location,
     suggestedAction: result.suggestedAction || 'Schedule follow-up through the appropriate campus office.',
-    confidence: Number(result.confidence) || 0.8,
     source: result.source || 'mock',
   }
 }
@@ -105,47 +103,20 @@ function mockAnalyze(description) {
   }
 }
 
-async function openAIAnalyze(description) {
-  const apiKey = env.VITE_OPENAI_API_KEY
-  if (!apiKey) return null
+export async function analyzeComplaint(description, user = {}) {
+  if (user.isDemo || !user.id) {
+    return normalizeResult({ ...mockAnalyze(description), source: 'demo-rules' })
+  }
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const result = await requestBackend('complaints/classify', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a campus complaint routing AI. Return JSON only with fields: category, priority, department, location, suggestedAction.',
-          },
-          { role: 'user', content: `Analyze: "${description}"` },
-        ],
-        max_tokens: 200,
-        temperature: 0.3,
-      }),
+      body: { description },
     })
-
-    if (!res.ok) return null
-
-    const data = await res.json()
-    const raw = data?.choices?.[0]?.message?.content
-    if (!raw) return null
-
-    const parsed = JSON.parse(raw)
-    return normalizeResult({ ...parsed, description, source: 'openai', confidence: 0.95 })
+    return normalizeResult(result)
   } catch {
-    return null
+    return normalizeResult({ ...mockAnalyze(description), source: 'local-rules' })
   }
-}
-
-export async function analyzeComplaint(description) {
-  const ai = await openAIAnalyze(description)
-  return normalizeResult(ai || { ...mockAnalyze(description), description })
 }
 
 export function getCampusAssistantReply(message, user = {}) {
@@ -191,35 +162,69 @@ export function getCampusAssistantReply(message, user = {}) {
   }
 
   if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-    return `Hello ${user?.name?.split(' ')[0] || 'there'}! 👋 I can help with mess menu, attendance, complaints, gate pass, documents, and fees.\n\nWhat do you need?`
+    return `Hello ${user?.name?.split(' ')[0] || 'there'}! I can help with mess menu, attendance, complaints, gate pass, documents, and fees.\n\nWhat do you need?`
   }
 
   return 'I can help with campus services like mess menu, attendance, complaints, gate pass, documents, and fees. Try asking something specific or use the quick questions below.'
 }
 
-export async function askCampusAssistant(message, user = {}) {
-  const baseUrl = env.VITE_AI_API_URL
-  const prompt = String(message || '').trim()
-  if (!prompt) return getCampusAssistantReply(prompt, user)
+export function getCampusWebsiteHelp(message, user = {}) {
+  const text = String(message || '').trim().toLowerCase()
+  const asksHowTo = /\b(how|where|which page|navigate|find|open|use|add|edit|update|submit|apply)\b/.test(text)
+  if (!text) return 'Ask me how to use any student or admin page, or ask about your live campus records.'
+  if (/\b(hello|hi|hey)\b/.test(text)) {
+    return `Hello ${user?.name?.split(' ')[0] || 'there'}! I can guide you around NexCampus or look up information available to your account.`
+  }
+  if (!asksHowTo) return null
 
-  if (baseUrl) {
-    try {
-      const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/assistant/student`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: prompt }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data?.answer) {
-          return String(data.answer)
-        }
-      }
-    } catch {
-      // Fall back to the local campus assistant when the backend is unavailable.
-    }
+  if (user.role === 'admin') {
+    if (/bus|route|gps|transport/.test(text)) return 'Open Admin → Bus Routes. Use Add route to publish a route, Edit route to change its details, or Start GPS sharing on the driver device to transmit its location.'
+    if (/room|classroom|library|lab|availability/.test(text)) return 'Open Admin → Room Directory. Use Add room to publish a campus space, then Update live status to change its availability or visitor note.'
+    if (/faculty|teacher|qualification|subject/.test(text)) return 'Open Admin → Faculty. Add or edit a faculty member’s name, qualification, classes, and subjects there.'
+    if (/mess|menu|meal|feedback|food/.test(text)) return 'Open Admin → Mess. Choose a weekday, select Edit menu, and save the meal details. Student ratings appear under Feedback.'
+    if (/notice|announcement/.test(text)) return 'Open Admin → Notices and choose Publish Notice. Published notices appear to students under Notifications → Notices.'
+    if (/leave|gate pass|gatepass|document|request|approve/.test(text)) return 'Open Admin → Requests. Choose Documents or Leave & Gate Pass, then review and approve or reject a request.'
+    if (/attendance|timetable|class schedule/.test(text)) return 'Open Admin → Attendance to review published attendance. Timetables are filtered by each student’s department; maintain subject and timetable records in Supabase.'
+    if (/student|profile|account/.test(text)) return 'Open Admin → Students to search student profiles. Assign administrator access only to trusted accounts from Supabase.'
+    return 'Use the Admin sidebar to manage students, faculty, transport, campus rooms, notices, requests, mess menus, attendance, and analytics.'
   }
 
-  return getCampusAssistantReply(prompt, user)
+  if (/complaint|problem|issue/.test(text)) return 'Open Student → Complaints, choose Report a Problem, describe the issue and location, then submit it to receive a tracking ID.'
+  if (/leave|gate pass|gatepass/.test(text)) return 'Open Student → Leave & Gate Pass, choose Leave or Gate Pass, fill in the reason, destination, and dates, then submit for approval.'
+  if (/document|certificate|request/.test(text)) return 'Open Student → Documents, choose New Request, select the document type, add the reason, and submit. Track its status on the same page.'
+  if (/attendance/.test(text)) return 'Open Student → Attendance for subject-wise records and your current attendance percentage. Your profile must be assigned to the correct account.'
+  if (/timetable|class schedule|classes/.test(text)) return 'Open Student → Timetable and select a weekday. Your profile department must match the published timetable.'
+  if (/mess|menu|meal|food/.test(text)) return 'Open Student → Mess to view the published weekly menu and leave a rating for today’s meal.'
+  if (/fee|payment|due/.test(text)) return 'Open Student → Fees & Dues to view posted fee records. Online payment is not connected yet; use your campus’s official payment channel.'
+  if (/hostel|room|warden/.test(text)) return 'Open Student → Hostel for your assigned block, room, and published warden details. Contact the hostel office if your assignment is missing.'
+  if (/notification|notice|announcement/.test(text)) return 'Use the header bell or Student → Notifications. Campus announcements are under the Notices tab.'
+  if (/faculty|teacher|qualification|subject/.test(text)) return 'Open Student → Faculty to search faculty by name, qualification, class, or subject.'
+  if (/bus|route|gps|transport/.test(text)) return 'Open Student → Bus Routes to view published routes and any location shared by campus transport.'
+  if (/profile|account|department/.test(text)) return 'Open Student → Profile to review your details. Keep your department, year, hostel, and room assignment accurate so related pages can show the right records.'
+  return 'Use My Services or the sidebar to open campus features. I can guide you through attendance, timetable, hostel, mess, fees, requests, complaints, notices, faculty, and bus routes.'
+}
+
+export async function askCampusAssistant(message, user = {}, { signal } = {}) {
+  const prompt = String(message || '').trim()
+  if (!prompt) return 'Type a question about using NexCampus or your campus records.'
+
+  const guidance = getCampusWebsiteHelp(prompt, user)
+  if (guidance) return guidance
+
+  if (user.isDemo) {
+    return getCampusAssistantReply(prompt, user)
+  }
+
+  try {
+    const endpoint = user.role === 'admin' ? 'assistant/admin' : 'assistant/student'
+    const result = await requestBackend(endpoint, {
+      method: 'POST',
+      body: { question: prompt },
+      signal,
+    })
+    return String(result.answer || 'The campus assistant returned no answer.')
+  } catch (error) {
+    if (signal?.aborted) throw error
+    return 'The campus data assistant is unavailable. Check your connection and try again; live attendance and campus records are not available offline.'
+  }
 }

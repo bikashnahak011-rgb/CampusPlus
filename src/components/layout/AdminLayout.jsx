@@ -3,8 +3,10 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { Menu, Bell, ChevronDown, LogOut, Settings, Search } from 'lucide-react'
 import AdminSidebar from './AdminSidebar'
 import AdminMobileBottomNav from '../AdminMobileBottomNav'
+import AIAssistant from '../AIAssistant'
 import { useAuth } from '../../contexts/AuthContext'
 import Ambient3DBackground from '../Ambient3DBackground'
+import AppLogo from '../AppLogo'
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -16,7 +18,7 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-violet-50 flex relative overflow-hidden">
       <Ambient3DBackground />
       <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative z-10">
+      <div className="flex-1 min-w-0 lg:ml-64 flex flex-col min-h-screen relative z-10">
 
         {/* Header */}
         <header className="h-14 sm:h-16 bg-white border-b border-gray-100 flex items-center px-3 sm:px-4 gap-2 sticky top-0 z-20 shadow-sm">
@@ -34,7 +36,10 @@ export default function AdminLayout() {
           </div>
 
           {/* Mobile title */}
-          <span className="sm:hidden flex-1 text-sm font-bold text-gray-800">Admin Panel</span>
+          <div className="sm:hidden flex-1 min-w-0 flex items-center gap-2 text-sm font-bold text-gray-800">
+            <AppLogo size={24} />
+            <span>Admin Panel</span>
+          </div>
 
           <div className="ml-auto flex items-center gap-1">
             <button onClick={() => navigate('/admin/requests')} className="relative p-2 hover:bg-gray-100 rounded-xl">
@@ -64,11 +69,12 @@ export default function AdminLayout() {
         </header>
 
         {/* Main content — pb-20 on mobile for bottom nav */}
-        <main className="dashboard-main flex-1 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 animate-fade-in">
+        <main className="dashboard-main flex-1 min-w-0 w-full p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 animate-fade-in">
           <div className="page-enter"><Outlet /></div>
         </main>
       </div>
       <AdminMobileBottomNav />
+      <AIAssistant />
     </div>
   )
 }

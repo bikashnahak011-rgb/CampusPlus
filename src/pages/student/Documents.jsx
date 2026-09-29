@@ -23,12 +23,16 @@ export default function DocumentsPage() {
     e.preventDefault()
     if (!form.type || !form.reason) { toast('Please fill all fields.', 'warning'); return }
     setSubmitting(true)
-    await new Promise(r => setTimeout(r, 700))
-    const id = submitRequest(form, user.id, user.name)
-    setSubmitting(false)
-    setShowForm(false)
-    setForm({ type: '', reason: '' })
-    toast(`✓ Request ${id} submitted successfully.`, 'success')
+    try {
+      const id = await submitRequest(form, user.id, user.name)
+      setShowForm(false)
+      setForm({ type: '', reason: '' })
+      toast(`Request ${id} submitted successfully.`, 'success')
+    } catch (error) {
+      toast(error.message, 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const statusFlow = ['Submitted', 'Under Review', 'Approved', 'Ready']

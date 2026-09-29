@@ -18,29 +18,32 @@ flowchart TD
   OUT --> UI
 ```
 
-Attendance uses deterministic thresholds: below 75% is a warning, and recent `attendance_history` records identify continuously decreasing attendance. Complaint analysis uses transparent keyword classification, location extraction, text similarity, and escalation rules; an optional LLM can be added behind `ai_service.py` without changing the API contract. The mess forecast combines room capacity, approved leave, day/date context, and feedback volume, and always returns uncertainty.
+Attendance uses the configured threshold, and recent `attendance_history` records identify continuously decreasing attendance. Complaint analysis uses keyword classification, location extraction, text similarity, and escalation rules. Rules are the default; setting `AI_PROVIDER=openai` and a server-only `OPENAI_API_KEY` enables structured OpenAI classification and admin copilot answers, with automatic rules fallback if the provider is unavailable. The mess forecast combines room capacity, approved leave, day/date context, and feedback volume, and always returns uncertainty.
 
 ## Setup
 
 1. Run the existing `supabase/schema.sql` in Supabase.
-2. Run `supabase/ai_engine.sql` to add history, AI analysis, clusters, forecasts, and notification priority.
-3. Create a backend environment file:
+2. Run `supabase/production_hardening.sql` to secure profile roles and live request workflows.
+3. Run `supabase/complaints_realtime.sql` to enable the secured live complaint workflow.
+4. Run `supabase/ai_engine.sql` to add history, AI analysis, clusters, forecasts, and notification priority.
+4. Create a backend environment file:
 
 ```powershell
-cd backend
-Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
 ```
 
 Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ORIGINS`. Never expose the service-role key to React or commit `.env`.
 
-4. Install and run:
+5. Install and run:
 
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload --port 8000
 ```
+
+Run these commands from the repository root so the `backend` package imports resolve correctly.
 
 Health check: `GET http://localhost:8000/health`. OpenAPI: `http://localhost:8000/docs`.
 
@@ -53,6 +56,7 @@ All protected endpoints require `Authorization: Bearer <supabase-access-token>`.
 | GET | `/health` | public | Service health |
 | GET | `/api/attendance/me` | student/admin token | Caller-scoped attendance warnings |
 | POST | `/api/attendance/analyze` | admin | Analyze all students and create warnings |
+| POST | `/api/complaints/classify` | student/admin token | Classify complaint text for the current form |
 | POST | `/api/complaints/analyze` | admin | Classify complaints and return incident clusters |
 | GET | `/api/mess/forecast` | admin | Meal demand forecast and uncertainty |
 | GET | `/api/insights/action-center` | admin | Structured dashboard summary |

@@ -33,24 +33,31 @@ export default function ComplaintsPage() {
   const handleAI = async () => {
     if (!form.description.trim()) { toast('Enter a description first.', 'warning'); return }
     setAiLoading(true)
-    const r = await analyzeComplaint(form.description)
-    setAiResult(r)
-    setForm(f => ({ ...f, category: r.category.split('/')[0].trim(), priority: r.priority, location: r.location !== 'Campus' ? r.location : f.location }))
-    setAiLoading(false)
-    toast('AI analysis complete!', 'success')
+    try {
+      const r = await analyzeComplaint(form.description, user)
+      setAiResult(r)
+      setForm(f => ({ ...f, category: r.category.split('/')[0].trim(), priority: r.priority, location: r.location !== 'Campus' ? r.location : f.location }))
+      toast(r.source === 'local-rules' ? 'Backend unavailable; local rules were used.' : 'AI analysis complete!', r.source === 'local-rules' ? 'warning' : 'success')
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.category || !form.description || !form.location) { toast('Please fill all required fields.', 'warning'); return }
     setSubmitting(true)
-    await new Promise(r => setTimeout(r, 700))
-    const id = submitComplaint({ ...form, ai_category: aiResult?.category, department: aiResult?.department || 'Administration' }, user.id, user.name)
-    setSubmitting(false)
-    setShowForm(false)
-    setForm({ category: '', location: '', description: '', priority: 'Medium' })
-    setAiResult(null)
-    toast(`✓ Complaint ${id} submitted successfully.`, 'success')
+    try {
+      const id = await submitComplaint({ ...form, ai_category: aiResult?.category, department: aiResult?.department || 'Administration' }, user.id, user.name)
+      setShowForm(false)
+      setForm({ category: '', location: '', description: '', priority: 'Medium' })
+      setAiResult(null)
+      toast(`Complaint ${id} submitted successfully.`, 'success')
+    } catch (error) {
+      toast(error.message || 'Complaint could not be submitted.', 'error')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (

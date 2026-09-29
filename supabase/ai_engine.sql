@@ -1,6 +1,19 @@
 -- CampusPulse AI additive migration.
 -- Run after supabase/schema.sql. This does not replace existing tables.
 
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
+$$;
+
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+
 ALTER TABLE notifications ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal';
 ALTER TABLE notifications ADD COLUMN IF NOT EXISTS link TEXT;
 
@@ -56,19 +69,24 @@ ALTER TABLE complaint_ai_analysis ENABLE ROW LEVEL SECURITY;
 ALTER TABLE complaint_clusters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mess_demand_forecasts ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "students_own_attendance_history" ON attendance_history;
 CREATE POLICY "students_own_attendance_history" ON attendance_history FOR SELECT USING (student_id = auth.uid());
+DROP POLICY IF EXISTS "admins_read_attendance_history" ON attendance_history;
 CREATE POLICY "admins_read_attendance_history" ON attendance_history FOR SELECT USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
+DROP POLICY IF EXISTS "admins_read_complaint_ai" ON complaint_ai_analysis;
 CREATE POLICY "admins_read_complaint_ai" ON complaint_ai_analysis FOR SELECT USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
   OR EXISTS (SELECT 1 FROM complaints c WHERE c.id = complaint_id AND c.student_id = auth.uid())
 );
+DROP POLICY IF EXISTS "admins_manage_clusters" ON complaint_clusters;
 CREATE POLICY "admins_manage_clusters" ON complaint_clusters FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
+DROP POLICY IF EXISTS "admins_manage_forecasts" ON mess_demand_forecasts;
 CREATE POLICY "admins_manage_forecasts" ON mess_demand_forecasts FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  public.is_admin()
 );
 
 -- Optional demo data for the requested scenarios. Replace UUIDs with real profile IDs.

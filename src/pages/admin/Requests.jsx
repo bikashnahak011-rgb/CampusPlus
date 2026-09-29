@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Loader2, ChevronRight } from 'lucide-react'
+import { Search, Loader2 } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
@@ -21,18 +21,25 @@ export default function AdminRequests() {
   const openDoc = (r) => { setDetail(r); setDetailType('doc'); setComment(r.admin_comment || '') }
   const openLeave = (l) => { setDetail(l); setDetailType('leave'); setComment(l.admin_comment || '') }
 
-  const handleAction = async (action) => {
+  const applyDecision = async (request, type, action, note = '') => {
+    if (!request) return
     setUpdating(true)
-    await new Promise(r => setTimeout(r, 600))
-    if (detailType === 'doc') {
-      updateRequest(detail.id, action, comment)
-    } else {
-      updateLeave(detail.id, action, comment)
+    try {
+      if (type === 'doc') {
+        await updateRequest(request.id, action, note)
+      } else {
+        await updateLeave(request.id, action, note)
+      }
+      if (detail?.id === request.id) setDetail(null)
+      toast(`${request.id} ${action.toLowerCase()}.`, action === 'Approved' ? 'success' : 'info')
+    } catch (error) {
+      toast(error.message, 'error')
+    } finally {
+      setUpdating(false)
     }
-    setUpdating(false)
-    setDetail(null)
-    toast(`✓ ${detail.id} ${action.toLowerCase()}.`, action === 'Approved' ? 'success' : 'info')
   }
+
+  const handleAction = action => applyDecision(detail, detailType, action, comment)
 
   const days = (d) => Math.floor((Date.now() - new Date(d)) / 86400000)
 
@@ -72,8 +79,8 @@ export default function AdminRequests() {
                       <div className="flex items-center gap-1">
                         <button onClick={() => openDoc(r)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-100">View</button>
                         {!['Approved', 'Rejected'].includes(r.status) && <>
-                          <button onClick={() => { setDetail(r); setDetailType('doc'); setComment(''); setTimeout(() => handleAction('Approved'), 0) }} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-lg hover:bg-green-100">Approve</button>
-                          <button onClick={() => { setDetail(r); setDetailType('doc'); setComment(''); setTimeout(() => handleAction('Rejected'), 0) }} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg hover:bg-red-100">Reject</button>
+                          <button onClick={() => applyDecision(r, 'doc', 'Approved')} disabled={updating} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-lg hover:bg-green-100 disabled:opacity-50">Approve</button>
+                          <button onClick={() => applyDecision(r, 'doc', 'Rejected')} disabled={updating} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg hover:bg-red-100 disabled:opacity-50">Reject</button>
                         </>}
                       </div>
                     </td>
@@ -104,8 +111,8 @@ export default function AdminRequests() {
                       <div className="flex items-center gap-1">
                         <button onClick={() => openLeave(l)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-100">View</button>
                         {l.status === 'Pending' && <>
-                          <button onClick={async () => { setDetail(l); setDetailType('leave'); await new Promise(r => setTimeout(r, 0)); updateLeave(l.id, 'Approved', 'Approved by admin'); toast(`✓ ${l.id} approved.`, 'success') }} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-lg hover:bg-green-100">Approve</button>
-                          <button onClick={async () => { updateLeave(l.id, 'Rejected', 'Rejected by admin'); toast(`${l.id} rejected.`, 'info') }} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg hover:bg-red-100">Reject</button>
+                          <button onClick={() => applyDecision(l, 'leave', 'Approved', 'Approved by admin')} disabled={updating} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded-lg hover:bg-green-100 disabled:opacity-50">Approve</button>
+                          <button onClick={() => applyDecision(l, 'leave', 'Rejected', 'Rejected by admin')} disabled={updating} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-lg hover:bg-red-100 disabled:opacity-50">Reject</button>
                         </>}
                       </div>
                     </td>

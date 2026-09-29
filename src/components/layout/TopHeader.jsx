@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Bell, ChevronDown, Menu, User, Settings, LogOut, X } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
+import AppLogo from '../AppLogo'
 
 export default function TopHeader({ onMenuClick }) {
   const { user, signOut } = useAuth()
@@ -41,7 +42,10 @@ export default function TopHeader({ onMenuClick }) {
         </div>
 
         {/* Mobile: show app name */}
-        <span className="sm:hidden flex-1 text-sm font-bold text-gray-800">NexCampus</span>
+        <div className="sm:hidden flex-1 min-w-0 flex items-center gap-2 text-sm font-bold text-gray-800">
+          <AppLogo size={24} />
+          <span>NexCampus</span>
+        </div>
 
         <div className="flex items-center gap-1 ml-auto" ref={ref}>
           {/* Mobile search toggle */}

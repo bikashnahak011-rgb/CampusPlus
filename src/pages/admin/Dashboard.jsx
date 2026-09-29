@@ -10,15 +10,19 @@ export default function AdminDashboard() {
   const openComplaints = complaints.filter(c => !['Resolved', 'Closed'].includes(c.status))
   const pendingReqs = [...requests.filter(r => !['Approved', 'Rejected'].includes(r.status)), ...leaveRequests.filter(l => l.status === 'Pending')]
   const highPriority = complaints.filter(c => c.priority === 'High' && !['Resolved', 'Closed'].includes(c.status))
+  const resolvedComplaints = complaints.filter(c => ['Resolved', 'Closed'].includes(c.status) && c.created_at && c.updated_at)
+  const averageResolutionHours = resolvedComplaints.length
+    ? (resolvedComplaints.reduce((sum, complaint) => sum + (new Date(complaint.updated_at) - new Date(complaint.created_at)) / 3600000, 0) / resolvedComplaints.length).toFixed(1)
+    : null
 
   const recentComplaints = complaints.slice(0, 5)
   const recentRequests = pendingReqs.slice(0, 5)
 
   const stats = [
-    { label: 'Total Students', value: '4,280', icon: Users, color: 'text-emerald-700', bg: 'bg-emerald-50', change: '+12 this month' },
-    { label: 'Pending Requests', value: pendingReqs.length + 120, icon: ClipboardList, color: 'text-amber-700', bg: 'bg-amber-50', change: `${pendingReqs.length} new today` },
-    { label: 'Open Complaints', value: openComplaints.length + 33, icon: MessageSquareWarning, color: 'text-red-600', bg: 'bg-red-50', change: `${highPriority.length} high priority` },
-    { label: 'Avg Resolution Time', value: '4.2 hrs', icon: Clock, color: 'text-teal-700', bg: 'bg-teal-50', change: '↓ 0.8 hrs from last week' },
+    { label: 'Total Students', value: students.length, icon: Users, color: 'text-emerald-700', bg: 'bg-emerald-50', change: 'Registered profiles' },
+    { label: 'Pending Requests', value: pendingReqs.length, icon: ClipboardList, color: 'text-amber-700', bg: 'bg-amber-50', change: 'Awaiting review' },
+    { label: 'Open Complaints', value: openComplaints.length, icon: MessageSquareWarning, color: 'text-red-600', bg: 'bg-red-50', change: `${highPriority.length} high priority` },
+    { label: 'Avg Resolution Time', value: averageResolutionHours ? `${averageResolutionHours} hrs` : 'N/A', icon: Clock, color: 'text-teal-700', bg: 'bg-teal-50', change: `${resolvedComplaints.length} resolved records` },
   ]
 
   return (

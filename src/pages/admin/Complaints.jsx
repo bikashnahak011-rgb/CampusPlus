@@ -32,17 +32,24 @@ export default function AdminComplaints() {
   const handleUpdate = async () => {
     if (!actionForm.note.trim()) { toast('Please add a note.', 'warning'); return }
     setUpdating(true)
-    await new Promise(r => setTimeout(r, 600))
-    updateComplaint(detail.id, actionForm.status, actionForm.note, actionForm.assignedTo || null)
-    setUpdating(false)
-    setDetail(null)
-    toast(`✓ Complaint ${detail.id} updated to: ${actionForm.status}`, 'success')
+    try {
+      await updateComplaint(detail.id, actionForm.status, actionForm.note, actionForm.assignedTo || null)
+      setDetail(null)
+      toast(`Complaint ${detail.id} updated to: ${actionForm.status}`, 'success')
+    } catch (error) {
+      toast(error.message || 'Complaint could not be updated.', 'error')
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const quickUpdate = async (c, status, note) => {
-    await new Promise(r => setTimeout(r, 300))
-    updateComplaint(c.id, status, note)
-    toast(`✓ ${c.id} → ${status}`, 'success')
+    try {
+      await updateComplaint(c.id, status, note)
+      toast(`${c.id} updated to ${status}.`, 'success')
+    } catch (error) {
+      toast(error.message || 'Complaint could not be updated.', 'error')
+    }
   }
 
   return (

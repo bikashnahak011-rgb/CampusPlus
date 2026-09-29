@@ -1,5 +1,7 @@
-import { useState } from 'react'
-import { Clock, MapPin } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { MapPin } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
 import { DEMO_TIMETABLE } from '../../data/demoData'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -15,14 +17,76 @@ function classStatus(time) {
 }
 
 export default function TimetablePage() {
+  const { user } = useAuth()
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const [activeDay, setActiveDay] = useState(DAYS.includes(today) ? today : 'Monday')
-  const classes = DEMO_TIMETABLE.filter(t => t.day === activeDay)
+  const [timetable, setTimetable] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!user) return
+    if (user.isDemo) {
+      setTimetable(DEMO_TIMETABLE)
+      setLoading(false)
+      setError('')
+      return
+    }
+    if (!supabase) {
+      setTimetable([])
+      setLoading(false)
+      setError('Live timetable is unavailable because Supabase is not configured.')
+      return
+    }
+    if (!user.department) {
+      setTimetable([])
+      setLoading(false)
+      setError('Add your department to your profile to load the correct timetable.')
+      return
+    }
+
+    let active = true
+    setLoading(true)
+    setError('')
+    const loadTimetable = async () => {
+      const { data, error: queryError } = await supabase.from('timetable')
+        .select('id,day,time,room,subject:subjects(name,faculty)')
+        .eq('department', user.department)
+        .order('time')
+        if (!active) return
+        if (queryError) {
+          setError(`Could not load timetable: ${queryError.message}`)
+          setTimetable([])
+        } else {
+          setTimetable((data || []).map(row => {
+            const subject = Array.isArray(row.subject) ? row.subject[0] : row.subject
+            return { ...row, subject: subject?.name || 'Subject', faculty: subject?.faculty || 'Faculty not assigned' }
+          }))
+        }
+        setLoading(false)
+    }
+
+    loadTimetable()
+    const refreshInterval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') loadTimetable()
+    }, 5000)
+
+    return () => {
+      active = false
+      window.clearInterval(refreshInterval)
+    }
+  }, [user])
+
+  const classes = timetable.filter(item => item.day === activeDay)
 
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-gray-900">Timetable</h1><p className="text-gray-500 text-sm mt-1">Your weekly class schedule</p></div>
       <div className="card">
+        {loading && <p className="py-8 text-center text-sm text-gray-500">Loading timetable...</p>}
+        {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+        {!loading && !error && timetable.length === 0 && <p className="py-8 text-center text-sm text-gray-500">No timetable has been published for your department.</p>}
+        {!loading && !error && timetable.length > 0 && <>
         <div className="flex gap-2 flex-wrap mb-6">
           {DAYS.map(d => (
             <button key={d} onClick={() => setActiveDay(d)} className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeDay === d ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
@@ -56,6 +120,7 @@ export default function TimetablePage() {
             })}
           </div>
         )}
+        </>}
       </div>
     </div>
   )

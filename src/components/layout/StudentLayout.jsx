@@ -12,10 +12,10 @@ export default function StudentLayout() {
     <div className="min-h-screen bg-violet-50 flex relative overflow-hidden">
       <Ambient3DBackground />
       <StudentSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen relative z-10">
+      <div className="flex-1 min-w-0 lg:ml-64 flex flex-col min-h-screen relative z-10">
         <TopHeader onMenuClick={() => setSidebarOpen(true)} />
         {/* pb-20 on mobile to account for bottom nav bar */}
-        <main className="dashboard-main flex-1 p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 animate-fade-in">
+        <main className="dashboard-main flex-1 min-w-0 w-full p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 animate-fade-in">
           <div className="page-enter"><Outlet /></div>
         </main>
       </div>

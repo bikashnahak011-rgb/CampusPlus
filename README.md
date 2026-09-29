@@ -1,7 +1,7 @@
 # CampusOne 🎓
 ### One Campus. One Platform. Zero Confusion.
 
-A complete, production-ready campus management platform built for hackathon demonstration.
+A campus management prototype with demo mode and partial Supabase/FastAPI integration. Several modules remain demo-only and need database-backed implementations before production use.
 
 ---
 
@@ -20,7 +20,7 @@ Open **http://localhost:5173**
 | Student | `student@campusone.demo` | `demo123` |
 | Admin | `admin@campusone.demo` | `demo123` |
 
-> **No Supabase setup needed.** All features work with in-memory state in demo mode.
+> Demo accounts are available only in local development. Production sign-in requires Supabase; live campus records also require the database migrations and backend below.
 
 ---
 
@@ -33,7 +33,7 @@ Open **http://localhost:5173**
 | Icons | Lucide React |
 | Charts | Recharts |
 | Backend | Supabase (PostgreSQL + Auth) |
-| AI | OpenAI API (optional, mock fallback included) |
+| AI | Authenticated FastAPI services with deterministic campus rules |
 
 ---
 
@@ -41,16 +41,31 @@ Open **http://localhost:5173**
 
 1. Create a project at [supabase.com](https://supabase.com)
 2. Run `supabase/schema.sql` in the SQL Editor
-3. Copy your project credentials
-4. Create `.env`:
+3. Run `supabase/production_hardening.sql` to secure account roles, document/leave requests, and approval notifications
+4. Run `supabase/complaints_realtime.sql` to enable secure complaint updates and live complaint subscriptions
+5. Run `supabase/ai_engine.sql` to enable live insights and backend analysis tables
+6. Run `supabase/bus_tracking.sql` to enable secure GPS publishing and live bus route/location updates
+7. Run `supabase/faculty.sql` to enable the shared faculty directory and admin-only editing
+8. Deploy the FastAPI backend as a separate HTTPS service. Set its `SUPABASE_URL`, server-only `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ORIGINS` to the exact deployed frontend origin. See `backend/README.md`.
+9. Set these frontend environment variables in Vercel Project Settings → Environment Variables:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_OPENAI_API_KEY=sk-...  # Optional — enables real AI routing
+VITE_AI_API_URL=https://your-deployed-backend.example.com
 ```
 
-5. Restart dev server: `npm run dev`
+`VITE_AI_API_URL` must be the deployed backend's public HTTPS URL, never `localhost`. Redeploy Vercel after changing environment variables. Never put the Supabase service-role key or an AI provider key in a `VITE_*` variable. Demo login is development-only and is not included in production builds.
+
+Promote a trusted account to administrator from the Supabase SQL Editor after that account signs up; do not grant admin by changing the login tab:
+
+```sql
+UPDATE public.profiles SET role = 'admin' WHERE email = 'trusted-admin@example.edu';
+```
+
+Production tables intentionally start without sample campus records. Add actual attendance, timetable, fee, hostel, bus, room, and meal records before those pages can show live data. If this Supabase project was initialized with an older schema, inspect `mess_menu` and `events` for the former sample rows before removing them so real records are not deleted accidentally. Real fee payment processing is not available until a payment provider is integrated.
+
+Bus GPS sharing is started by an authenticated admin from Admin → Bus Routes using the driver's device. The browser must have location permission, and production deployments must use HTTPS. Demo mode does not publish or simulate GPS locations.
 
 ---
 
@@ -171,7 +186,8 @@ src/
 - [x] Row Level Security policies
 - [x] Toast notifications for all actions
 - [x] Loading/Error/Empty states on all operations
-- [x] OpenAI integration with keyword-based mock fallback
+- [x] Authenticated backend complaint classification and student assistant
+- [x] Live admin AI insights from the FastAPI action center
 
 ---
 
@@ -197,17 +213,7 @@ Toggle in **Settings** to enable Lite Mode:
 
 ## 🤖 AI Smart Routing
 
-The AI complaint routing works in two modes:
-
-**With OpenAI API key** (`VITE_OPENAI_API_KEY` set):
-- Uses GPT-3.5-turbo to analyze complaint text
-- Returns category, priority, department, and suggested action
-
-**Without API key (Mock Mode)**:
-- Keyword-based analysis (water, electric, clean, mess, etc.)
-- Location extraction from text (Block A, Room 203)
-- Priority detection (urgent, emergency = High)
-- Same UI experience, no crashes
+Real accounts send complaint classification, student assistant questions, and admin insights to the authenticated FastAPI backend. Rules are the default; optional OpenAI classification/admin answers can be enabled with `AI_PROVIDER=openai` and `OPENAI_API_KEY` in `backend/.env`. If the provider is unavailable, backend rules remain available. Demo accounts use local sample data and rules. Never put AI provider secrets in `VITE_*` variables; browser environment values are public.
 
 ---
 

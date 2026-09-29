@@ -1,3 +1,5 @@
+import { lazy, Suspense, useEffect, useState } from 'react'
+
 import {
   BrowserRouter,
   Routes,
@@ -16,10 +18,11 @@ import { ToastProvider } from './components/ui/Toast'
 
 import AppLogo from './components/AppLogo'
 
-import LandingPage from './pages/LandingPage'
-import LoginPage from './pages/LoginPage'
-import AuthCallback from './pages/AuthCallback'
-import AboutPage from './pages/AboutPage'
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const MobileOnboarding = lazy(() => import('./pages/MobileOnboarding'))
+const AuthCallback = lazy(() => import('./pages/AuthCallback'))
+const AboutPage = lazy(() => import('./pages/AboutPage'))
 
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 
@@ -33,20 +36,23 @@ import AdminLayout from './components/layout/AdminLayout'
   ============================
 */
 
-import StudentDashboard from './pages/student/Dashboard'
-import ServicesPage from './pages/student/Services'
-import AttendancePage from './pages/student/Attendance'
-import TimetablePage from './pages/student/Timetable'
-import HostelPage from './pages/student/Hostel'
-import MessPage from './pages/student/Mess'
-import ComplaintsPage from './pages/student/Complaints'
-import LeavePage from './pages/student/Leave'
-import DocumentsPage from './pages/student/Documents'
-import FeesPage from './pages/student/Fees'
-import NotificationsPage from './pages/student/Notifications'
-import ProfilePage from './pages/student/Profile'
-import SettingsPage from './pages/student/Settings'
-import SearchPage from './pages/student/Search'
+const StudentDashboard = lazy(() => import('./pages/student/Dashboard'))
+const ServicesPage = lazy(() => import('./pages/student/Services'))
+const AttendancePage = lazy(() => import('./pages/student/Attendance'))
+const TimetablePage = lazy(() => import('./pages/student/Timetable'))
+const HostelPage = lazy(() => import('./pages/student/Hostel'))
+const MessPage = lazy(() => import('./pages/student/Mess'))
+const ComplaintsPage = lazy(() => import('./pages/student/Complaints'))
+const LeavePage = lazy(() => import('./pages/student/Leave'))
+const DocumentsPage = lazy(() => import('./pages/student/Documents'))
+const FeesPage = lazy(() => import('./pages/student/Fees'))
+const NotificationsPage = lazy(() => import('./pages/student/Notifications'))
+const ProfilePage = lazy(() => import('./pages/student/Profile'))
+const SettingsPage = lazy(() => import('./pages/student/Settings'))
+const SearchPage = lazy(() => import('./pages/student/Search'))
+const BusRoutesPage = lazy(() => import('./pages/student/BusRoutes'))
+const RoomFinderPage = lazy(() => import('./pages/student/RoomFinder'))
+const FacultyDirectoryPage = lazy(() => import('./pages/FacultyDirectory'))
 
 
 /*
@@ -55,18 +61,20 @@ import SearchPage from './pages/student/Search'
   ============================
 */
 
-import AdminDashboard from './pages/admin/Dashboard'
-import AdminStudents from './pages/admin/Students'
-import AdminComplaints from './pages/admin/Complaints'
-import AdminRequests from './pages/admin/Requests'
-import AdminHostel from './pages/admin/Hostel'
-import AdminMess from './pages/admin/Mess'
-import AdminNotices from './pages/admin/Notices'
-import AdminAttendance from './pages/admin/Attendance'
-import AdminAnalytics from './pages/admin/Analytics'
-import AdminAIInsights from './pages/admin/AIInsights'
-import AdminSettings from './pages/admin/Settings'
-import AdminProfile from './pages/admin/Profile'
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
+const AdminStudents = lazy(() => import('./pages/admin/Students'))
+const AdminComplaints = lazy(() => import('./pages/admin/Complaints'))
+const AdminRequests = lazy(() => import('./pages/admin/Requests'))
+const AdminHostel = lazy(() => import('./pages/admin/Hostel'))
+const AdminMess = lazy(() => import('./pages/admin/Mess'))
+const AdminNotices = lazy(() => import('./pages/admin/Notices'))
+const AdminAttendance = lazy(() => import('./pages/admin/Attendance'))
+const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'))
+const AdminAIInsights = lazy(() => import('./pages/admin/AIInsights'))
+const AdminSettings = lazy(() => import('./pages/admin/Settings'))
+const AdminProfile = lazy(() => import('./pages/admin/Profile'))
+const AdminBusRoutes = lazy(() => import('./pages/admin/BusRoutes'))
+const AdminRoomFinder = lazy(() => import('./pages/admin/RoomFinder'))
 
 
 /*
@@ -190,6 +198,16 @@ function ProtectedRoute({ children, role }) {
 
 function LoginRoute() {
   const { user, loading } = useAuth()
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches)
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => localStorage.getItem('campusplus_mobile_intro_seen') === 'true')
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
+    const updateViewport = (event) => setIsMobile(event.matches)
+
+    mediaQuery.addEventListener('change', updateViewport)
+    return () => mediaQuery.removeEventListener('change', updateViewport)
+  }, [])
 
   if (loading) {
     return <Spinner />
@@ -205,6 +223,17 @@ function LoginRoute() {
       <Navigate
         to={getUserHome(user)}
         replace
+      />
+    )
+  }
+
+  if (isMobile && !hasSeenOnboarding) {
+    return (
+      <MobileOnboarding
+        onComplete={() => {
+          localStorage.setItem('campusplus_mobile_intro_seen', 'true')
+          setHasSeenOnboarding(true)
+        }}
       />
     )
   }
@@ -261,7 +290,8 @@ export default function App() {
 
             <PWAInstallPrompt />
 
-            <Routes>
+            <Suspense fallback={<Spinner />}>
+              <Routes>
 
               {/* ================= ROOT ================= */}
 
@@ -328,6 +358,21 @@ export default function App() {
                 <Route
                   path="services"
                   element={<ServicesPage />}
+                />
+
+                <Route
+                  path="bus-routes"
+                  element={<BusRoutesPage />}
+                />
+
+                <Route
+                  path="room-finder"
+                  element={<RoomFinderPage />}
+                />
+
+                <Route
+                  path="faculty"
+                  element={<FacultyDirectoryPage />}
                 />
 
                 <Route
@@ -427,6 +472,11 @@ export default function App() {
                 />
 
                 <Route
+                  path="faculty"
+                  element={<FacultyDirectoryPage />}
+                />
+
+                <Route
                   path="complaints"
                   element={<AdminComplaints />}
                 />
@@ -444,6 +494,16 @@ export default function App() {
                 <Route
                   path="mess"
                   element={<AdminMess />}
+                />
+
+                <Route
+                  path="bus-routes"
+                  element={<AdminBusRoutes />}
+                />
+
+                <Route
+                  path="room-finder"
+                  element={<AdminRoomFinder />}
                 />
 
                 <Route
@@ -491,7 +551,8 @@ export default function App() {
                 }
               />
 
-            </Routes>
+              </Routes>
+            </Suspense>
 
           </ToastProvider>
 

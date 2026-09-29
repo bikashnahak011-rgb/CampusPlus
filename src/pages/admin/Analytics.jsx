@@ -4,7 +4,7 @@ import { useApp } from '../../contexts/AppContext'
 const COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#ec4899','#06b6d4']
 
 export default function AdminAnalytics() {
-  const { complaints, requests, leaveRequests, messFeedback } = useApp()
+  const { complaints, requests, messFeedback } = useApp()
 
   // Complaints by category
   const catMap = {}
@@ -16,11 +16,21 @@ export default function AdminAnalytics() {
   complaints.forEach(c => { statusMap[c.status] = (statusMap[c.status]||0)+1 })
   const statusData = Object.entries(statusMap).map(([name,value])=>({name,value}))
 
-  // Monthly complaints (simulated)
-  const monthlyData = [
-    {month:'Jul',complaints:12,resolved:10},{month:'Aug',complaints:18,resolved:15},
-    {month:'Sep',complaints:22,resolved:19},{month:'Oct',complaints:complaints.length,resolved:complaints.filter(c=>c.status==='Resolved').length},
-  ]
+  const monthlyMap = new Map()
+  complaints.forEach(complaint => {
+    const date = new Date(complaint.created_at)
+    if (Number.isNaN(date.getTime())) return
+    const key = `${date.getFullYear()}-${date.getMonth()}`
+    const month = monthlyMap.get(key) || { month: date.toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }), complaints: 0, resolved: 0 }
+    month.complaints += 1
+    if (['Resolved', 'Closed'].includes(complaint.status)) month.resolved += 1
+    monthlyMap.set(key, month)
+  })
+  const monthlyData = [...monthlyMap.entries()].sort(([first], [second]) => first.localeCompare(second)).map(([, month]) => month)
+  const resolved = complaints.filter(complaint => ['Resolved', 'Closed'].includes(complaint.status) && complaint.created_at && complaint.updated_at)
+  const averageResolution = resolved.length
+    ? `${(resolved.reduce((total, complaint) => total + (new Date(complaint.updated_at) - new Date(complaint.created_at)) / 3600000, 0) / resolved.length).toFixed(1)} hrs`
+    : 'N/A'
 
   // Mess ratings
   const ratingDist = [1,2,3,4,5].map(r=>({rating:`${r}★`,count:messFeedback.filter(f=>f.rating===r).length}))
@@ -39,7 +49,7 @@ export default function AdminAnalytics() {
           {label:'Total Complaints',value:complaints.length,color:'text-red-600'},
           {label:'Resolved',value:complaints.filter(c=>c.status==='Resolved').length,color:'text-green-600'},
           {label:'High Priority',value:complaints.filter(c=>c.priority==='High').length,color:'text-orange-600'},
-          {label:'Avg Resolution',value:'4.2 hrs',color:'text-blue-600'},
+          {label:'Avg Resolution',value:averageResolution,color:'text-blue-600'},
         ].map(({label,value,color})=>(
           <div key={label} className="card text-center"><p className={`text-2xl font-bold ${color} mb-1`}>{value}</p><p className="text-gray-500 text-xs">{label}</p></div>
         ))}
@@ -77,6 +87,7 @@ export default function AdminAnalytics() {
 
         <div className="card">
           <h2 className="font-semibold text-gray-900 mb-4">Monthly Complaint Trend</h2>
+          {monthlyData.length === 0 ? <p className="py-8 text-center text-sm text-gray-400">No dated complaint records yet.</p> :
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={monthlyData} margin={{top:0,right:0,left:-20,bottom:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -87,7 +98,7 @@ export default function AdminAnalytics() {
               <Line type="monotone" dataKey="complaints" stroke="#ef4444" strokeWidth={2} dot={{r:4}} name="Complaints" />
               <Line type="monotone" dataKey="resolved" stroke="#10b981" strokeWidth={2} dot={{r:4}} name="Resolved" />
             </LineChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer>}
         </div>
 
         <div className="card">
