@@ -10,13 +10,19 @@ import {
   DoorOpen,
   ChevronRight,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Award,
+  Megaphone,
 } from 'lucide-react'
 
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
+import DashboardVideoShowcase from '../../components/DashboardVideoShowcase'
+import CampusJournalPreview from '../../components/CampusJournalPreview'
+import LiquidGlassActions from '../../components/LiquidGlassActions'
 import { StatusBadge } from '../../components/ui/States'
 import { supabase } from '../../lib/supabase'
+import { matchesNoticeTarget } from '../../lib/noticeAudience'
 import {
   DEMO_SUBJECTS,
   DEMO_TIMETABLE,
@@ -72,7 +78,9 @@ export default function StudentDashboard() {
     leaveRequests,
     notifications,
     notices,
-    messMenu
+    messMenu,
+    dashboardVideos,
+    campusJournalItems
   } = useApp()
 
   const navigate = useNavigate()
@@ -168,6 +176,14 @@ export default function StudentDashboard() {
   const attendanceGauge = avgAtt ?? 0
   const hasLowAttendance = academicData.subjects.some(subject => subject.total > 0 && (subject.present / subject.total) * 100 < 80)
 
+  const selectDashboardCard = event => {
+    const card = event.target.closest('.card')
+    if (!card || !event.currentTarget.contains(card)) return
+
+    event.currentTarget.querySelector('[data-dashboard-selected="true"]')?.removeAttribute('data-dashboard-selected')
+    card.setAttribute('data-dashboard-selected', 'true')
+  }
+
   const myNotifs = notifications
     .filter(n => n.user_id === user?.id)
     .slice(0, 4)
@@ -184,11 +200,40 @@ export default function StudentDashboard() {
     )
     .slice(0, 4)
 
+  const importantNotices = notices.filter(notice =>
+    notice.important && matchesNoticeTarget(notice.target, user)
+  )
+
   return (
-    <div className="flex gap-6">
+    <div className="dashboard-selectable flex gap-6" onClick={selectDashboardCard}>
 
       {/* MAIN CONTENT */}
       <div className="flex-1 min-w-0 space-y-6">
+
+        {importantNotices.length > 0 && (
+          <section aria-label="Important campus notices" className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-pink-50 px-3 py-2.5 shadow-sm sm:px-4">
+            <div className="flex shrink-0 items-center gap-2 rounded-lg bg-violet-100 px-2.5 py-2 text-violet-800">
+              <Megaphone size={16} />
+              <span className="text-xs font-bold">Important</span>
+            </div>
+            <div className="notice-marquee min-w-0 flex-1" aria-hidden="true">
+              <div className="notice-marquee-track">
+                {[0, 1].map(copy => (
+                  <div key={copy} className="notice-marquee-group">
+                    {importantNotices.map(notice => (
+                      <span key={`${copy}-${notice.id}`} className="inline-flex items-center gap-2 text-sm text-gray-700">
+                        <span className="font-semibold text-violet-800">{notice.title}</span>
+                        <span className="text-gray-500">{notice.content}</span>
+                        <span className="text-pink-500" aria-hidden="true">•</span>
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <span className="sr-only">{importantNotices.map(notice => `${notice.title}: ${notice.content}`).join('. ')}</span>
+          </section>
+        )}
 
         {/* GREETING */}
         <div>
@@ -275,81 +320,19 @@ export default function StudentDashboard() {
         </div>
 
 
-        {/* QUICK ACTIONS */}
-        <div className="card">
-
-          <h2 className="font-semibold text-gray-900 mb-4">
-            Quick Actions
-          </h2>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-
-            {[
-              {
-                icon: MessageSquareWarning,
-                label: 'Report a Problem',
-                color:
-                  'bg-red-50 text-red-600 hover:bg-red-100',
-                to: '/student/complaints'
-              },
-              {
-                icon: DoorOpen,
-                label: 'Apply Leave',
-                color:
-                  'bg-blue-50 text-blue-600 hover:bg-blue-100',
-                to: '/student/leave'
-              },
-              {
-                icon: FileText,
-                label: 'Request Document',
-                color:
-                  'bg-purple-50 text-purple-600 hover:bg-purple-100',
-                to: '/student/documents'
-              },
-              {
-                icon: DoorOpen,
-                label: 'Apply Gate Pass',
-                color:
-                  'bg-violet-50 text-violet-700 hover:bg-violet-100',
-                to: '/student/leave'
-              },
-              {
-                icon: ClipboardList,
-                label: 'View Attendance',
-                color:
-                  'bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100',
-                to: '/student/attendance'
-              },
-              {
-                icon: UtensilsCrossed,
-                label: 'View Mess Menu',
-                color:
-                  'bg-violet-50 text-violet-700 hover:bg-violet-100',
-                to: '/student/mess'
-              }
-            ].map(
-              ({
-                icon: Icon,
-                label,
-                color,
-                to
-              }) => (
-                <button
-                  key={label}
-                  onClick={() => navigate(to)}
-                  className={`${color} rounded-xl p-4 flex flex-col items-center gap-2 text-center transition-colors`}
-                >
-                  <Icon size={22} />
-
-                  <span className="text-xs font-medium">
-                    {label}
-                  </span>
-                </button>
-              )
-            )}
-
-          </div>
-        </div>
+        <LiquidGlassActions
+          columns="three"
+          subtitle="Jump back into your campus services"
+          actions={[
+            { icon: MessageSquareWarning, label: 'Report a problem', description: 'Get campus support', to: '/student/complaints' },
+            { icon: DoorOpen, label: 'Apply for leave', description: 'Plan time away', to: '/student/leave' },
+            { icon: FileText, label: 'Request document', description: 'Certificates and records', to: '/student/documents' },
+            { icon: DoorOpen, label: 'Apply gate pass', description: 'Submit a pass request', to: '/student/leave' },
+            { icon: ClipboardList, label: 'View attendance', description: 'Track class progress', to: '/student/attendance' },
+            { icon: UtensilsCrossed, label: 'View mess menu', description: 'See today’s meals', to: '/student/mess' },
+            { icon: Award, label: 'Exam results', description: 'View published marks', to: '/student/results' },
+          ]}
+        />
 
 
         {/* ATTENDANCE + TODAY'S CLASSES */}
@@ -734,6 +717,9 @@ export default function StudentDashboard() {
 
         </div>
 
+        <CampusJournalPreview items={campusJournalItems} />
+        <DashboardVideoShowcase videos={dashboardVideos} />
+
       </div>
 
 
@@ -873,7 +859,7 @@ export default function StudentDashboard() {
               onClick={() =>
                 navigate('/student/notifications')
               }
-              className="text-blue-600 text-xs hover:underline"
+                  className="text-blue-600 text-xs hover:underline"
             >
               All
             </button>

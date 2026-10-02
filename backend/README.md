@@ -26,7 +26,8 @@ Attendance uses the configured threshold, and recent `attendance_history` record
 2. Run `supabase/production_hardening.sql` to secure profile roles and live request workflows.
 3. Run `supabase/complaints_realtime.sql` to enable the secured live complaint workflow.
 4. Run `supabase/ai_engine.sql` to add history, AI analysis, clusters, forecasts, and notification priority.
-4. Create a backend environment file:
+5. Run `supabase/web_push.sql` to create the browser-subscription table.
+6. Create a backend environment file:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
@@ -34,7 +35,9 @@ Copy-Item backend/.env.example backend/.env
 
 Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ORIGINS`. Never expose the service-role key to React or commit `.env`.
 
-5. Install and run:
+For Android/browser system notifications, generate a VAPID key pair with `npx web-push generate-vapid-keys` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in the backend environment. Keep the private key only on the backend. Deploy the frontend over HTTPS; each student must sign in, open Notifications, select **Enable alerts**, and allow notifications in the browser. Notice pushes go only to subscribed students matching the notice target.
+
+7. Install and run:
 
 ```powershell
 py -3.11 -m venv .venv
@@ -64,6 +67,10 @@ All protected endpoints require `Authorization: Bearer <supabase-access-token>`.
 | POST | `/api/assistant/student` | student | Caller-only assistant data |
 | GET | `/api/notifications/me` | caller | Caller-only notifications |
 | POST | `/api/notifications/admin` | admin | Create an authorized notification |
+| GET | `/api/notifications/push-public-key` | public | VAPID public key for browser subscription |
+| POST | `/api/notifications/push-subscription` | caller | Save the caller's browser push subscription |
+| DELETE | `/api/notifications/push-subscription` | caller | Remove the caller's browser push subscription |
+| POST | `/api/notifications/push-notice` | admin | Send a targeted notice to subscribed browsers |
 
 ## Example requests
 

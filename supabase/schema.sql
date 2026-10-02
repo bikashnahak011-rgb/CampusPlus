@@ -56,6 +56,27 @@ CREATE TABLE IF NOT EXISTS attendance (
 );
 
 -- ============================================================
+-- EXAM RESULTS
+-- ============================================================
+CREATE TABLE IF NOT EXISTS exam_results (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  student_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  exam_name TEXT NOT NULL,
+  academic_year TEXT NOT NULL,
+  semester INTEGER NOT NULL CHECK (semester BETWEEN 1 AND 12),
+  subject TEXT NOT NULL,
+  subject_code TEXT,
+  marks_obtained NUMERIC(6,2) NOT NULL CHECK (marks_obtained >= 0),
+  max_marks NUMERIC(6,2) NOT NULL CHECK (max_marks > 0),
+  published BOOLEAN NOT NULL DEFAULT FALSE,
+  published_at TIMESTAMPTZ,
+  created_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(student_id, exam_name, academic_year, semester, subject),
+  CHECK (marks_obtained <= max_marks)
+);
+
+-- ============================================================
 -- TIMETABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS timetable (
@@ -206,6 +227,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   title TEXT NOT NULL,
   message TEXT NOT NULL,
   type TEXT DEFAULT 'info',
+  priority TEXT NOT NULL DEFAULT 'normal',
   read BOOLEAN DEFAULT FALSE,
   link TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -283,6 +305,7 @@ GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE exam_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subjects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE timetable ENABLE ROW LEVEL SECURITY;
 ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
@@ -305,6 +328,7 @@ GRANT UPDATE (name, phone, avatar_url, roll_no, department, branch, section, gen
   ON TABLE profiles TO authenticated;
 GRANT SELECT ON TABLE profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE subjects, timetable, attendance, fees TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE exam_results TO authenticated;
 GRANT SELECT, UPDATE ON TABLE notifications TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE notices TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE mess_menu TO authenticated;
@@ -321,6 +345,13 @@ CREATE POLICY "own_profile_update" ON profiles FOR UPDATE
 CREATE POLICY "admin_profiles_select" ON profiles FOR SELECT USING (
   public.is_admin()
 );
+
+DROP POLICY IF EXISTS "student_published_exam_results" ON exam_results;
+DROP POLICY IF EXISTS "admin_manage_exam_results" ON exam_results;
+CREATE POLICY "student_published_exam_results" ON exam_results FOR SELECT TO authenticated
+  USING (student_id = auth.uid() AND published = TRUE);
+CREATE POLICY "admin_manage_exam_results" ON exam_results FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "authenticated_read_subjects" ON subjects;
 DROP POLICY IF EXISTS "admins_manage_subjects" ON subjects;
@@ -373,6 +404,32 @@ CREATE POLICY "admin_leave_update" ON leave_requests FOR UPDATE TO authenticated
 
 -- Notifications: own only
 CREATE POLICY "own_notifications" ON notifications FOR ALL USING (user_id = auth.uid());
+
+CREATE OR REPLACE FUNCTION public.notify_exam_result_published()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.published AND (TG_OP = 'INSERT' OR OLD.published IS DISTINCT FROM NEW.published) THEN
+    INSERT INTO public.notifications (user_id, title, message, type, link)
+    VALUES (
+      NEW.student_id,
+      'Exam result published',
+      NEW.exam_name || ' results are published for ' || NEW.subject || '.',
+      'exam_result',
+      '/student/results'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS exam_results_notification_event ON exam_results;
+CREATE TRIGGER exam_results_notification_event
+  AFTER INSERT OR UPDATE OF published ON exam_results
+  FOR EACH ROW EXECUTE FUNCTION public.notify_exam_result_published();
 
 DROP POLICY IF EXISTS "authenticated_read_notices" ON notices;
 DROP POLICY IF EXISTS "admins_manage_notices" ON notices;

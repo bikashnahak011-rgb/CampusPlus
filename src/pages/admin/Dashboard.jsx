@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router-dom'
-import { Users, MessageSquareWarning, ClipboardList, Clock, TrendingUp, AlertCircle, ChevronRight } from 'lucide-react'
+import { Users, MessageSquareWarning, ClipboardList, Clock, TrendingUp, AlertCircle, ChevronRight, Megaphone, Award } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
+import DashboardVideoShowcase from '../../components/DashboardVideoShowcase'
+import CampusJournalPreview from '../../components/CampusJournalPreview'
+import LiquidGlassActions from '../../components/LiquidGlassActions'
 import { StatusBadge } from '../../components/ui/States'
 
 export default function AdminDashboard() {
-  const { complaints, requests, leaveRequests, students } = useApp()
+  const { complaints, requests, leaveRequests, students, dashboardVideos, campusJournalItems } = useApp()
   const navigate = useNavigate()
 
   const openComplaints = complaints.filter(c => !['Resolved', 'Closed'].includes(c.status))
@@ -18,6 +21,14 @@ export default function AdminDashboard() {
   const recentComplaints = complaints.slice(0, 5)
   const recentRequests = pendingReqs.slice(0, 5)
 
+  const selectDashboardCard = event => {
+    const card = event.target.closest('.card')
+    if (!card || !event.currentTarget.contains(card)) return
+
+    event.currentTarget.querySelector('[data-dashboard-selected="true"]')?.removeAttribute('data-dashboard-selected')
+    card.setAttribute('data-dashboard-selected', 'true')
+  }
+
   const stats = [
     { label: 'Total Students', value: students.length, icon: Users, color: 'text-emerald-700', bg: 'bg-emerald-50', change: 'Registered profiles' },
     { label: 'Pending Requests', value: pendingReqs.length, icon: ClipboardList, color: 'text-amber-700', bg: 'bg-amber-50', change: 'Awaiting review' },
@@ -26,7 +37,7 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="dashboard-selectable space-y-4 sm:space-y-6" onClick={selectDashboardCard}>
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-500 text-sm mt-1">Campus overview and management</p>
@@ -103,21 +114,20 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-900">Quick Actions</h2>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-          {[
-            { label: 'Manage Complaints', to: '/admin/complaints', color: 'bg-red-50 text-red-600 hover:bg-red-100' },
-            { label: 'Review Requests', to: '/admin/requests', color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
-            { label: 'Post Notice', to: '/admin/notices', color: 'bg-amber-50 text-amber-700 hover:bg-amber-100' },
-            { label: 'View Analytics', to: '/admin/analytics', color: 'bg-teal-50 text-teal-700 hover:bg-teal-100' },
-          ].map(({ label, to, color }) => (
-            <button key={label} onClick={() => navigate(to)} className={`${color} rounded-xl p-4 text-sm font-medium transition-colors text-center`}>{label}</button>
-          ))}
-        </div>
-      </div>
+      <CampusJournalPreview items={campusJournalItems} admin />
+
+      <LiquidGlassActions
+        subtitle="Manage the campus from one place"
+        actions={[
+          { icon: Users, label: 'Message a student', description: 'Send a private update', to: '/admin/students' },
+          { icon: ClipboardList, label: 'Review requests', description: 'Documents and leave', to: '/admin/requests' },
+          { icon: Megaphone, label: 'Publish notice', description: 'Reach a student group', to: '/admin/notices' },
+          { icon: TrendingUp, label: 'View analytics', description: 'Campus activity', to: '/admin/analytics' },
+          { icon: Award, label: 'Publish exam results', description: 'Share marks privately', to: '/admin/results' },
+        ]}
+      />
+
+      <DashboardVideoShowcase videos={dashboardVideos} />
     </div>
   )
 }

@@ -1,0 +1,25 @@
+import unittest
+
+from backend.routes.push_notifications import _matches_target
+
+
+class PushTargetTests(unittest.TestCase):
+    def test_all_students_matches_any_student_profile(self):
+        self.assertTrue(_matches_target("All Students", {"year": 1}))
+
+    def test_department_and_year_targets_match_profile_fields(self):
+        profile = {"department": "Computer Science", "branch": "CSE", "year": 2}
+        self.assertTrue(_matches_target("Computer Science", profile))
+        self.assertTrue(_matches_target("Year 2", profile))
+        self.assertFalse(_matches_target("Year 3", profile))
+
+    def test_hostel_and_day_scholar_targets_are_exclusive(self):
+        hostel_profile = {"hostel_block": "A"}
+        day_profile = {"hostel_block": None}
+        self.assertTrue(_matches_target("Hostel", hostel_profile))
+        self.assertFalse(_matches_target("Day Scholars", hostel_profile))
+        self.assertTrue(_matches_target("Day Scholars", day_profile))
+
+
+if __name__ == "__main__":
+    unittest.main()

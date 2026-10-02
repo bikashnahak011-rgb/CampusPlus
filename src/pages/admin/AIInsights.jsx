@@ -4,6 +4,7 @@ import { useApp } from '../../contexts/AppContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { requestBackend } from '../../lib/backendApi'
 import { DEMO_AI_INSIGHTS } from '../../data/demoData'
+import { buildDynamicInsights, getInsightSummary } from '../../lib/insightFallback'
 
 const severityConfig = {
   critical: { bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-700', icon: 'text-red-600' },
@@ -36,29 +37,7 @@ export default function AdminAIInsights() {
     return () => { active = false }
   }, [user, retry])
 
-  // Dynamically detect recurring issues from live complaint data
-  const catCount = {}
-  const locCount = {}
-  complaints.filter(c => !['Resolved','Closed'].includes(c.status)).forEach(c => {
-    catCount[c.category] = (catCount[c.category]||0)+1
-    const block = c.location?.match(/Block ([A-Z])/)?.[1]
-    if (block) locCount[`Block ${block}`] = (locCount[`Block ${block}`]||0)+1
-  })
-
-  const dynamicInsights = Object.entries(catCount)
-    .filter(([,count]) => count >= 2)
-    .map(([cat, count]) => ({
-      id: `dyn-${cat}`,
-      severity: count >= 5 ? 'critical' : count >= 3 ? 'high' : 'medium',
-      title: `Recurring ${cat} Issues`,
-      description: `${count} active ${cat.toLowerCase()} complaints detected.`,
-      location: Object.entries(locCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'Campus',
-      count,
-      period: 'Current',
-      recommendation: `Investigate ${cat.toLowerCase()} infrastructure. Schedule preventive maintenance.`,
-      category: cat,
-      trend: count >= 3 ? 'increasing' : 'stable',
-    }))
+  const dynamicInsights = buildDynamicInsights(complaints)
 
   const hasLiveResult = result?.userId === user?.id
   const actionCenter = hasLiveResult ? result.data : null
@@ -108,26 +87,51 @@ export default function AdminAIInsights() {
 
   const allInsights = user?.isDemo
     ? [...dynamicInsights, ...DEMO_AI_INSIGHTS]
-    : liveInsights
-  const analysisSummary = user?.isDemo
-    ? `Demo data: ${complaints.length} complaints checked. ${dynamicInsights.length} local pattern${dynamicInsights.length === 1 ? '' : 's'} detected.`
-    : backendError
-      ? `Live analysis is unavailable: ${backendError}`
-      : loading
-        ? 'Loading live campus data from the AI service…'
-        : `Live analysis: ${actionCenter.unresolved_complaints} unresolved complaints, ${actionCenter.high_priority_complaints} high priority, and ${actionCenter.attendance_below_required} students below attendance requirement.`
+    : backendError || !actionCenter
+      ? dynamicInsights
+      : liveInsights
+  const analysisSummary = getInsightSummary({
+    user,
+    complaints,
+    actionCenter,
+    backendError,
+    loading,
+    dynamicInsights,
+  })
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><Brain size={22} className="text-purple-600" /></div>
-        <div className="flex-1"><h1 className="text-2xl font-bold text-gray-900">AI Insights</h1><p className="text-gray-500 text-sm">Recurring issue detection and recommendations</p></div>
-        {user && !user.isDemo && <button onClick={() => { setResult(null); setRetry(value => value + 1) }} disabled={loading} aria-label="Refresh AI insights" className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-50"><RefreshCw size={18} /></button>}
+    <div className="space-y-6 p-2 md:p-3">
+      <div className="rounded-[28px] border border-[#e9ddf8] bg-[#f2edf9] p-5 md:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 bg-[#f3d8ff] rounded-2xl flex items-center justify-center shadow-inner shadow-white/40"><Brain size={26} className="text-[#7a3db8]" /></div>
+            <div className="min-w-0">
+              <h1 className="text-3xl md:text-4xl font-bold text-[#2f1f3d] tracking-tight">AI Insights</h1>
+              <p className="text-base text-[#66597a]">Recurring issue detection and recommendations</p>
+            </div>
+          </div>
+
+          {user && !user.isDemo && (
+            <button
+              onClick={() => { setResult(null); setRetry(value => value + 1) }}
+              disabled={loading}
+              aria-label="Refresh AI insights"
+              className="p-2.5 rounded-xl border border-[#d9cbe8] bg-white/60 text-[#5b4a6f] hover:bg-white disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw size={18} />
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-4">
-        <div className="flex items-center gap-2 mb-1"><Brain size={18} className="text-purple-600" /><p className="font-semibold text-purple-900">{user?.isDemo ? 'Demo Analysis' : backendError ? 'AI Service Unavailable' : loading ? 'Loading AI Analysis' : 'Live AI Analysis'}</p></div>
-        <p className="text-sm text-purple-700">{analysisSummary}</p>
+      <div className="rounded-[30px] border border-[#e7d8f5] bg-[#f4f0f8] p-5 md:p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <Brain size={18} className="text-[#7a3db8]" />
+          <p className="font-semibold text-[#4b2d63] text-xl md:text-2xl">
+            {user?.isDemo ? 'Demo Analysis' : backendError ? 'AI Service Unavailable' : loading ? 'Loading AI Analysis' : 'Live AI Analysis'}
+          </p>
+        </div>
+        <p className="text-base text-[#5a4b6b] leading-relaxed">{analysisSummary}</p>
       </div>
 
       <div className="space-y-4">

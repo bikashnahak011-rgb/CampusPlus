@@ -1,12 +1,18 @@
 import { useState } from 'react'
-import { Search, Users } from 'lucide-react'
+import { MessageSquareText, Search, Send, Users } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import { StatusBadge } from '../../components/ui/States'
+import { useToast } from '../../components/ui/Toast'
+import Modal from '../../components/ui/Modal'
 
 export default function AdminStudents() {
-  const { students } = useApp()
+  const { students, sendStudentMessage } = useApp()
+  const toast = useToast()
   const [search, setSearch] = useState('')
   const [deptFilter, setDeptFilter] = useState('All')
+  const [selectedStudent, setSelectedStudent] = useState(null)
+  const [draft, setDraft] = useState({ title: '', message: '' })
+  const [sending, setSending] = useState(false)
 
   const depts = ['All', ...new Set(students.map(s => s.dept))]
   const filtered = students.filter(s => {
@@ -14,6 +20,25 @@ export default function AdminStudents() {
     const md = deptFilter === 'All' || s.dept === deptFilter
     return ms && md
   })
+
+  const openMessage = student => {
+    setSelectedStudent(student)
+    setDraft({ title: '', message: '' })
+  }
+
+  const handleSend = async event => {
+    event.preventDefault()
+    setSending(true)
+    try {
+      await sendStudentMessage(selectedStudent, draft)
+      setSelectedStudent(null)
+      toast('Message sent to student.', 'success')
+    } catch (error) {
+      toast(error.message, 'error')
+    } finally {
+      setSending(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -40,7 +65,7 @@ export default function AdminStudents() {
           <>
             <div className="hidden sm:block">
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-gray-100">{['Name', 'Roll No', 'Department', 'Year', 'Hostel', 'Status'].map(h => <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
+                <thead><tr className="border-b border-gray-100">{['Name', 'Roll No', 'Department', 'Year', 'Hostel', 'Status', 'Action'].map(h => <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
                 <tbody>
                   {filtered.map(s => (
                     <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50">
@@ -55,6 +80,7 @@ export default function AdminStudents() {
                       <td className="py-3 px-4 text-gray-500">Year {s.year}</td>
                       <td className="py-3 px-4 text-gray-500">{s.hostel}</td>
                       <td className="py-3 px-4"><StatusBadge status={s.status} /></td>
+                      <td className="py-3 px-4"><button type="button" onClick={() => openMessage(s)} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"><MessageSquareText size={14} /> Message</button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -79,12 +105,20 @@ export default function AdminStudents() {
                     <div><p className="text-gray-400">Year</p><p className="font-medium text-gray-700">Year {s.year}</p></div>
                     <div><p className="text-gray-400">Hostel</p><p className="font-medium text-gray-700">{s.hostel}</p></div>
                   </div>
+                  <button type="button" onClick={() => openMessage(s)} className="mt-3 inline-flex items-center gap-2 border-t border-gray-200/70 pt-3 text-sm font-semibold text-blue-700"><MessageSquareText size={15} /> Message student</button>
                 </article>
               ))}
             </div>
           </>
         )}
       </div>
+      <Modal isOpen={!!selectedStudent} onClose={() => setSelectedStudent(null)} title={`Message ${selectedStudent?.name || 'student'}`}>
+        <form onSubmit={handleSend} className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700">Title<input required maxLength={160} value={draft.title} onChange={event => setDraft(previous => ({ ...previous, title: event.target.value }))} className="input mt-1" placeholder="Message from Campus Admin" /></label>
+          <label className="block text-sm font-medium text-gray-700">Message<textarea required maxLength={1000} rows={4} value={draft.message} onChange={event => setDraft(previous => ({ ...previous, message: event.target.value }))} className="input mt-1 resize-y" placeholder="Write a message for this student..." /></label>
+          <div className="flex justify-end gap-3"><button type="button" onClick={() => setSelectedStudent(null)} className="btn-secondary">Cancel</button><button type="submit" disabled={sending} className="btn-primary disabled:opacity-60"><Send size={15} />{sending ? 'Sending...' : 'Send message'}</button></div>
+        </form>
+      </Modal>
     </div>
   )
 }

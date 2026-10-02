@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Grid3X3, ClipboardList, Calendar, GraduationCap, Building2, UtensilsCrossed, BusFront, MapPinned, MessageSquareWarning, DoorOpen, FileText, CreditCard, Bell, User, Settings, LogOut, X, Zap } from 'lucide-react'
+import { LayoutDashboard, Grid3X3, ClipboardList, Calendar, GraduationCap, Building2, UtensilsCrossed, BusFront, MapPinned, MessageSquareWarning, DoorOpen, FileText, CreditCard, Bell, User, Settings, LogOut, X, Zap, Award, BookOpen } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import AppLogo from '../AppLogo'
@@ -9,7 +9,9 @@ const WHATSAPP_LINK = 'https://chat.whatsapp.com/Fy1KjDyGVLJEpoVROjTdcv?s=sh&p=a
 const NAV = [
   { to: '/student/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/student/services', icon: Grid3X3, label: 'My Services' },
+  { to: '/student/campus-journal', icon: BookOpen, label: 'Campus Journal' },
   { to: '/student/attendance', icon: ClipboardList, label: 'Attendance' },
+  { to: '/student/results', icon: Award, label: 'Exam Results' },
   { to: '/student/timetable', icon: Calendar, label: 'Timetable' },
   { to: '/student/faculty', icon: GraduationCap, label: 'Faculty' },
   { to: '/student/hostel', icon: Building2, label: 'Hostel' },

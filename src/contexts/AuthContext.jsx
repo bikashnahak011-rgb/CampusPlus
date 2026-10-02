@@ -11,11 +11,15 @@ const AuthContext = createContext(null)
 
 const DEMO_USERS = {
   'student@demo.com': {
-    id: 'demo-student-001',
+    id: 'stu-001',
     email: 'student@demo.com',
     role: 'student',
     name: 'Demo Student',
     roll_no: 'DEMO001',
+    department: 'Computer Science',
+    branch: 'B.Tech CSE',
+    year: 3,
+    hostel_block: 'A',
     profileComplete: true,
     isDemo: true,
   },

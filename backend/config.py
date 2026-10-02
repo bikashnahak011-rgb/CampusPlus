@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     ai_provider: str = "rules"
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.0-flash"
+
+    vapid_public_key: str | None = None
+    vapid_private_key: str | None = None
+    vapid_subject: str = "mailto:admin@nexcampus.app"
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,

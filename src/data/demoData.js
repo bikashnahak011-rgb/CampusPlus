@@ -90,6 +90,14 @@ export const DEMO_STUDENTS_ADMIN = [
   { id: 'stu-008', name: 'Ananya Das', roll: 'EC2022019', dept: 'Electronics', year: 2, hostel: 'B-301', status: 'Active' },
 ]
 
+export const DEMO_EXAM_RESULTS = [
+  { id: 'result-001', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Programming in Python', subject_code: 'CS301', marks_obtained: 86, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'result-002', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Database Management', subject_code: 'CS302', marks_obtained: 78, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'result-003', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Computer Networks', subject_code: 'CS303', marks_obtained: 91, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'result-004', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Mathematics III', subject_code: 'MA301', marks_obtained: 73, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'result-005', student_id: 'stu-002', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Programming in Python', subject_code: 'CS301', marks_obtained: 88, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+]
+
 export const INITIAL_COMPLAINTS = [
   { id: 'CMP-2028', student_id: 'stu-001', student_name: 'Arjun Sharma', category: 'Electricity', location: 'Hostel Block A, Room 203', description: 'Power socket near study table is not working.', priority: 'Medium', status: 'Resolved', department: 'Electrical Maintenance', assigned_to: 'Electrical Team', created_at: new Date(Date.now()-5*86400000).toISOString(), updated_at: new Date(Date.now()-3*86400000).toISOString(), ai_category: 'Electricity', updates: [{ status: 'Submitted', note: 'Complaint submitted', time: new Date(Date.now()-5*86400000).toISOString() }, { status: 'Assigned', note: 'Assigned to Electrical Team', time: new Date(Date.now()-4*86400000).toISOString() }, { status: 'Resolved', note: 'Socket replaced and tested', time: new Date(Date.now()-3*86400000).toISOString() }] },
   { id: 'CMP-2019', student_id: 'stu-002', student_name: 'Priya Nair', category: 'Cleaning', location: 'Hostel Block B, Common Area', description: 'Common bathroom not cleaned for 2 days.', priority: 'Medium', status: 'Submitted', department: 'Housekeeping', assigned_to: null, created_at: new Date(Date.now()-1*86400000).toISOString(), updated_at: new Date(Date.now()-1*86400000).toISOString(), ai_category: 'Cleaning', updates: [{ status: 'Submitted', note: 'Complaint submitted', time: new Date(Date.now()-1*86400000).toISOString() }] },
@@ -123,6 +131,35 @@ export const INITIAL_NOTICES = [
   { id: 'nc5', title: 'Mess Menu Update - October', content: 'Updated mess menu for October has been published. Special Sunday meals included. Feedback welcome.', target: 'Hostel', created_by: 'Mess Committee', created_at: new Date(Date.now()-5*86400000).toISOString(), important: false },
 ]
 
+
+export const INITIAL_CAMPUS_JOURNAL = [
+  {
+    id: 'journal-demo-featured',
+    student_id: 'stu-001',
+    author_name: 'Demo Student',
+    title: 'A Smarter Campus Starts with Small Ideas',
+    summary: 'A student perspective on practical ways to make campus life more connected and sustainable.',
+    content: 'Small changes can make campus life easier for everyone. Shared study resources, clearer event updates, and everyday sustainability habits are a good place to begin.',
+    category: 'Student Publications',
+    subcategory: 'Articles',
+    status: 'published',
+    is_featured: true,
+    created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+  {
+    id: 'journal-demo-pending',
+    student_id: 'stu-001',
+    author_name: 'Demo Student',
+    title: 'Campus Through a Poet’s Eyes',
+    summary: 'A short poem about the friendships and discoveries that make college memorable.',
+    content: 'Morning light finds the courtyard,\nnew ideas gather in every room.\nBetween the classes and conversations,\nwe find the place where futures bloom.',
+    category: 'Student Publications',
+    subcategory: 'Poems',
+    status: 'pending',
+    is_featured: false,
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+]
 export const DEMO_AI_INSIGHTS = [
   { id: 'ai1', severity: 'critical', title: 'Recurring Water Issues - Block A', description: '18 water-related complaints from Hostel Block A this week.', location: 'Hostel Block A', count: 18, period: 'This Week', recommendation: 'Conduct full inspection of Block A plumbing infrastructure. Consider replacing aging pipes on floors 1-3.', category: 'Water', trend: 'increasing' },
   { id: 'ai2', severity: 'high', title: 'Electricity Complaints Spike', description: '9 electricity complaints across campus in last 3 days.', location: 'Multiple Blocks', count: 9, period: 'Last 3 Days', recommendation: 'Schedule preventive electrical maintenance. Check main distribution boards.', category: 'Electricity', trend: 'stable' },

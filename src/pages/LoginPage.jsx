@@ -8,7 +8,11 @@ import {
   ArrowLeft,
   Loader2,
   Shield,
-  GraduationCap
+  GraduationCap,
+  CalendarDays,
+  Award,
+  MapPinned,
+  ArrowUpRight
 } from 'lucide-react'
 
 import { useAuth } from '../contexts/AuthContext'
@@ -422,29 +426,61 @@ export default function LoginPage() {
 
   return (
 
-    <div className="login-page min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative overflow-hidden">
+    <div className="login-page relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6 lg:px-10">
 
       <Ambient3DBackground variant="login" />
 
-      {/* Background decoration */}
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,480px)] lg:gap-10 xl:gap-16">
+        <section className="login-showcase hidden lg:flex" aria-labelledby="login-showcase-title">
+          <div className="flex items-center gap-3">
+            <AppLogo size={40} />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">NexCampus platform</p>
+              <p className="mt-0.5 text-xs text-violet-950/55">One campus, connected</p>
+            </div>
+          </div>
+          <h2 id="login-showcase-title" className="mt-8 max-w-2xl text-5xl font-black leading-[1.04] text-[#251444] xl:text-6xl">
+            Campus life,<br /><span className="text-violet-700">in better view.</span>
+          </h2>
+          <p className="mt-5 max-w-xl text-base leading-7 text-[#5e5277]">
+            Bring classes, attendance, results, and campus services together in one clear place.
+          </p>
 
-      <div className="hidden sm:block absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl animate-float pointer-events-none" />
+          <div className="login-campus-stage" aria-hidden="true">
+            <div className="login-campus-plane" />
+            <div className="login-campus-mark"><AppLogo size={66} /></div>
 
-      <div
-        className="hidden sm:block absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl animate-float pointer-events-none"
-        style={{
-          animationDelay: '1.5s'
-        }}
-      />
+            <div className="login-glass-panel login-glass-panel--schedule">
+              <div className="flex items-start justify-between gap-3">
+                <div><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700">Your campus, at a glance</p><p className="mt-1 text-sm font-bold text-[#2d2148]">Everything in sync</p></div>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
+              </div>
+              <div className="login-glass-row"><span className="login-glass-icon"><CalendarDays size={15} /></span><span><b>Class schedule</b><small>Keep your day on track</small></span><ArrowUpRight size={15} className="ml-auto text-violet-500" /></div>
+              <div className="login-glass-row"><span className="login-glass-icon"><Award size={15} /></span><span><b>Exam results</b><small>Progress, clearly shown</small></span><ArrowUpRight size={15} className="ml-auto text-violet-500" /></div>
+            </div>
 
+            <div className="login-glass-panel login-glass-panel--services">
+              <div className="flex items-center justify-between"><p className="text-xs font-bold text-[#2d2148]">Campus services</p><MapPinned size={16} className="text-violet-600" /></div>
+              <div className="mt-3 flex gap-2"><span className="login-service-chip">Attendance</span><span className="login-service-chip">Notices</span><span className="login-service-chip">Rooms</span></div>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-violet-100"><div className="h-full w-[72%] rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500" /></div>
+              <p className="mt-2 text-[10px] text-violet-950/50">One portal for everyday campus life</p>
+            </div>
+          </div>
 
-      <div className="w-full sm:w-[90%] md:w-[60%] lg:w-[45%] xl:w-[38%] max-w-lg relative z-10">
+          <div className="mt-1 flex flex-wrap gap-2 text-xs font-medium text-violet-950/65">
+            <span className="rounded-full border border-violet-200/80 bg-white/55 px-3 py-1.5">Student services</span>
+            <span className="rounded-full border border-violet-200/80 bg-white/55 px-3 py-1.5">Academic updates</span>
+            <span className="rounded-full border border-violet-200/80 bg-white/55 px-3 py-1.5">Campus notices</span>
+          </div>
+        </section>
+
+      <div className="login-form-column mx-auto w-full max-w-lg lg:max-w-none">
 
         {/* Back button */}
 
         <button
           onClick={() => navigate('/landing')}
-          className="flex items-center gap-2 text-black-100 hover:text-white mb-4 sm:mb-6 transition-all text-sm hover:-translate-x-1 duration-200"
+          className="mb-4 flex items-center gap-2 text-sm text-gray-600 transition-all duration-200 hover:-translate-x-1 hover:text-violet-700 sm:mb-6"
         >
 
           <ArrowLeft size={16} />
@@ -830,6 +866,8 @@ export default function LoginPage() {
         </div>
 
       </div>
+
+    </div>
 
     </div>
   )

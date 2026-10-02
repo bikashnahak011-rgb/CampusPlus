@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Shield, Bell, Database, Zap, Moon, Eye } from 'lucide-react'
+import { Shield, Bell, Database, Zap, Moon, Eye, Plus, Trash2 } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
+import DashboardVideoShowcase from '../../components/DashboardVideoShowcase'
 import { supabase } from '../../lib/supabase'
 
 const configured = Boolean(supabase)
@@ -26,9 +27,12 @@ const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) =
 )
 
 export default function AdminSettings() {
-  const { liteMode, setLiteMode } = useApp()
+  const { liteMode, setLiteMode, dashboardVideos, addDashboardVideo, removeDashboardVideo } = useApp()
   const [largeText, setLargeText] = useState(() => localStorage.getItem('cp_large_text') === 'true')
   const [highContrast, setHighContrast] = useState(() => localStorage.getItem('cp_contrast') === 'true')
+  const [videoTitle, setVideoTitle] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
+  const [videoMessage, setVideoMessage] = useState('')
 
   const handleLargeText = (v) => {
     setLargeText(v)
@@ -42,11 +46,77 @@ export default function AdminSettings() {
     document.body.classList.toggle('high-contrast', v)
   }
 
+  const handleAddVideo = (event) => {
+    event.preventDefault()
+    try {
+      addDashboardVideo({ title: videoTitle.trim() || 'Campus Event', url: videoUrl })
+      setVideoTitle('')
+      setVideoUrl('')
+      setVideoMessage('Video saved successfully.')
+    } catch (error) {
+      setVideoMessage(error.message)
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
         <p className="text-gray-500 text-sm mt-1">Admin configuration and preferences</p>
+      </div>
+
+      <div className="card space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold text-gray-900">Dashboard videos</h2>
+            <p className="text-xs text-gray-500 mt-1">Keep only two active campus videos on both dashboards.</p>
+          </div>
+        </div>
+
+        <DashboardVideoShowcase videos={dashboardVideos} showAdminControls onDelete={removeDashboardVideo} />
+
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-3">
+          <h3 className="font-medium text-gray-900">Add YouTube link</h3>
+          <form onSubmit={handleAddVideo} className="space-y-3">
+            <input
+              value={videoTitle}
+              onChange={(event) => setVideoTitle(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+              placeholder="Event title"
+            />
+            <input
+              value={videoUrl}
+              onChange={(event) => setVideoUrl(event.target.value)}
+              type="url"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            <button type="submit" className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+              <Plus size={16} /> Add video
+            </button>
+          </form>
+          {videoMessage && <p className="text-xs text-emerald-700">{videoMessage}</p>}
+        </div>
+
+        <div className="space-y-2">
+          {dashboardVideos.length === 0 ? (
+            <p className="text-sm text-gray-500">No videos active yet.</p>
+          ) : dashboardVideos.map((video) => (
+            <div key={video.id} className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{video.title}</p>
+                <p className="text-xs text-gray-500 truncate max-w-xs">{video.url}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeDashboardVideo(video.id)}
+                className="flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+              >
+                <Trash2 size={12} /> Delete
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="card space-y-3">

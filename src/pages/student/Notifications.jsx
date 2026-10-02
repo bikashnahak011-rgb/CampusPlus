@@ -1,20 +1,55 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, CheckCheck, CheckCircle, AlertCircle, Info, Megaphone } from 'lucide-react'
+import { Bell, CheckCheck, CheckCircle, AlertCircle, Info, Megaphone, BellRing, FileCheck2, MessageSquareText, Award } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import { EmptyState } from '../../components/ui/States'
+import { requestBackend } from '../../lib/backendApi'
+import { enablePushNotifications } from '../../lib/pushNotifications'
+import { matchesNoticeTarget } from '../../lib/noticeAudience'
 
-const typeIcon = { success: CheckCircle, warning: AlertCircle, info: Info, error: AlertCircle }
-const typeColor = { success: 'text-green-500', warning: 'text-yellow-500', info: 'text-blue-500', error: 'text-red-500' }
+const typeIcon = { success: CheckCircle, warning: AlertCircle, info: Info, error: AlertCircle, message: MessageSquareText, notice: Megaphone, certificate: FileCheck2, exam_result: Award }
+const typeColor = { success: 'text-green-500', warning: 'text-yellow-500', info: 'text-blue-500', error: 'text-red-500', message: 'text-blue-600', notice: 'text-orange-600', certificate: 'text-emerald-600', exam_result: 'text-amber-600' }
+const typeLabel = { message: 'Message', notice: 'Notice', certificate: 'Certificate', exam_result: 'Exam result' }
 
 export default function NotificationsPage() {
   const { user } = useAuth()
   const { notifications, notices, markRead, markAllRead } = useApp()
   const navigate = useNavigate()
   const [tab, setTab] = useState('Notifications')
+  const [pushState, setPushState] = useState('idle')
+  const [pushError, setPushError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !('serviceWorker' in navigator)) return undefined
+
+    navigator.serviceWorker.ready
+      .then(registration => registration.pushManager.getSubscription())
+      .then(async subscription => {
+        if (!subscription) return
+        await requestBackend('notifications/push-subscription', { method: 'POST', body: subscription.toJSON() })
+        if (active) setPushState('enabled')
+      })
+      .catch(error => console.warn('Could not refresh this device push subscription:', error.message))
+
+    return () => { active = false }
+  }, [])
+
+  const enablePush = async () => {
+    setPushState('loading')
+    setPushError('')
+    try {
+      await enablePushNotifications()
+      setPushState('enabled')
+    } catch (error) {
+      setPushError(error.message || 'Could not enable push notifications.')
+      setPushState('error')
+    }
+  }
 
   const myNotifs = notifications.filter(n => n.user_id === user?.id)
+  const myNotices = notices.filter(notice => matchesNoticeTarget(notice.target, user))
   const unread = myNotifs.filter(n => !n.read).length
 
   return (
@@ -37,6 +72,22 @@ export default function NotificationsPage() {
         ))}
       </div>
 
+      {tab === 'Notifications' && pushState !== 'enabled' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Get campus alerts on this device</p>
+            <p className="mt-1 text-xs text-gray-600">Allow notifications to receive notices when NexCampus is closed.</p>
+            {pushError && <p role="alert" className="mt-2 text-xs text-red-700">{pushError}</p>}
+          </div>
+          <button onClick={enablePush} disabled={pushState === 'loading'} className="btn-primary text-sm disabled:opacity-60">
+            <BellRing size={16} /> {pushState === 'loading' ? 'Enabling…' : 'Enable alerts'}
+          </button>
+        </div>
+      )}
+      {tab === 'Notifications' && pushState === 'enabled' && (
+        <p className="text-sm text-green-700">Alerts are enabled on this device.</p>
+      )}
+
       {tab === 'Notifications' && (
         <div className="space-y-2">
           {myNotifs.length === 0
@@ -51,7 +102,10 @@ export default function NotificationsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`text-sm font-medium ${!n.read ? 'text-gray-900' : 'text-gray-700'}`}>{n.title}</p>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className={`truncate text-sm font-medium ${!n.read ? 'text-gray-900' : 'text-gray-700'}`}>{n.title}</p>
+                          {typeLabel[n.type] && <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">{typeLabel[n.type]}</span>}
+                        </div>
                         {!n.read && <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />}
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">{n.message}</p>
@@ -65,9 +119,9 @@ export default function NotificationsPage() {
 
       {tab === 'Notices' && (
         <div className="space-y-3">
-          {notices.length === 0
+          {myNotices.length === 0
             ? <div className="card"><EmptyState message="No notices." icon={Megaphone} /></div>
-            : notices.map(n => (
+            : myNotices.map(n => (
                 <div key={n.id} className={`card ${n.important ? 'border-l-4 border-l-orange-400' : ''}`}>
                   <div className="flex items-start gap-3">
                     <div>

@@ -17,8 +17,18 @@ import {
   INITIAL_CAMPUS_ROOMS,
   INITIAL_FACULTY,
   DEMO_STUDENTS_ADMIN,
+  DEMO_EXAM_RESULTS,
+  INITIAL_CAMPUS_JOURNAL,
 } from '../data/demoData.js'
 
+import {
+  DASHBOARD_VIDEOS_STORAGE_KEY,
+  getStoredDashboardVideos,
+  normalizeDashboardVideo,
+  sanitizeDashboardVideos,
+} from '../lib/dashboardVideos'
+import { requestBackend } from '../lib/backendApi'
+import { matchesNoticeTarget } from '../lib/noticeAudience'
 import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -28,6 +38,19 @@ const AI_API_URL =
   import.meta.env.VITE_AI_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')
 
 let cmpNum = 2032
+const DEMO_NOTIFICATIONS_KEY = 'campusplus_demo_notifications'
+const DEMO_NOTICES_KEY = 'campusplus_demo_notices'
+const DEMO_EXAM_RESULTS_KEY = 'campusplus_demo_exam_results'
+const DEMO_CAMPUS_JOURNAL_KEY = 'campusplus_demo_campus_journal'
+
+function getStoredDemoValue(key, fallback) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) || 'null')
+    return Array.isArray(saved) ? saved : fallback
+  } catch {
+    return fallback
+  }
+}
 
 function normalizeBusRoute(route) {
   return {
@@ -77,14 +100,15 @@ export function AppProvider({ children }) {
   const [requests, setRequests] = useState([])
   const [leaveRequests, setLeaveRequests] = useState([])
 
-  const [notifications, setNotifications] = useState(
-    INITIAL_NOTIFICATIONS
-  )
+  const [notifications, setNotifications] = useState(() => getStoredDemoValue(DEMO_NOTIFICATIONS_KEY, INITIAL_NOTIFICATIONS))
 
-  const [notices, setNotices] = useState([])
+  const [notices, setNotices] = useState(() => getStoredDemoValue(DEMO_NOTICES_KEY, INITIAL_NOTICES))
+  const [campusJournalItems, setCampusJournalItems] = useState([])
+  const [campusJournalError, setCampusJournalError] = useState('')
 
   const [messFeedback, setMessFeedback] = useState([])
   const [messMenu, setMessMenu] = useState({})
+  const [dashboardVideos, setDashboardVideos] = useState(getStoredDashboardVideos)
 
   // Bus and classroom data
   const [busRoutes, setBusRoutes] = useState([])
@@ -92,12 +116,15 @@ export function AppProvider({ children }) {
   const [campusRooms, setCampusRooms] = useState([])
   const [faculty, setFaculty] = useState([])
   const [students, setStudents] = useState([])
+  const [examResults, setExamResults] = useState(() => getStoredDemoValue(DEMO_EXAM_RESULTS_KEY, DEMO_EXAM_RESULTS))
 
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (!user) {
       setNotices([])
+      setCampusJournalItems([])
+      setCampusJournalError('')
       setFaculty([])
       setStudents([])
       setBusRoutes([])
@@ -107,7 +134,9 @@ export function AppProvider({ children }) {
       return undefined
     }
     if (user.isDemo) {
-      setNotices(INITIAL_NOTICES)
+      setNotices(getStoredDemoValue(DEMO_NOTICES_KEY, INITIAL_NOTICES))
+      setCampusJournalItems(getStoredDemoValue(DEMO_CAMPUS_JOURNAL_KEY, INITIAL_CAMPUS_JOURNAL))
+      setCampusJournalError('')
       setFaculty(INITIAL_FACULTY)
       setStudents(DEMO_STUDENTS_ADMIN)
       setBusRoutes(INITIAL_BUS_ROUTES.map(normalizeBusRoute))
@@ -117,13 +146,18 @@ export function AppProvider({ children }) {
       return undefined
     }
     setNotices([])
+    setCampusJournalItems([])
+    setCampusJournalError('')
     setFaculty([])
     setStudents([])
     setBusRoutes([])
     setCampusRooms([])
     setMessMenu({})
     setMessFeedback([])
-    if (!supabase) return undefined
+    if (!supabase) {
+      setCampusJournalError('Campus Journal requires a configured Supabase connection.')
+      return undefined
+    }
 
     let active = true
     const loadDirectoryData = async () => {
@@ -139,6 +173,7 @@ export function AppProvider({ children }) {
         user.role === 'admin'
           ? supabase.from('mess_feedback').select('*').order('created_at', { ascending: false })
           : Promise.resolve({ data: [], error: null }),
+        supabase.from('campus_journal').select('*').order('created_at', { ascending: false }),
       ])
       if (!active) return
       const [noticesResult, facultyResult, menuResult] = results
@@ -164,6 +199,14 @@ export function AppProvider({ children }) {
         if (results[6].error) console.error('Failed to load mess feedback:', results[6].error.message)
         else setMessFeedback(results[6].data || [])
       }
+      if (results[7].error) {
+        console.error('Failed to load Campus Journal:', results[7].error.message)
+        setCampusJournalItems([])
+        setCampusJournalError('Campus Journal database setup is incomplete. Apply supabase/campus_journal.sql.')
+      } else {
+        setCampusJournalItems(results[7].data || [])
+        setCampusJournalError('')
+      }
     }
 
     loadDirectoryData()
@@ -176,6 +219,7 @@ export function AppProvider({ children }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mess_feedback' }, loadDirectoryData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bus_routes' }, loadDirectoryData)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'campus_rooms' }, loadDirectoryData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'campus_journal' }, loadDirectoryData)
       .subscribe()
     const refreshInterval = window.setInterval(() => {
       if (document.visibilityState === 'visible') loadDirectoryData()
@@ -237,6 +281,46 @@ export function AppProvider({ children }) {
     const refreshInterval = window.setInterval(() => {
       if (document.visibilityState === 'visible') loadRequests()
     }, 5000)
+
+    return () => {
+      active = false
+      window.clearInterval(refreshInterval)
+      supabase.removeChannel(channel)
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!user) {
+      setExamResults([])
+      return undefined
+    }
+
+    if (user.isDemo) {
+      setExamResults(getStoredDemoValue(DEMO_EXAM_RESULTS_KEY, DEMO_EXAM_RESULTS))
+      return undefined
+    }
+
+    setExamResults([])
+    if (!supabase) return undefined
+
+    let active = true
+    const loadExamResults = async () => {
+      let query = supabase.from('exam_results').select('*').order('published_at', { ascending: false })
+      if (user.role !== 'admin') query = query.eq('student_id', user.id).eq('published', true)
+      const { data, error } = await query
+      if (!active) return
+      if (error) console.error('Failed to load exam results:', error.message)
+      else setExamResults(data || [])
+    }
+
+    loadExamResults()
+    const channel = supabase
+      .channel(`exam-results-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'exam_results' }, loadExamResults)
+      .subscribe()
+    const refreshInterval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') loadExamResults()
+    }, 10000)
 
     return () => {
       active = false
@@ -400,6 +484,22 @@ export function AppProvider({ children }) {
     )
   }, [user])
 
+  const addDashboardVideo = useCallback((video) => {
+    const normalized = normalizeDashboardVideo(video)
+    if (!normalized.embedUrl) {
+      throw new Error('Add a valid YouTube link to show on the dashboard.')
+    }
+
+    setDashboardVideos(previous => sanitizeDashboardVideos([
+      ...previous,
+      normalized,
+    ]))
+  }, [])
+
+  const removeDashboardVideo = useCallback((id) => {
+    setDashboardVideos(previous => previous.filter(video => video.id !== id))
+  }, [])
+
   const addCampusRoom = useCallback(async room => {
     const record = { ...room, id: room.id || crypto.randomUUID() }
     if (!user?.isDemo) {
@@ -528,6 +628,25 @@ export function AppProvider({ children }) {
     )
   }, [liteMode])
 
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(DASHBOARD_VIDEOS_STORAGE_KEY, JSON.stringify(sanitizeDashboardVideos(dashboardVideos)))
+    }
+  }, [dashboardVideos])
+
+  useEffect(() => {
+    if (user?.isDemo) {
+      localStorage.setItem(DEMO_NOTIFICATIONS_KEY, JSON.stringify(notifications))
+      localStorage.setItem(DEMO_NOTICES_KEY, JSON.stringify(notices))
+    }
+  }, [notifications, notices, user])
+
+  useEffect(() => {
+    if (user?.isDemo) {
+      localStorage.setItem(DEMO_EXAM_RESULTS_KEY, JSON.stringify(examResults))
+    }
+  }, [examResults, user])
+
   // ============================================================
   // LOCAL NOTIFICATION
   // ============================================================
@@ -542,7 +661,7 @@ export function AppProvider({ children }) {
     ) => {
       setNotifications((previous) => [
         {
-          id: `n${Date.now()}`,
+          id: crypto.randomUUID(),
           user_id: userId,
           title,
           message,
@@ -772,6 +891,7 @@ export function AppProvider({ children }) {
       fileUrl = null
     ) => {
       const updatedAt = new Date().toISOString()
+      const request = requests.find(item => item.id === id)
       if (!user?.isDemo) {
         if (!supabase || user?.role !== 'admin') throw new Error('Only a signed-in administrator can update requests.')
         const { error } = await supabase.from('requests').update({
@@ -783,33 +903,66 @@ export function AppProvider({ children }) {
         if (error) throw new Error(`Request could not be updated: ${error.message}`)
       }
 
-      setRequests((previous) =>
-        previous.map((request) => {
-          if (request.id !== id) {
-            return request
-          }
+      setRequests(previous => previous.map(item => item.id === id ? {
+        ...item,
+        status,
+        admin_comment: comment,
+        file_url: fileUrl ?? item.file_url,
+        updated_at: updatedAt,
+      } : item))
 
-          const updated = {
-            ...request,
-            status,
-            admin_comment: comment,
-
-            file_url:
-              fileUrl ?? request.file_url,
-
-            updated_at: updatedAt,
-          }
-
-          if (user?.isDemo) {
-            addNotif(request.student_id, `Document ${status}`, `Your ${request.type} request ${id} has been ${status.toLowerCase()}.`, status === 'Approved' ? 'success' : 'info', '/student/documents')
-          }
-
-          return updated
-        })
-      )
+      if (user?.isDemo && request) {
+        const notificationType = status === 'Approved' && /certificate/i.test(request.type) ? 'certificate' : status === 'Approved' ? 'success' : 'info'
+        addNotif(request.student_id, `${request.type} ${status}`, `Your ${request.type} request ${id} has been ${status.toLowerCase()}.`, notificationType, '/student/documents')
+      }
     },
-    [addNotif, user]
+    [addNotif, requests, user]
   )
+
+  // ============================================================
+  // EXAM RESULTS
+  // ============================================================
+
+  const publishExamResult = useCallback(async data => {
+    if (user?.role !== 'admin') throw new Error('Only administrators can publish exam results.')
+
+    const result = {
+      id: crypto.randomUUID(),
+      student_id: data.student_id,
+      exam_name: data.exam_name.trim(),
+      academic_year: data.academic_year.trim(),
+      semester: Number(data.semester),
+      subject: data.subject.trim(),
+      subject_code: data.subject_code.trim() || null,
+      marks_obtained: Number(data.marks_obtained),
+      max_marks: Number(data.max_marks),
+      published: true,
+      published_at: new Date().toISOString(),
+      created_by: user.id,
+    }
+    if (!result.student_id || !result.exam_name || !result.academic_year || !result.subject) throw new Error('Complete all required result details.')
+    if (!Number.isInteger(result.semester) || result.semester < 1 || result.semester > 12) throw new Error('Semester must be between 1 and 12.')
+    if (!Number.isFinite(result.marks_obtained) || !Number.isFinite(result.max_marks) || result.max_marks <= 0 || result.marks_obtained < 0 || result.marks_obtained > result.max_marks) {
+      throw new Error('Marks must be between zero and the maximum marks.')
+    }
+
+    let saved = result
+    if (!user.isDemo) {
+      if (!supabase) throw new Error('Supabase is not configured.')
+      const { data: created, error } = await supabase.from('exam_results').insert(result).select().single()
+      if (error) throw new Error(`Exam result could not be published: ${error.message}`)
+      saved = created
+    } else {
+      const student = students.find(item => item.id === result.student_id)
+      if (!student) throw new Error('Choose a student from the current directory.')
+      saved.student_name = student.name
+      saved.student_roll = student.roll
+      addNotif(student.id, 'Exam result published', `${result.exam_name}: ${result.subject} result is ready.`, 'exam_result', '/student/results')
+    }
+
+    setExamResults(previous => [saved, ...previous])
+    return saved
+  }, [addNotif, students, user])
 
   // ============================================================
   // LEAVE / GATE PASS
@@ -916,12 +1069,30 @@ export function AppProvider({ children }) {
       }
     }
     setNotifications((previous) =>
-      previous.map((notification) => ({
-        ...notification,
-        read: true,
-      }))
+      previous.map(notification => notification.user_id === user?.id
+        ? { ...notification, read: true }
+        : notification)
     )
   }, [user])
+
+  const sendStudentMessage = useCallback(async (student, { title, message }) => {
+    if (user?.role !== 'admin') throw new Error('Only administrators can message students.')
+    const notification = {
+      user_id: student.id,
+      title: title.trim(),
+      message: message.trim(),
+      type: 'message',
+      link: '/student/notifications',
+    }
+    if (!notification.title || !notification.message) throw new Error('Enter a title and message.')
+
+    if (user.isDemo) {
+      addNotif(notification.user_id, notification.title, notification.message, notification.type, notification.link)
+      return notification
+    }
+
+    return requestBackend('notifications/admin', { method: 'POST', body: notification })
+  }, [addNotif, user])
 
   // ============================================================
   // NOTICES
@@ -935,18 +1106,125 @@ export function AppProvider({ children }) {
         created_by: adminName,
         created_at: new Date().toISOString(),
       }
+
       if (!user?.isDemo) {
         if (!supabase || user?.role !== 'admin') throw new Error('Only a signed-in administrator can publish notices.')
+
         const { data: saved, error } = await supabase.from('notices').insert(notice).select().single()
         if (error) throw new Error(`Notice could not be published: ${error.message}`)
+
+        try {
+          await requestBackend('notifications/push-notice', {
+            method: 'POST',
+            body: {
+              title: saved.title,
+              body: saved.content,
+              target: saved.target || 'All Students',
+              important: Boolean(saved.important),
+            },
+          })
+        } catch (pushError) {
+          console.warn('Notice was saved, but push delivery is unavailable:', pushError.message)
+        }
+
         setNotices(previous => [saved, ...previous])
         return saved
       }
+
+      students
+        .filter(student => matchesNoticeTarget(notice.target, student))
+        .forEach(student => addNotif(
+          student.id,
+          notice.title,
+          notice.content,
+          'notice',
+          '/student/notifications'
+        ))
+
       setNotices(previous => [notice, ...previous])
       return notice
     },
-    [user]
+    [addNotif, students, user]
   )
+
+  const submitCampusJournalItem = useCallback(async data => {
+    if (!user || user.role !== 'student') throw new Error('Only signed-in students can submit journal entries.')
+
+    const createdAt = new Date().toISOString()
+    const item = {
+      id: crypto.randomUUID(),
+      student_id: user.id,
+      author_name: user.name,
+      title: data.title.trim(),
+      summary: data.summary.trim(),
+      content: data.content.trim(),
+      category: data.category,
+      subcategory: data.subcategory || null,
+      status: 'pending',
+      is_featured: false,
+      created_at: createdAt,
+      updated_at: createdAt,
+    }
+    if (!item.title || !item.summary || !item.content) throw new Error('Complete the title, summary, and article fields.')
+
+    let saved = item
+    if (user.isDemo) {
+      const next = [item, ...getStoredDemoValue(DEMO_CAMPUS_JOURNAL_KEY, INITIAL_CAMPUS_JOURNAL)]
+      localStorage.setItem(DEMO_CAMPUS_JOURNAL_KEY, JSON.stringify(next))
+    } else {
+      if (!supabase) throw new Error('Campus Journal requires a configured Supabase connection.')
+      const { data: result, error } = await supabase.from('campus_journal').insert(item).select().single()
+      if (error) throw new Error(`Journal submission could not be saved: ${error.message}`)
+      saved = result
+    }
+    setCampusJournalItems(previous => [saved, ...previous.filter(existing => existing.id !== saved.id)])
+    return saved
+  }, [user])
+
+  const reviewCampusJournalItem = useCallback(async (id, status) => {
+    if (!user || user.role !== 'admin') throw new Error('Only administrators can review journal submissions.')
+    if (!['published', 'rejected'].includes(status)) throw new Error('Choose a valid review decision.')
+
+    const updates = {
+      status,
+      is_featured: false,
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    let saved
+    if (user.isDemo) {
+      const next = getStoredDemoValue(DEMO_CAMPUS_JOURNAL_KEY, INITIAL_CAMPUS_JOURNAL).map(item => item.id === id ? { ...item, ...updates } : item)
+      localStorage.setItem(DEMO_CAMPUS_JOURNAL_KEY, JSON.stringify(next))
+      saved = next.find(item => item.id === id)
+    } else {
+      if (!supabase) throw new Error('Campus Journal requires a configured Supabase connection.')
+      const { data, error } = await supabase.from('campus_journal').update(updates).eq('id', id).select().single()
+      if (error) throw new Error(`Journal submission could not be reviewed: ${error.message}`)
+      saved = data
+    }
+    setCampusJournalItems(previous => previous.map(item => item.id === id ? saved : item))
+    return saved
+  }, [user])
+
+  const setCampusJournalFeatured = useCallback(async (id, isFeatured) => {
+    if (!user || user.role !== 'admin') throw new Error('Only administrators can feature journal publications.')
+
+    const updates = { is_featured: Boolean(isFeatured), updated_at: new Date().toISOString() }
+    let saved
+    if (user.isDemo) {
+      const next = getStoredDemoValue(DEMO_CAMPUS_JOURNAL_KEY, INITIAL_CAMPUS_JOURNAL).map(item => item.id === id && item.status === 'published' ? { ...item, ...updates } : item)
+      localStorage.setItem(DEMO_CAMPUS_JOURNAL_KEY, JSON.stringify(next))
+      saved = next.find(item => item.id === id)
+    } else {
+      if (!supabase) throw new Error('Campus Journal requires a configured Supabase connection.')
+      const { data, error } = await supabase.from('campus_journal').update(updates).eq('id', id).eq('status', 'published').select().single()
+      if (error) throw new Error(`Featured publication could not be updated: ${error.message}`)
+      saved = data
+    }
+    setCampusJournalItems(previous => previous.map(item => item.id === id ? saved : item))
+    return saved
+  }, [user])
 
   // ============================================================
   // MESS FEEDBACK
@@ -975,12 +1253,9 @@ export function AppProvider({ children }) {
   // UNREAD NOTIFICATIONS
   // ============================================================
 
-  const unreadCount =
-    notifications.filter(
-      (notification) =>
-        !notification.read &&
-        !notification.is_read
-    ).length
+  const unreadCount = notifications.filter(notification =>
+    notification.user_id === user?.id && !notification.read && !notification.is_read
+  ).length
 
   // ============================================================
   // PROVIDER
@@ -1016,6 +1291,10 @@ export function AppProvider({ children }) {
         submitRequest,
         updateRequest,
 
+        // Exam Results
+        examResults,
+        publishExamResult,
+
         // Leave / Gate Pass
         leaveRequests,
         submitLeave,
@@ -1025,17 +1304,30 @@ export function AppProvider({ children }) {
         notifications,
         markRead,
         markAllRead,
+        sendStudentMessage,
         unreadCount,
 
         // Notices
         notices,
         addNotice,
 
+        // Campus Journal
+        campusJournalItems,
+        campusJournalError,
+        submitCampusJournalItem,
+        reviewCampusJournalItem,
+        setCampusJournalFeatured,
+
         // Mess
         messFeedback,
         addMessFeedback,
         messMenu,
         updateMessMenu,
+
+        // Dashboard videos
+        dashboardVideos,
+        addDashboardVideo,
+        removeDashboardVideo,
 
         // Search
         searchQuery,

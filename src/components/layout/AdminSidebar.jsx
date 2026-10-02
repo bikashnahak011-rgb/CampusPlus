@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, GraduationCap, MessageSquareWarning, ClipboardList, Building2, UtensilsCrossed, BusFront, MapPinned, Megaphone, Calendar, BarChart3, Brain, Settings, LogOut, X, UserCircle } from 'lucide-react'
+import { LayoutDashboard, Users, GraduationCap, MessageSquareWarning, ClipboardList, Building2, UtensilsCrossed, BusFront, MapPinned, Megaphone, Calendar, BarChart3, Brain, Settings, LogOut, X, UserCircle, Award, BookOpen } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLogo from '../AppLogo'
 
@@ -8,6 +8,7 @@ const WHATSAPP_LINK = 'https://chat.whatsapp.com/Fy1KjDyGVLJEpoVROjTdcv?s=sh&p=a
 const NAV = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/admin/students', icon: Users, label: 'Students' },
+  { to: '/admin/results', icon: Award, label: 'Exam Results' },
   { to: '/admin/faculty', icon: GraduationCap, label: 'Faculty' },
   { to: '/admin/complaints', icon: MessageSquareWarning, label: 'Complaints' },
   { to: '/admin/requests', icon: ClipboardList, label: 'Requests' },
@@ -16,6 +17,7 @@ const NAV = [
   { to: '/admin/bus-routes', icon: BusFront, label: 'Bus Routes' },
   { to: '/admin/room-finder', icon: MapPinned, label: 'Room Directory' },
   { to: '/admin/notices', icon: Megaphone, label: 'Notices' },
+  { to: '/admin/campus-journal', icon: BookOpen, label: 'Campus Journal' },
   { to: '/admin/attendance', icon: Calendar, label: 'Attendance' },
   { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/admin/ai-insights', icon: Brain, label: 'AI Insights' },

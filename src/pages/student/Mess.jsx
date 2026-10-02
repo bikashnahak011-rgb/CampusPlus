@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Star, Send, Loader2 } from 'lucide-react'
+import { Star, Send, Loader2, Check } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import { useToast } from '../../components/ui/Toast'
@@ -65,6 +65,24 @@ export default function MessPage() {
           ))}
         </div>}
       </div>
+
+      <section className="card">
+        <h2 className="font-semibold text-gray-900 mb-1">Canteen Rules</h2>
+        <p className="text-xs text-gray-500 mb-4">Help keep the dining area clean and comfortable.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            'Wait your turn and follow the queue.',
+            'Keep tables and serving areas clean.',
+            'Take only what you can finish.',
+            'Put trays and waste in their designated areas.',
+          ].map(rule => (
+            <div key={rule} className="flex items-start gap-2 text-sm text-gray-600">
+              <Check size={16} className="mt-0.5 shrink-0 text-violet-600" />
+              <span>{rule}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {activeDay === today && (
         <div className="card animate-slide-up">

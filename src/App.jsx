@@ -37,6 +37,7 @@ import AdminLayout from './components/layout/AdminLayout'
 */
 
 const StudentDashboard = lazy(() => import('./pages/student/Dashboard'))
+const CampusJournalPage = lazy(() => import('./pages/student/CampusJournal'))
 const ServicesPage = lazy(() => import('./pages/student/Services'))
 const AttendancePage = lazy(() => import('./pages/student/Attendance'))
 const TimetablePage = lazy(() => import('./pages/student/Timetable'))
@@ -46,6 +47,7 @@ const ComplaintsPage = lazy(() => import('./pages/student/Complaints'))
 const LeavePage = lazy(() => import('./pages/student/Leave'))
 const DocumentsPage = lazy(() => import('./pages/student/Documents'))
 const FeesPage = lazy(() => import('./pages/student/Fees'))
+const StudentExamResults = lazy(() => import('./pages/student/ExamResults'))
 const NotificationsPage = lazy(() => import('./pages/student/Notifications'))
 const ProfilePage = lazy(() => import('./pages/student/Profile'))
 const SettingsPage = lazy(() => import('./pages/student/Settings'))
@@ -62,7 +64,9 @@ const FacultyDirectoryPage = lazy(() => import('./pages/FacultyDirectory'))
 */
 
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
+const AdminCampusJournal = lazy(() => import('./pages/admin/CampusJournal'))
 const AdminStudents = lazy(() => import('./pages/admin/Students'))
+const AdminExamResults = lazy(() => import('./pages/admin/ExamResults'))
 const AdminComplaints = lazy(() => import('./pages/admin/Complaints'))
 const AdminRequests = lazy(() => import('./pages/admin/Requests'))
 const AdminHostel = lazy(() => import('./pages/admin/Hostel'))
@@ -198,15 +202,34 @@ function ProtectedRoute({ children, role }) {
 
 function LoginRoute() {
   const { user, loading } = useAuth()
-  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches)
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => localStorage.getItem('campusplus_mobile_intro_seen') === 'true')
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(max-width: 767px)').matches
+  })
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => {
+    if (typeof localStorage === 'undefined') return false
+    return localStorage.getItem('campusplus_mobile_intro_seen') === 'true'
+  })
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 767px)')
-    const updateViewport = (event) => setIsMobile(event.matches)
+    if (typeof window === 'undefined') return undefined
 
-    mediaQuery.addEventListener('change', updateViewport)
-    return () => mediaQuery.removeEventListener('change', updateViewport)
+    const mediaQuery = window.matchMedia('(max-width: 767px)')
+    const updateViewport = (event) => setIsMobile(Boolean(event.matches))
+
+    setIsMobile(mediaQuery.matches)
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateViewport)
+      return () => mediaQuery.removeEventListener('change', updateViewport)
+    }
+
+    if (typeof mediaQuery.addListener === 'function') {
+      mediaQuery.addListener(updateViewport)
+      return () => mediaQuery.removeListener(updateViewport)
+    }
+
+    return undefined
   }, [])
 
   if (loading) {
@@ -361,6 +384,11 @@ export default function App() {
                 />
 
                 <Route
+                  path="campus-journal"
+                  element={<CampusJournalPage />}
+                />
+
+                <Route
                   path="bus-routes"
                   element={<BusRoutesPage />}
                 />
@@ -413,6 +441,11 @@ export default function App() {
                 <Route
                   path="fees"
                   element={<FeesPage />}
+                />
+
+                <Route
+                  path="results"
+                  element={<StudentExamResults />}
                 />
 
                 <Route
@@ -472,6 +505,11 @@ export default function App() {
                 />
 
                 <Route
+                  path="results"
+                  element={<AdminExamResults />}
+                />
+
+                <Route
                   path="faculty"
                   element={<FacultyDirectoryPage />}
                 />
@@ -509,6 +547,11 @@ export default function App() {
                 <Route
                   path="notices"
                   element={<AdminNotices />}
+                />
+
+                <Route
+                  path="campus-journal"
+                  element={<AdminCampusJournal />}
                 />
 
                 <Route

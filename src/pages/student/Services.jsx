@@ -23,7 +23,7 @@ export default function ServicesPage() {
       <div><h1 className="text-2xl font-bold text-gray-900">My Services</h1><p className="text-gray-500 text-sm mt-1">All campus services in one place</p></div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {SERVICES.map(({ icon: Icon, label, desc, to, color, border }) => (
-          <button key={label} onClick={() => navigate(to)} className={`card border ${border} hover:shadow-md transition-all text-left group`}>
+          <button key={label} onClick={() => navigate(to)} className={`student-service-card card border ${border} hover:shadow-md transition-all text-left group`}>
             <div className={`w-12 h-12 ${color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}><Icon size={24} /></div>
             <h3 className="font-semibold text-gray-900 mb-1">{label}</h3>
             <p className="text-xs text-gray-500">{desc}</p>

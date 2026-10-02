@@ -53,6 +53,62 @@ AS $$
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
 $$;
 
+CREATE TABLE IF NOT EXISTS public.exam_results (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  exam_name TEXT NOT NULL,
+  academic_year TEXT NOT NULL,
+  semester INTEGER NOT NULL CHECK (semester BETWEEN 1 AND 12),
+  subject TEXT NOT NULL,
+  subject_code TEXT,
+  marks_obtained NUMERIC(6,2) NOT NULL CHECK (marks_obtained >= 0),
+  max_marks NUMERIC(6,2) NOT NULL CHECK (max_marks > 0),
+  published BOOLEAN NOT NULL DEFAULT FALSE,
+  published_at TIMESTAMPTZ,
+  created_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(student_id, exam_name, academic_year, semester, subject),
+  CHECK (marks_obtained <= max_marks)
+);
+
+ALTER TABLE public.exam_results ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.exam_results TO authenticated;
+DROP POLICY IF EXISTS "student_published_exam_results" ON public.exam_results;
+DROP POLICY IF EXISTS "admin_manage_exam_results" ON public.exam_results;
+CREATE POLICY "student_published_exam_results" ON public.exam_results FOR SELECT TO authenticated
+  USING (student_id = auth.uid() AND published = TRUE);
+CREATE POLICY "admin_manage_exam_results" ON public.exam_results FOR ALL TO authenticated
+  USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+CREATE OR REPLACE FUNCTION public.notify_exam_result_published()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.published AND (TG_OP = 'INSERT' OR OLD.published IS DISTINCT FROM NEW.published) THEN
+    INSERT INTO public.notifications (user_id, title, message, type, link)
+    VALUES (
+      NEW.student_id,
+      'Exam result published',
+      NEW.exam_name || ' results are published for ' || NEW.subject || '.',
+      'exam_result',
+      '/student/results'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS exam_results_notification_event ON public.exam_results;
+CREATE TRIGGER exam_results_notification_event
+  AFTER INSERT OR UPDATE OF published ON public.exam_results
+  FOR EACH ROW EXECUTE FUNCTION public.notify_exam_result_published();
+
+ALTER TABLE public.notifications
+  ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal';
+
 REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
@@ -236,7 +292,11 @@ BEGIN
     INSERT INTO public.notifications (user_id, title, message, type, link)
     VALUES (NEW.student_id, request_label || ' ' || NEW.status,
       'Your request ' || NEW.id || ' has been ' || lower(NEW.status) || '.',
-      CASE WHEN NEW.status = 'Approved' THEN 'success' ELSE 'warning' END,
+      CASE
+        WHEN TG_TABLE_NAME = 'requests' AND NEW.status = 'Approved' AND NEW.type ILIKE '%certificate%' THEN 'certificate'
+        WHEN NEW.status = 'Approved' THEN 'success'
+        ELSE 'warning'
+      END,
       CASE WHEN TG_TABLE_NAME = 'requests' THEN '/student/documents' ELSE '/student/leave' END);
   END IF;
 
@@ -253,6 +313,56 @@ DROP TRIGGER IF EXISTS leave_requests_notification_event ON public.leave_request
 CREATE TRIGGER leave_requests_notification_event
   AFTER INSERT OR UPDATE OF status ON public.leave_requests
   FOR EACH ROW EXECUTE FUNCTION public.notify_request_changes();
+
+CREATE OR REPLACE FUNCTION public.notify_notice_publish()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  student_profile RECORD;
+BEGIN
+  FOR student_profile IN
+    SELECT id, role, department, branch, year, hostel_block
+    FROM public.profiles
+    WHERE role = 'student'
+      AND (
+        NEW.target = 'All Students'
+        OR (
+          NEW.target = 'Computer Science' AND (lower(COALESCE(department, '')) LIKE '%computer%' OR lower(COALESCE(branch, '')) LIKE '%computer%' OR lower(COALESCE(department, '')) LIKE '%cse%' OR lower(COALESCE(branch, '')) LIKE '%cse%')
+        )
+        OR (
+          NEW.target = 'Mechanical Engg' AND (lower(COALESCE(department, '')) LIKE '%mechanical%' OR lower(COALESCE(branch, '')) LIKE '%mechanical%' OR lower(COALESCE(department, '')) LIKE '%mech%' OR lower(COALESCE(branch, '')) LIKE '%mech%')
+        )
+        OR (
+          NEW.target = 'Electronics' AND (lower(COALESCE(department, '')) LIKE '%electronics%' OR lower(COALESCE(branch, '')) LIKE '%electronics%' OR lower(COALESCE(department, '')) LIKE '%ece%' OR lower(COALESCE(branch, '')) LIKE '%ece%' OR lower(COALESCE(department, '')) LIKE '%ee%' OR lower(COALESCE(branch, '')) LIKE '%ee%')
+        )
+        OR (NEW.target = 'Year 1' AND year = 1)
+        OR (NEW.target = 'Year 2' AND year = 2)
+        OR (NEW.target = 'Year 3' AND year = 3)
+        OR (NEW.target = 'Hostel' AND hostel_block IS NOT NULL AND hostel_block <> '')
+        OR (NEW.target = 'Day Scholars' AND (hostel_block IS NULL OR hostel_block = ''))
+      )
+  LOOP
+    INSERT INTO public.notifications (user_id, title, message, type, link)
+    VALUES (
+      student_profile.id,
+      NEW.title,
+      NEW.content,
+      CASE WHEN NEW.important THEN 'warning' ELSE 'info' END,
+      '/student/notifications'
+    );
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS notices_notification_event ON public.notices;
+CREATE TRIGGER notices_notification_event
+  AFTER INSERT ON public.notices
+  FOR EACH ROW EXECUTE FUNCTION public.notify_notice_publish();
 
 DO $$
 BEGIN

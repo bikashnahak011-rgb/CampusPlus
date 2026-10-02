@@ -42,6 +42,41 @@ def classify_complaint(description: str, category: str | None = None) -> dict[st
     return {"category": selected, "urgency": urgency, "summary": summary}
 
 
+async def _gemini_json(system_prompt: str, user_prompt: str) -> dict | None:
+    settings = get_settings()
+    if settings.ai_provider.lower() != "gemini" or not settings.gemini_api_key:
+        return None
+
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}",
+                json={
+                    "contents": [
+                        {
+                            "parts": [{"text": f"{system_prompt}\n\n{user_prompt}"}],
+                        }
+                    ],
+                    "generationConfig": {
+                        "temperature": 0.2,
+                        "responseMimeType": "application/json",
+                    },
+                },
+            )
+            response.raise_for_status()
+            payload = response.json()
+            text = payload["candidates"][0]["content"]["parts"][0]["text"]
+            cleaned = text.strip()
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+                cleaned = re.sub(r"\s*```$", "", cleaned)
+            result = json.loads(cleaned)
+            return result if isinstance(result, dict) else None
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError):
+        logger.warning("Gemini provider failed; using deterministic rules.")
+        return None
+
+
 async def _openai_json(system_prompt: str, user_prompt: str) -> dict | None:
     settings = get_settings()
     if settings.ai_provider.lower() != "openai" or not settings.openai_api_key:
@@ -71,10 +106,21 @@ async def _openai_json(system_prompt: str, user_prompt: str) -> dict | None:
         return None
 
 
+async def _provider_json(system_prompt: str, user_prompt: str) -> dict | None:
+    settings = get_settings()
+    provider = (settings.ai_provider or "rules").lower()
+
+    if provider == "gemini":
+        return await _gemini_json(system_prompt, user_prompt)
+    if provider == "openai":
+        return await _openai_json(system_prompt, user_prompt)
+    return None
+
+
 async def analyze_complaint_text(description: str) -> dict[str, str]:
     rules = classify_complaint(description)
     location = extract_location(description)
-    generated = await _openai_json(
+    generated = await _provider_json(
         "Classify a campus complaint. Return JSON only with category (water, electricity, cleaning, mess, internet, security, or general), urgency (HIGH or NORMAL), location (string or null), and suggested_action (short string). Only use facts from the report.",
         description,
     )
@@ -137,7 +183,7 @@ def answer_query(question: str, stats: dict) -> str:
 
 async def answer_query_with_ai(question: str, stats: dict) -> str:
     fallback = answer_query(question, stats)
-    generated = await _openai_json(
+    generated = await _provider_json(
         "Answer the administrator's campus operations question using only the supplied aggregate statistics. Do not invent facts or expose student-level data. Return JSON only with an answer string.",
         json.dumps({"question": question, "aggregate_statistics": stats}, default=str),
     )

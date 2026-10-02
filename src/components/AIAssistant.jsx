@@ -60,39 +60,49 @@ export default function AIAssistant() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} aria-label="Open Campus AI assistant" className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-3 sm:px-4 py-3 shadow-xl flex items-center gap-2 transition-all hover:scale-105">
-        <MessageCircle size={20} /><span className="text-sm font-medium hidden sm:block">Ask Campus AI</span>
+      <button onClick={() => setOpen(true)} aria-label="Open Campus AI assistant" className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 bg-gradient-to-r from-[#8d4ef7] to-[#7f52e6] hover:from-[#7c42ee] hover:to-[#6e46d8] text-white rounded-[20px] px-4 sm:px-5 py-3 shadow-[0_12px_30px_rgba(125,89,220,0.35)] flex items-center gap-2 transition-all hover:scale-[1.02]">
+        <MessageCircle size={20} />
+        <span className="text-base font-semibold hidden sm:block">Ask Campus AI</span>
       </button>
       {open && (
-        <div className="fixed inset-x-3 bottom-20 sm:inset-x-auto sm:bottom-20 sm:right-6 z-50 w-auto sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col animate-slide-up" style={{ height: 'min(480px, calc(100dvh - 7rem))' }}>
-          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+        <div className="fixed inset-x-3 bottom-20 sm:inset-x-auto sm:bottom-20 sm:right-6 z-50 w-auto sm:w-[420px] bg-[#f3f0f7] rounded-[28px] shadow-[0_28px_60px_rgba(60,45,82,0.18)] border border-[#ded3f0] flex flex-col overflow-hidden" style={{ height: 'min(500px, calc(100dvh - 7rem))' }}>
+          <div className="flex items-center justify-between p-4 bg-[#f3f0f7] border-b border-[#e8e1f1]">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><Bot size={16} className="text-white" /></div>
-              <div><p className="text-white font-semibold text-sm">Campus AI</p><p className="text-blue-200 text-xs">Always here to help</p></div>
+              <div className="w-8 h-8 bg-[#e9defd] rounded-full flex items-center justify-center"><Bot size={16} className="text-[#6a3cc9]" /></div>
+              <div><p className="text-[#4c2f63] font-semibold text-sm">Campus AI</p><p className="text-[#7f6b92] text-xs">Always here to help</p></div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white"><X size={18} /></button>
+            <button onClick={() => setOpen(false)} className="text-[#6f5d82] hover:text-[#392d4b] rounded-full p-1"><X size={18} /></button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f4f1f8]">
             {messages.map(m => (
-              <div key={m.id} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${m.role === 'assistant' ? 'bg-blue-100' : 'bg-gray-200'}`}>
-                  {m.role === 'assistant' ? <Bot size={14} className="text-blue-600" /> : <User size={14} className="text-gray-600" />}
+              <div key={m.id} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${m.role === 'assistant' ? 'bg-[#e8dffc]' : 'bg-[#d7c8f5]'}`}>
+                  {m.role === 'assistant' ? <Bot size={14} className="text-[#5f32b3]" /> : <User size={14} className="text-[#5b496d]" />}
                 </div>
-                <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm whitespace-pre-line ${m.role === 'assistant' ? 'bg-gray-100 text-gray-800' : 'bg-blue-600 text-white'}`}>{m.text}</div>
+                <div className={`max-w-[82%] px-4 py-3 rounded-[22px] text-[15px] leading-6 whitespace-pre-line shadow-sm ${m.role === 'assistant' ? 'bg-[#ece6f7] text-[#2a2235]' : 'bg-[#8d4ef7] text-white'}`}>{m.text}</div>
               </div>
             ))}
-            {loading && <div className="flex gap-2"><div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center"><Bot size={14} className="text-blue-600" /></div><div className="bg-gray-100 px-3 py-2 rounded-2xl"><Loader2 size={14} className="animate-spin text-gray-400" /></div></div>}
+            {loading && <div className="flex gap-3"><div className="w-8 h-8 rounded-full bg-[#e8dffc] flex items-center justify-center"><Bot size={14} className="text-[#5f32b3]" /></div><div className="bg-[#ece6f7] px-4 py-3 rounded-[22px]"><Loader2 size={16} className="animate-spin text-[#7b59d5]" /></div></div>}
             <div ref={bottomRef} />
           </div>
-          <div className="p-3 border-t border-gray-100">
-            <div className="flex flex-wrap gap-1 mb-2">
-              {quickQuestions.slice(0, 2).map(q => <button key={q} disabled={loading} onClick={() => send(q)} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-100 disabled:opacity-50">{q}</button>)}
+          <div className="p-3 border-t border-[#e8e1f1] bg-[#f5f2f9]">
+            <div className="flex flex-wrap gap-2 mb-3">
+              {quickQuestions.slice(0, 2).map((q, index) => (
+                <button
+                  key={q}
+                  disabled={loading}
+                  onClick={() => send(q)}
+                  className={`text-[13px] rounded-full px-3 py-2 transition-colors ${index === 0 ? 'bg-[#8d4ef7] text-white' : 'bg-white text-[#4d3f5d] border border-[#e3d8f3] hover:bg-[#f2ebff]'}`}
+                >
+                  {q}
+                </button>
+              ))}
             </div>
-            <div className="flex gap-2">
-              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask anything..." className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <div className="flex gap-2 items-center rounded-[18px] border border-[#ddd0f0] bg-[#f9f7fb] px-2 py-2 shadow-inner shadow-white/50">
+              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask anything..." className="flex-1 bg-transparent border-0 px-2 py-2 text-[15px] text-[#362c42] placeholder:text-[#817191] focus:outline-none" />
               {loading
-                ? <button type="button" onClick={cancel} className="btn-secondary px-3 py-2">Cancel</button>
-                : <button onClick={() => send()} disabled={!input.trim()} className="btn-primary px-3 py-2"><Send size={16} /></button>}
+                ? <button type="button" onClick={cancel} className="rounded-xl bg-[#efeafc] text-[#4f3c66] px-3 py-2 text-sm font-medium">Cancel</button>
+                : <button onClick={() => send()} disabled={!input.trim()} className="rounded-xl bg-gradient-to-r from-[#8d4ef7] to-[#7d4fe1] p-3 text-white shadow-md disabled:opacity-50"><Send size={17} /></button>}
             </div>
           </div>
         </div>

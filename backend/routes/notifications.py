@@ -24,4 +24,6 @@ async def my_notifications(user: CurrentUser = Depends(get_current_user)):
 
 @router.post("/admin", dependencies=[Depends(require_admin)])
 async def send_notification(payload: NotificationCreate):
-    return await create_notification(**payload.model_dump())
+    notification_data = payload.model_dump()
+    notification_data["notification_type"] = notification_data.pop("type")
+    return await create_notification(**notification_data)
