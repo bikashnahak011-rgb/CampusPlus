@@ -127,45 +127,61 @@ export function getCampusAssistantReply(message, user = {}) {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const menu = DEMO_MESS_MENU[today]
 
-  if (lower.includes('mess') || lower.includes('menu') || lower.includes('food')) {
+  if (/(bus|route|transport|pickup|stop|timing|driver|shuttle|travel)/.test(lower)) {
+    return 'Campus transport is available through the Bus Routes page.\n\n• Check the route timings and stops\n• View the live route list\n• Contact the transport office if your pickup point is missing\n\nIf you want, I can help you find a route for your hostel or department.'
+  }
+
+  if (/(hostel|room|warden|block|floor|accommodation)/.test(lower)) {
+    return 'Your hostel details can be checked from the Hostel page.\n\n• Block and room assignment\n• Warden contact details\n• Room status and maintenance requests\n\nIf your room is missing, contact the hostel office or submit a complaint.'
+  }
+
+  if (/(timetable|class|lecture|lab|schedule|seminar|exam)/.test(lower)) {
+    return 'Use the Timetable page to view your class schedule and room assignments.\n\n• Check this week’s timetable\n• See subject-wise room details\n• Review the latest exam or schedule updates\n\nYour department and profile must match the published timetable.'
+  }
+
+  if (/(faculty|teacher|mentor|professor|staff|department)/.test(lower)) {
+    return 'Open the Faculty page to search faculty by name, subject, qualification, or department.\n\nIt helps you find the right teacher, subject lead, or staff contact for academic queries.'
+  }
+
+  if (/(notice|announcement|event|holiday|campus update|calendar)/.test(lower)) {
+    return 'Campus notices and updates are shown in the Notifications and Notices sections.\n\nCheck there for academic notices, hostel updates, events, and important announcements from the admin team.'
+  }
+
+  if (/(mess|menu|food|meal|canteen|breakfast|lunch|dinner|snack)/.test(lower)) {
     return `Today is ${today}. Here's the menu:\n🌅 Breakfast: ${menu?.breakfast || 'Not available'}\n☀️ Lunch: ${menu?.lunch || 'Not available'}\n🌙 Dinner: ${menu?.dinner || 'Not available'}\n\nView the full weekly menu in the Mess section.`
   }
 
-  if (lower.includes('attendance')) {
+  if (/(attendance|present|absent|marks|grade|score|percentage)/.test(lower)) {
     const avg = Math.round(DEMO_SUBJECTS.reduce((sum, sub) => sum + (sub.present / sub.total) * 100, 0) / DEMO_SUBJECTS.length)
     const low = DEMO_SUBJECTS.filter(sub => (sub.present / sub.total) * 100 < 80)
     return `Your overall attendance is ~${avg}%. ${low.length > 0 ? `⚠️ ${low.map(s => s.name).join(', ')} ${low.length > 1 ? 'are' : 'is'} below 80%.` : 'All subjects are above 80%.'}\n\nGo to the Attendance page for details.`
   }
 
-  if (lower.includes('gate pass') || lower.includes('gatepass')) {
+  if (/(gate pass|gatepass|pass)/.test(lower)) {
     return 'To apply for a Gate Pass:\n1. Open Leave & Gate Pass\n2. Click “New Request”\n3. Choose “Gate Pass”\n4. Fill in the destination, date, and time\n5. Submit for approval\n\nYou will receive a notification after approval.'
   }
 
-  if (lower.includes('bonafide') || lower.includes('certificate') || lower.includes('document')) {
-    return 'To request a Bonafide Certificate:\n1. Go to Documents\n2. Click “New Request”\n3. Select “Bonafide Certificate”\n4. Enter the reason\n5. Submit\n\nThe admin will review it and notify you when ready.'
-  }
-
-  if (lower.includes('complaint') || lower.includes('problem') || lower.includes('issue') || lower.includes('water') || lower.includes('electric') || lower.includes('leak')) {
-    return 'To report a problem:\n1. Open Complaints\n2. Click “Report a Problem”\n3. Describe the issue\n4. Let AI auto-detect the category and priority\n5. Submit\n\nYou will get a complaint ID and status updates.'
-  }
-
-  if (lower.includes('fee') || lower.includes('payment') || lower.includes('due')) {
-    return 'View your fee details in the Fees section.\nPending amount: ₹15,000\n\nFor payment, use the online portal or visit the accounts office.'
-  }
-
-  if (lower.includes('hostel') || lower.includes('room') || lower.includes('warden')) {
-    return 'You are in Hostel Block A, Room 203.\nWarden: Mr. Suresh Nair (📞 9876500001)\n\nUse the Complaints section for hostel issues or check the Hostel page for details.'
-  }
-
-  if (lower.includes('leave')) {
+  if (/(leave|outing|absence)/.test(lower)) {
     return 'To apply for leave:\n1. Go to Leave & Gate Pass\n2. Click “New Request”\n3. Choose “Leave”\n4. Fill in dates and reason\n5. Submit\n\nLeave requests require warden and admin approval.'
   }
 
-  if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
-    return `Hello ${user?.name?.split(' ')[0] || 'there'}! I can help with mess menu, attendance, complaints, gate pass, documents, and fees.\n\nWhat do you need?`
+  if (/(bonafide|certificate|document|transcript|record|request)/.test(lower)) {
+    return 'To request a document or certificate:\n1. Go to Documents\n2. Click “New Request”\n3. Select the document type\n4. Enter the reason\n5. Submit\n\nThe admin will review it and notify you when ready.'
   }
 
-  return 'I can help with campus services like mess menu, attendance, complaints, gate pass, documents, and fees. Try asking something specific or use the quick questions below.'
+  if (/(complaint|problem|issue|water|electric|leak|maintenance|cleaning|wifi|network)/.test(lower)) {
+    return 'To report a problem:\n1. Open Complaints\n2. Click “Report a Problem”\n3. Describe the issue and location\n4. Let AI auto-detect the category and priority\n5. Submit\n\nYou will get a complaint ID and status updates.'
+  }
+
+  if (/(fee|payment|dues|fine|scholarship|invoice)/.test(lower)) {
+    return 'View your fee details in the Fees section.\nPending amount: ₹15,000\n\nFor payment, use the online portal or visit the accounts office.'
+  }
+
+  if (/(hello|hi|hey|good morning|good afternoon|good evening)/.test(lower)) {
+    return `Hello ${user?.name?.split(' ')[0] || 'there'}! I can help with mess menu, attendance, complaints, gate pass, hostel, bus routes, documents, and fees.\n\nWhat do you need?`
+  }
+
+  return 'I can help with campus services like mess menu, attendance, complaints, gate pass, hostel, bus routes, documents, faculty, and fees. Try asking something specific, such as “What is today’s mess menu?” or “How do I request a document?”'
 }
 
 export function getCampusWebsiteHelp(message, user = {}) {

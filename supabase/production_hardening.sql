@@ -56,19 +56,14 @@ $$;
 CREATE TABLE IF NOT EXISTS public.exam_results (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   student_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  exam_name TEXT NOT NULL,
+  result_type TEXT NOT NULL CHECK (result_type IN ('SGPA', 'CGPA')),
+  result_value NUMERIC(3,2) NOT NULL CHECK (result_value BETWEEN 0 AND 10),
   academic_year TEXT NOT NULL,
   semester INTEGER NOT NULL CHECK (semester BETWEEN 1 AND 12),
-  subject TEXT NOT NULL,
-  subject_code TEXT,
-  marks_obtained NUMERIC(6,2) NOT NULL CHECK (marks_obtained >= 0),
-  max_marks NUMERIC(6,2) NOT NULL CHECK (max_marks > 0),
   published BOOLEAN NOT NULL DEFAULT FALSE,
   published_at TIMESTAMPTZ,
   created_by UUID REFERENCES public.profiles(id),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(student_id, exam_name, academic_year, semester, subject),
-  CHECK (marks_obtained <= max_marks)
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.exam_results ENABLE ROW LEVEL SECURITY;
@@ -92,7 +87,7 @@ BEGIN
     VALUES (
       NEW.student_id,
       'Exam result published',
-      NEW.exam_name || ' results are published for ' || NEW.subject || '.',
+      'Your ' || NEW.result_type || ' (' || to_char(NEW.result_value, 'FM990.00') || ') is published for semester ' || NEW.semester || '.',
       'exam_result',
       '/student/results'
     );

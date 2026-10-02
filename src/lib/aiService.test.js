@@ -14,6 +14,13 @@ test('getCampusAssistantReply answers common campus questions', () => {
   assert.match(reply.toLowerCase(), /mess|menu|breakfast|lunch|dinner/)
 })
 
+test('getCampusAssistantReply answers broader campus service questions', () => {
+  const hostelReply = getCampusAssistantReply('Where is my hostel room and warden details?')
+  const busReply = getCampusAssistantReply('When does the bus leave campus?')
+  assert.match(hostelReply.toLowerCase(), /hostel|room|warden|block/)
+  assert.match(busReply.toLowerCase(), /bus|route|transport|timing|pickup/)
+})
+
 test('website guidance gives role-specific admin and student workflows', () => {
   const adminReply = getCampusWebsiteHelp('How do I edit bus routes?', { role: 'admin' })
   const studentReply = getCampusWebsiteHelp('How do I request a document?', { role: 'student' })

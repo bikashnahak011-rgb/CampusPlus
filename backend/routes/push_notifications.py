@@ -112,19 +112,6 @@ async def send_notice_push(payload: PushNotice, _: CurrentUser = Depends(require
     if not user_ids:
         return {"sent": 0, "expired": 0, "notified": 0}
 
-    supabase.table("notifications").insert([
-        {
-            "user_id": user_id,
-            "title": payload.title,
-            "message": payload.body,
-            "type": "notice",
-            "priority": "high" if payload.important else "normal",
-            "read": False,
-            "link": "/student/notifications",
-        }
-        for user_id in user_ids
-    ]).execute()
-
     if not settings.vapid_private_key or not settings.vapid_public_key:
         return {"sent": 0, "expired": 0, "notified": len(user_ids)}
 

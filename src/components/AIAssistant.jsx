@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react'
+import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { askCampusAssistant } from '../lib/aiService'
 
@@ -65,41 +65,71 @@ export default function AIAssistant() {
         <span className="text-base font-semibold hidden sm:block">Ask Campus AI</span>
       </button>
       {open && (
-        <div className="fixed inset-x-3 bottom-20 sm:inset-x-auto sm:bottom-20 sm:right-6 z-50 w-auto sm:w-[420px] bg-[#f3f0f7] rounded-[28px] shadow-[0_28px_60px_rgba(60,45,82,0.18)] border border-[#ded3f0] flex flex-col overflow-hidden" style={{ height: 'min(500px, calc(100dvh - 7rem))' }}>
-          <div className="flex items-center justify-between p-4 bg-[#f3f0f7] border-b border-[#e8e1f1]">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#e9defd] rounded-full flex items-center justify-center"><Bot size={16} className="text-[#6a3cc9]" /></div>
-              <div><p className="text-[#4c2f63] font-semibold text-sm">Campus AI</p><p className="text-[#7f6b92] text-xs">Always here to help</p></div>
+        <div className="fixed inset-x-3 bottom-20 sm:inset-x-auto sm:bottom-20 sm:right-6 z-50 w-auto sm:w-[430px] bg-[#f7f3fb] rounded-[28px] shadow-[0_28px_60px_rgba(60,45,82,0.18)] border border-[#e4d8f8] flex flex-col overflow-hidden" style={{ height: 'min(520px, calc(100dvh - 7rem))' }}>
+          <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#8c52ee] via-[#8350ea] to-[#7c4de1] text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-white/15 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
+                <Bot size={16} />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Campus AI</p>
+                <p className="text-xs text-violet-100">Always here to help</p>
+              </div>
             </div>
-            <button onClick={() => setOpen(false)} className="text-[#6f5d82] hover:text-[#392d4b] rounded-full p-1"><X size={18} /></button>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wide">Live</span>
+              <button onClick={() => setOpen(false)} className="rounded-full p-1 hover:bg-white/10 transition-colors"><X size={18} /></button>
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f4f1f8]">
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[radial-gradient(circle_at_top,_rgba(166,130,255,0.14),transparent_40%),linear-gradient(180deg,#f7f3fb_0%,#f2ecf9_100%)]">
             {messages.map(m => (
               <div key={m.id} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${m.role === 'assistant' ? 'bg-[#e8dffc]' : 'bg-[#d7c8f5]'}`}>
-                  {m.role === 'assistant' ? <Bot size={14} className="text-[#5f32b3]" /> : <User size={14} className="text-[#5b496d]" />}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${m.role === 'assistant' ? 'bg-[#efe7ff] text-[#5f32b3]' : 'bg-[#8d4ef7] text-white shadow-[0_8px_20px_rgba(141,78,247,0.25)]'}`}>
+                  {m.role === 'assistant' ? <Bot size={14} /> : <User size={14} />}
                 </div>
-                <div className={`max-w-[82%] px-4 py-3 rounded-[22px] text-[15px] leading-6 whitespace-pre-line shadow-sm ${m.role === 'assistant' ? 'bg-[#ece6f7] text-[#2a2235]' : 'bg-[#8d4ef7] text-white'}`}>{m.text}</div>
+                <div className={`max-w-[85%] rounded-[22px] px-4 py-3 text-[15px] leading-6 whitespace-pre-line shadow-sm border ${m.role === 'assistant'
+                  ? 'bg-white/90 text-[#2a2235] border-[#e7ddfb]'
+                  : 'bg-gradient-to-r from-[#8d4ef7] to-[#7e4fdb] text-white border-transparent'}`}>
+                  {m.text}
+                </div>
               </div>
             ))}
-            {loading && <div className="flex gap-3"><div className="w-8 h-8 rounded-full bg-[#e8dffc] flex items-center justify-center"><Bot size={14} className="text-[#5f32b3]" /></div><div className="bg-[#ece6f7] px-4 py-3 rounded-[22px]"><Loader2 size={16} className="animate-spin text-[#7b59d5]" /></div></div>}
+            {loading && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#efe7ff] text-[#5f32b3] flex items-center justify-center">
+                  <Bot size={14} />
+                </div>
+                <div className="bg-white/90 border border-[#e7ddfb] rounded-[22px] px-4 py-3 shadow-sm">
+                  <Loader2 size={16} className="animate-spin text-[#7b59d5]" />
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
+
           <div className="p-3 border-t border-[#e8e1f1] bg-[#f5f2f9]">
             <div className="flex flex-wrap gap-2 mb-3">
-              {quickQuestions.slice(0, 2).map((q, index) => (
+              {quickQuestions.slice(0, 3).map((q, index) => (
                 <button
                   key={q}
                   disabled={loading}
                   onClick={() => send(q)}
-                  className={`text-[13px] rounded-full px-3 py-2 transition-colors ${index === 0 ? 'bg-[#8d4ef7] text-white' : 'bg-white text-[#4d3f5d] border border-[#e3d8f3] hover:bg-[#f2ebff]'}`}
+                  className={`text-[12px] rounded-full px-3 py-2 transition-all ${index === 0 ? 'bg-[#8d4ef7] text-white shadow-[0_6px_16px_rgba(141,78,247,0.2)]' : 'bg-white text-[#4d3f5d] border border-[#e3d8f3] hover:bg-[#f2ebff]'}`}
                 >
                   {q}
                 </button>
               ))}
             </div>
-            <div className="flex gap-2 items-center rounded-[18px] border border-[#ddd0f0] bg-[#f9f7fb] px-2 py-2 shadow-inner shadow-white/50">
-              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask anything..." className="flex-1 bg-transparent border-0 px-2 py-2 text-[15px] text-[#362c42] placeholder:text-[#817191] focus:outline-none" />
+
+            <div className="flex gap-2 items-center rounded-[18px] border border-[#ddd0f0] bg-[#fdfbfd] px-2 py-2 shadow-inner shadow-white/50">
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && send()}
+                placeholder="Ask about campus services..."
+                className="flex-1 bg-transparent border-0 px-2 py-2 text-[15px] text-[#362c42] placeholder:text-[#817191] focus:outline-none"
+              />
               {loading
                 ? <button type="button" onClick={cancel} className="rounded-xl bg-[#efeafc] text-[#4f3c66] px-3 py-2 text-sm font-medium">Cancel</button>
                 : <button onClick={() => send()} disabled={!input.trim()} className="rounded-xl bg-gradient-to-r from-[#8d4ef7] to-[#7d4fe1] p-3 text-white shadow-md disabled:opacity-50"><Send size={17} /></button>}

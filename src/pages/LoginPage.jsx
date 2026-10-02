@@ -16,8 +16,10 @@ import {
 } from 'lucide-react'
 
 import { useAuth } from '../contexts/AuthContext'
+import { useApp } from '../contexts/AppContext'
 import AppLogo from '../components/AppLogo'
 import Ambient3DBackground from '../components/Ambient3DBackground'
+import { LANGUAGE_OPTIONS } from '../lib/translations'
 
 export default function LoginPage() {
 
@@ -35,7 +37,7 @@ export default function LoginPage() {
   } = useAuth()
 
   const navigate = useNavigate()
-
+  const { language, setLanguage, t } = useApp()
 
   /*
   ============================================================
@@ -485,7 +487,7 @@ export default function LoginPage() {
 
           <ArrowLeft size={16} />
 
-          Back to Home
+          {t('backToHome')}
 
         </button>
 
@@ -525,12 +527,12 @@ export default function LoginPage() {
 
 
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              NexCampus
+              {t('appName')}
             </h1>
 
 
             <p className="text-violet-100 text-xs sm:text-sm mt-1">
-              One Campus. One Platform. Zero Confusion.
+              {t('welcomeBack')}
             </p>
 
           </div>
@@ -542,6 +544,15 @@ export default function LoginPage() {
 
 
             {/* Role selector */}
+
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-2.5 text-[11px] font-medium text-violet-800">
+              <span>{t('languageLabel')}</span>
+              <select value={language} onChange={(event) => setLanguage(event.target.value)} className="rounded-lg border border-violet-200 bg-white px-2 py-1 text-[11px] font-medium text-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.nativeLabel}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="flex bg-gray-100 rounded-2xl p-1 mb-5 sm:mb-6">
 
@@ -563,7 +574,7 @@ export default function LoginPage() {
 
                 <GraduationCap size={17} />
 
-                Student
+                {t('student')}
 
               </button>
 
@@ -586,7 +597,7 @@ export default function LoginPage() {
 
                 <Shield size={17} />
 
-                Admin
+                {t('admin')}
 
               </button>
 

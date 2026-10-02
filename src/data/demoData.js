@@ -91,11 +91,9 @@ export const DEMO_STUDENTS_ADMIN = [
 ]
 
 export const DEMO_EXAM_RESULTS = [
-  { id: 'result-001', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Programming in Python', subject_code: 'CS301', marks_obtained: 86, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'result-002', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Database Management', subject_code: 'CS302', marks_obtained: 78, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'result-003', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Computer Networks', subject_code: 'CS303', marks_obtained: 91, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'result-004', student_id: 'stu-001', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Mathematics III', subject_code: 'MA301', marks_obtained: 73, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'result-005', student_id: 'stu-002', exam_name: 'Semester VI Final Examination', academic_year: '2025-2026', semester: 6, subject: 'Programming in Python', subject_code: 'CS301', marks_obtained: 88, max_marks: 100, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'result-001', student_id: 'stu-001', result_type: 'SGPA', result_value: 8.6, academic_year: '2025-2026', semester: 6, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'result-002', student_id: 'stu-001', result_type: 'CGPA', result_value: 8.4, academic_year: '2025-2026', semester: 6, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'result-003', student_id: 'stu-002', result_type: 'SGPA', result_value: 9.1, academic_year: '2025-2026', semester: 6, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
 ]
 
 export const INITIAL_COMPLAINTS = [

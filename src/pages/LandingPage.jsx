@@ -29,6 +29,8 @@ import {
 } from 'lucide-react'
 import AppLogo from '../components/AppLogo'
 import Ambient3DBackground from '../components/Ambient3DBackground'
+import { useApp } from '../contexts/AppContext'
+import { LANGUAGE_OPTIONS } from '../lib/translations'
 
 const studentFeatures = [
   { icon: MessageSquareWarning, title: 'Smart Complaints', desc: 'AI-assisted issue reporting that routes the right concern to the correct office instantly.' },
@@ -55,6 +57,7 @@ const workflowSteps = [
 
 export default function LandingPage() {
   const navigate = useNavigate()
+  const { language, setLanguage, t } = useApp()
   const [menuOpen, setMenuOpen] = useState(false)
   const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const closeMenu = () => setMenuOpen(false)
@@ -73,17 +76,27 @@ export default function LandingPage() {
           </button>
 
           <div className="hidden md:flex items-center gap-7 text-sm text-violet-800">
-            <button onClick={() => scrollTo('features')} className="transition-colors duration-200">Features</button>
-            <button onClick={() => scrollTo('how-it-works')} className="transition-colors duration-200">How it works</button>
-            <button onClick={() => scrollTo('admin')} className="transition-colors duration-200">For admins</button>
+            <button onClick={() => scrollTo('features')} className="transition-colors duration-200">{t('features')}</button>
+            <button onClick={() => scrollTo('how-it-works')} className="transition-colors duration-200">{t('howItWorks')}</button>
+            <button onClick={() => scrollTo('admin')} className="transition-colors duration-200">{t('forAdmins')}</button>
             <button onClick={() => navigate('/about')} className="inline-flex items-center gap-1.5 transition-colors duration-200">
-              <Info size={14} /> About
+              <Info size={14} /> {t('about')}
             </button>
           </div>
 
           <div className="landing-nav-actions">
+            <select
+              value={language}
+              onChange={(event) => setLanguage(event.target.value)}
+              className="hidden rounded-xl border border-violet-200 bg-white px-2 py-1.5 text-xs font-medium text-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 md:block"
+              aria-label={t('languageLabel')}
+            >
+              {LANGUAGE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.nativeLabel}</option>
+              ))}
+            </select>
             <button onClick={() => navigate('/login')} className="primary-button text-sm px-4 py-2">
-              <span>Get Started</span>
+              <span>{t('getStarted')}</span>
               <ArrowRight size={16} />
             </button>
             <button onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} className="md:hidden rounded-xl p-2 text-violet-900 hover:bg-violet-50">
@@ -93,10 +106,10 @@ export default function LandingPage() {
         </div>
         {menuOpen && (
           <div className="md:hidden border-t border-violet-100 bg-white/95 px-4 py-3 shadow-lg">
-            {[['features', 'Features'], ['how-it-works', 'How it works'], ['admin', 'For admins']].map(([id, label]) => (
+            {[['features', t('features')], ['how-it-works', t('howItWorks')], ['admin', t('forAdmins')]].map(([id, label]) => (
               <button key={id} onClick={() => { scrollTo(id); closeMenu() }} className="block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">{label}</button>
             ))}
-            <button onClick={() => navigate('/about')} className="block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">About NexCampus</button>
+            <button onClick={() => navigate('/about')} className="block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">{t('aboutNexCampus')}</button>
           </div>
         )}
       </nav>
@@ -125,11 +138,11 @@ export default function LandingPage() {
 
                 <div className="mt-8 flex flex-col sm:flex-row gap-4">
                   <button onClick={() => navigate('/login')} className="primary-button shadow-2xl shadow-violet-500/20">
-                    Start now
+                    {t('startNow')}
                     <ArrowRight size={18} />
                   </button>
                   <button onClick={() => scrollTo('features')} className="secondary-button public-secondary-button">
-                    Explore platform
+                    {t('explorePlatform')}
                   </button>
                 </div>
 

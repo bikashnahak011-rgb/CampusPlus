@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Bell, ChevronDown, Menu, User, Settings, LogOut, X } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
+import { LANGUAGE_OPTIONS } from '../../lib/translations'
 import AppLogo from '../AppLogo'
 
 export default function TopHeader({ onMenuClick }) {
   const { user, signOut } = useAuth()
-  const { unreadCount, notifications, markRead, searchQuery, setSearchQuery } = useApp()
+  const { unreadCount, notifications, markRead, searchQuery, setSearchQuery, language, setLanguage, t } = useApp()
   const [showNotifs, setShowNotifs] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
@@ -36,7 +37,7 @@ export default function TopHeader({ onMenuClick }) {
           <input
             value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && searchQuery.trim() && navigate(`/student/search?q=${encodeURIComponent(searchQuery)}`)}
-            placeholder="Search..."
+            placeholder={t('search')}
               className="w-full pl-9 pr-4 py-2 bg-violet-50 border border-violet-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white"
           />
         </div>
@@ -44,10 +45,20 @@ export default function TopHeader({ onMenuClick }) {
         {/* Mobile: show app name */}
         <div className="sm:hidden flex-1 min-w-0 flex items-center gap-2 text-sm font-bold text-gray-800">
           <AppLogo size={24} />
-          <span>NexCampus</span>
+          <span>{t('appName')}</span>
         </div>
 
         <div className="flex items-center gap-1 ml-auto" ref={ref}>
+          <select
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            className="hidden rounded-xl border border-violet-200 bg-violet-50 px-2 py-1.5 text-xs font-medium text-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:block"
+            aria-label={t('languageLabel')}
+          >
+            {LANGUAGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.nativeLabel}</option>
+            ))}
+          </select>
           {/* Mobile search toggle */}
           <button onClick={() => setShowSearch(!showSearch)} className="sm:hidden p-2 hover:bg-gray-100 rounded-xl">
             <Search size={19} className="text-gray-600" />
@@ -69,12 +80,12 @@ export default function TopHeader({ onMenuClick }) {
             {showNotifs && (
               <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl w-72 sm:w-80 z-50">
                 <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-100">
-                  <span className="font-semibold text-sm">Notifications</span>
-                  <button onClick={() => { navigate('/student/notifications'); setShowNotifs(false) }} className="text-violet-700 text-xs hover:underline">View all</button>
+                  <span className="font-semibold text-sm">{t('notifications')}</span>
+                  <button onClick={() => { navigate('/student/notifications'); setShowNotifs(false) }} className="text-violet-700 text-xs hover:underline">{t('viewAll')}</button>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {myNotifs.length === 0
-                    ? <p className="text-center text-gray-400 text-sm py-6">No notifications</p>
+                    ? <p className="text-center text-gray-400 text-sm py-6">{t('noNotifications')}</p>
                     : myNotifs.map(n => (
                       <div key={n.id}
                         onClick={() => { markRead(n.id); navigate(n.link || '/student/notifications'); setShowNotifs(false) }}
@@ -107,10 +118,10 @@ export default function TopHeader({ onMenuClick }) {
             </button>
             {showProfile && (
               <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl w-44 z-50 py-1">
-                <button onClick={() => { navigate('/student/profile'); setShowProfile(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2"><User size={15} /> Profile</button>
-                <button onClick={() => { navigate('/student/settings'); setShowProfile(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2"><Settings size={15} /> Settings</button>
+                <button onClick={() => { navigate('/student/profile'); setShowProfile(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2"><User size={15} /> {t('profile')}</button>
+                <button onClick={() => { navigate('/student/settings'); setShowProfile(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2"><Settings size={15} /> {t('settings')}</button>
                 <hr className="my-1 border-gray-100" />
-                <button onClick={async () => { await signOut(); navigate('/') }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"><LogOut size={15} /> Logout</button>
+                <button onClick={async () => { await signOut(); navigate('/') }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"><LogOut size={15} /> {t('logout')}</button>
               </div>
             )}
           </div>
@@ -126,7 +137,7 @@ export default function TopHeader({ onMenuClick }) {
               autoFocus
               value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) { navigate(`/student/search?q=${encodeURIComponent(searchQuery)}`); setShowSearch(false) } }}
-              placeholder="Search complaints, requests..."
+              placeholder={t('searchComplaints')}
               className="w-full pl-8 pr-4 py-2 bg-violet-50 border border-violet-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>

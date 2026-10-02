@@ -31,40 +31,40 @@ import {
   DEMO_EVENTS
 } from '../../data/demoData'
 
-function getGreeting() {
+function getGreeting(t) {
   const h = new Date().getHours()
 
-  if (h < 12) return 'Good Morning'
-  if (h < 17) return 'Good Afternoon'
+  if (h < 12) return t('goodMorning')
+  if (h < 17) return t('goodAfternoon')
 
-  return 'Good Evening'
+  return t('goodEvening')
 }
 
-function classStatus(time) {
+function classStatus(time, t) {
   const now = new Date()
   const [h, m] = time.split(':').map(Number)
 
-  const t = new Date()
-  t.setHours(h, m, 0)
+  const tValue = new Date()
+  tValue.setHours(h, m, 0)
 
-  const diff = (t - now) / 60000
+  const diff = (tValue - now) / 60000
 
   if (diff > 30) {
     return {
-      label: 'Upcoming',
+      label: t('upcoming'),
       cls: 'bg-amber-100 text-amber-700'
     }
   }
 
   if (diff >= -60) {
     return {
-      label: 'Current',
+      label: t('current'),
       cls: 'bg-violet-100 text-violet-700'
     }
   }
 
   return {
-    label: 'Completed',
+    label: t('completed'),
     cls: 'bg-gray-100 text-gray-500'
   }
 }
@@ -80,7 +80,8 @@ export default function StudentDashboard() {
     notices,
     messMenu,
     dashboardVideos,
-    campusJournalItems
+    campusJournalItems,
+    t,
   } = useApp()
 
   const navigate = useNavigate()
@@ -238,11 +239,11 @@ export default function StudentDashboard() {
         {/* GREETING */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {getGreeting()}, {user?.name?.split(' ')[0]} 👋
+            {getGreeting(t)}, {user?.name?.split(' ')[0]} 👋
           </h1>
 
           <p className="text-gray-500 mt-1">
-            Here's what's happening on campus today.
+            {t('campusToday')}
           </p>
         </div>
 
@@ -252,7 +253,7 @@ export default function StudentDashboard() {
 
           {[
             {
-              label: 'Attendance',
+              label: t('attendance'),
               value: avgAtt === null ? '—' : `${avgAtt}%`,
               icon: ClipboardList,
               color: 'text-emerald-700',
@@ -260,7 +261,7 @@ export default function StudentDashboard() {
               to: '/student/attendance'
             },
             {
-              label: 'Pending Requests',
+              label: t('pendingRequests'),
               value: pendingReqs,
               icon: FileText,
               color: 'text-amber-700',
@@ -268,7 +269,7 @@ export default function StudentDashboard() {
               to: '/student/documents'
             },
             {
-              label: 'Open Complaints',
+              label: t('openComplaints'),
               value: openComplaints,
               icon: MessageSquareWarning,
               color: 'text-red-600',
@@ -276,7 +277,7 @@ export default function StudentDashboard() {
               to: '/student/complaints'
             },
             {
-              label: "Today's Classes",
+              label: t('todaysClasses'),
               value: todayClasses.length,
               icon: BookOpen,
               color: 'text-teal-700',
@@ -322,15 +323,15 @@ export default function StudentDashboard() {
 
         <LiquidGlassActions
           columns="three"
-          subtitle="Jump back into your campus services"
+          subtitle={t('jumpBack')}
           actions={[
-            { icon: MessageSquareWarning, label: 'Report a problem', description: 'Get campus support', to: '/student/complaints' },
-            { icon: DoorOpen, label: 'Apply for leave', description: 'Plan time away', to: '/student/leave' },
-            { icon: FileText, label: 'Request document', description: 'Certificates and records', to: '/student/documents' },
-            { icon: DoorOpen, label: 'Apply gate pass', description: 'Submit a pass request', to: '/student/leave' },
-            { icon: ClipboardList, label: 'View attendance', description: 'Track class progress', to: '/student/attendance' },
-            { icon: UtensilsCrossed, label: 'View mess menu', description: 'See today’s meals', to: '/student/mess' },
-            { icon: Award, label: 'Exam results', description: 'View published marks', to: '/student/results' },
+            { icon: MessageSquareWarning, label: t('reportProblem'), description: t('getCampusSupport'), to: '/student/complaints' },
+            { icon: DoorOpen, label: t('applyLeave'), description: t('planTimeAway'), to: '/student/leave' },
+            { icon: FileText, label: t('requestDocument'), description: t('certificatesRecords'), to: '/student/documents' },
+            { icon: DoorOpen, label: t('applyGatePass'), description: t('submitPassRequest'), to: '/student/leave' },
+            { icon: ClipboardList, label: t('viewAttendance'), description: t('trackClassProgress'), to: '/student/attendance' },
+            { icon: UtensilsCrossed, label: t('viewMessMenu'), description: t('seeMeals'), to: '/student/mess' },
+            { icon: Award, label: t('examMarks'), description: t('viewPublishedMarks'), to: '/student/results' },
           ]}
         />
 
@@ -344,7 +345,7 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between mb-4">
 
               <h2 className="font-semibold text-gray-900">
-                Attendance
+                {t('attendance')}
               </h2>
 
               <button
@@ -353,7 +354,7 @@ export default function StudentDashboard() {
                 }
                 className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
               >
-                View Details
+                {t('viewDetails')}
                 <ChevronRight size={14} />
               </button>
 
@@ -402,7 +403,7 @@ export default function StudentDashboard() {
                   <div className="w-2 h-2 bg-emerald-600 rounded-full" />
 
                   <span className="text-sm text-gray-600">
-                    Present:{' '}
+                    {t('present')}:{' '}
                     {attendancePresent}
                   </span>
                 </div>
@@ -411,7 +412,7 @@ export default function StudentDashboard() {
                   <div className="w-2 h-2 bg-gray-300 rounded-full" />
 
                   <span className="text-sm text-gray-600">
-                    Absent:{' '}
+                    {t('absent')}:{' '}
                     {attendanceAbsent}
                   </span>
                 </div>
@@ -436,7 +437,7 @@ export default function StudentDashboard() {
 
                 <AlertCircle size={14} />
 
-                Some subjects below 80% — check Attendance page
+                {t('someSubjectsBelow')}
 
               </div>
             )}
@@ -450,7 +451,7 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between mb-4">
 
               <h2 className="font-semibold text-gray-900">
-                Today's Classes
+                {t('todaysClasses')}
               </h2>
 
               <button
@@ -459,7 +460,7 @@ export default function StudentDashboard() {
                 }
                 className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
               >
-                Full Timetable
+                {t('fullTimetable')}
                 <ChevronRight size={14} />
               </button>
 
@@ -468,7 +469,7 @@ export default function StudentDashboard() {
             {todayClasses.length === 0 ? (
 
               <p className="text-gray-400 text-sm text-center py-6">
-                user?.department ? `No classes scheduled for ${today}.` : 'Add your department to your profile to see classes.'
+                {user?.department ? `${t('noClassesScheduled')} ${today}.` : t('addDepartmentToProfile')}
               </p>
 
             ) : (
@@ -478,7 +479,7 @@ export default function StudentDashboard() {
                 {todayClasses.map(cls => {
 
                   const s =
-                    classStatus(cls.time)
+                    classStatus(cls.time, t)
 
                   return (
                     <div
@@ -530,7 +531,7 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between mb-4">
 
               <h2 className="font-semibold text-gray-900">
-                Hostel
+                {t('hostel')}
               </h2>
 
               <button
@@ -539,7 +540,7 @@ export default function StudentDashboard() {
                 }
                 className="text-blue-600 text-xs hover:underline flex items-center gap-1"
               >
-                View Hostel
+                {t('viewHostel')}
                 <ChevronRight size={14} />
               </button>
 
@@ -559,12 +560,14 @@ export default function StudentDashboard() {
               <div>
 
                 <p className="font-semibold text-gray-900">
-                  Block {user?.hostel_block || 'Not assigned'},
-                  Room {user?.room_number || 'Not assigned'}
+                  {t('blockRoom', '', {
+                    block: user?.hostel_block || t('notAssigned'),
+                    room: user?.room_number || t('notAssigned'),
+                  })}
                 </p>
 
                 <p className="text-xs text-gray-500">
-                  {user?.isDemo ? `Floor ${DEMO_HOSTEL.floor} • ${DEMO_HOSTEL.roommates.length} roommates` : 'Current profile assignment'}
+                  {user?.isDemo ? `${t('floor')} ${DEMO_HOSTEL.floor} • ${t('roommates', { count: DEMO_HOSTEL.roommates.length })}` : t('currentAssignment')}
                 </p>
 
               </div>
@@ -576,7 +579,7 @@ export default function StudentDashboard() {
 
                 <AlertCircle size={14} />
 
-                Open Complaints: {openComplaints}
+                {t('openComplaintsLabel')}: {openComplaints}
 
               </div>
             )}
@@ -590,7 +593,7 @@ export default function StudentDashboard() {
             <div className="flex items-center justify-between mb-4">
 
               <h2 className="font-semibold text-gray-900">
-                Today's Mess Menu
+                {t('todayMessMenu')}
               </h2>
 
               <button
@@ -599,7 +602,7 @@ export default function StudentDashboard() {
                 }
                 className="text-blue-600 text-xs hover:underline flex items-center gap-1"
               >
-                Full Menu
+                {t('fullMenu')}
                 <ChevronRight size={14} />
               </button>
 
@@ -608,9 +611,9 @@ export default function StudentDashboard() {
             {menu ? <div className="space-y-2">
 
               {[
-                ['🌅', 'Breakfast', menu.breakfast],
-                ['☀️', 'Lunch', menu.lunch],
-                ['🌙', 'Dinner', menu.dinner]
+                ['🌅', t('breakfast'), menu.breakfast],
+                ['☀️', t('lunch'), menu.lunch],
+                ['🌙', t('dinner'), menu.dinner]
               ].map(
                 ([emoji, meal, item]) => (
                   <div
@@ -634,7 +637,7 @@ export default function StudentDashboard() {
                 )
               )}
 
-            </div> : <p className="py-3 text-sm text-gray-500">No menu has been published for today.</p>}
+            </div> : <p className="py-3 text-sm text-gray-500">{t('noMenu')}</p>}
 
           </div>
 
@@ -647,7 +650,7 @@ export default function StudentDashboard() {
           <div className="flex items-center justify-between mb-4">
 
             <h2 className="font-semibold text-gray-900">
-              Recent Requests & Complaints
+              {t('recentRequestsComplaints')}
             </h2>
 
             <button
@@ -656,7 +659,7 @@ export default function StudentDashboard() {
               }
               className="text-blue-600 text-xs hover:underline"
             >
-              View All
+              {t('viewAll')}
             </button>
 
           </div>
@@ -664,7 +667,7 @@ export default function StudentDashboard() {
           {recentItems.length === 0 ? (
 
             <p className="text-gray-400 text-sm text-center py-4">
-              No recent activity
+              {t('noRecentActivity')}
             </p>
 
           ) : (
@@ -732,7 +735,7 @@ export default function StudentDashboard() {
           <div className="flex items-center justify-between mb-3">
 
             <h3 className="font-semibold text-gray-900 text-sm">
-              Notifications
+              {t('notificationsCard')}
             </h3>
 
             <button
@@ -741,7 +744,7 @@ export default function StudentDashboard() {
               }
               className="text-blue-600 text-xs hover:underline"
             >
-              All
+              {t('all')}
             </button>
 
           </div>
@@ -749,7 +752,7 @@ export default function StudentDashboard() {
           {myNotifs.length === 0 ? (
 
             <p className="text-gray-400 text-xs text-center py-3">
-              No notifications
+              {t('noNotificationsLabel')}
             </p>
 
           ) : (
@@ -796,12 +799,12 @@ export default function StudentDashboard() {
         <div className="card">
 
           <h3 className="font-semibold text-gray-900 text-sm mb-3">
-            Upcoming Events
+            {t('upcomingEvents')}
           </h3>
 
           <div className="space-y-2">
 
-            {academicData.events.length === 0 ? <p className="py-3 text-xs text-gray-500">No upcoming events have been published.</p> : academicData.events.map(e => (
+            {academicData.events.length === 0 ? <p className="py-3 text-xs text-gray-500">{t('noUpcomingEvents')}</p> : academicData.events.map(e => (
 
               <div
                 key={e.id}
@@ -852,7 +855,7 @@ export default function StudentDashboard() {
           <div className="flex items-center justify-between mb-3">
 
             <h3 className="font-semibold text-gray-900 text-sm">
-              Important Notices
+              {t('importantNotices')}
             </h3>
 
             <button
@@ -861,7 +864,7 @@ export default function StudentDashboard() {
               }
                   className="text-blue-600 text-xs hover:underline"
             >
-              All
+              {t('all')}
             </button>
 
           </div>

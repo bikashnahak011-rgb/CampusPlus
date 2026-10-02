@@ -27,17 +27,20 @@ Attendance uses the configured threshold, and recent `attendance_history` record
 3. Run `supabase/complaints_realtime.sql` to enable the secured live complaint workflow.
 4. Run `supabase/ai_engine.sql` to add history, AI analysis, clusters, forecasts, and notification priority.
 5. Run `supabase/web_push.sql` to create the browser-subscription table.
-6. Create a backend environment file:
+6. Run `supabase/campus_journal.sql`, `supabase/exam_results.sql`, and `supabase/email_notifications.sql` to enable journal review notifications and asynchronous email delivery.
+7. Create a backend environment file:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
 ```
 
-Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ORIGINS`. Never expose the service-role key to React or commit `.env`.
+Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ORIGINS`. Include the exact frontend origin, including `https://` (for example, `https://campus-plus-zeta.vercel.app`); separate multiple origins with commas. Never expose the service-role key to React or commit `.env`.
+
+For email notifications, create a Resend account, verify a sender domain, and set `RESEND_API_KEY`, `EMAIL_FROM` (for example, `CampusOne <updates@your-verified-domain.edu>`), and `EMAIL_APP_URL` in the backend environment. The queue sends new notification emails in the background, normally within a few seconds, and retries transient failures up to five times. Do not put the Resend key in a `VITE_*` variable. Email delivery stays disabled until the API key and sender are configured.
 
 For Android/browser system notifications, generate a VAPID key pair with `npx web-push generate-vapid-keys` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in the backend environment. Keep the private key only on the backend. Deploy the frontend over HTTPS; each student must sign in, open Notifications, select **Enable alerts**, and allow notifications in the browser. Notice pushes go only to subscribed students matching the notice target.
 
-7. Install and run:
+8. Install and run:
 
 ```powershell
 py -3.11 -m venv .venv
@@ -118,7 +121,7 @@ Set `VITE_AI_API_URL=http://localhost:8000` in the React environment. Do not sen
 
 ## Deployment
 
-Deploy the backend as a Python web service with a start command such as `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`. Configure the Supabase URL, service-role key, CORS origin, and rate limit as platform secrets. Use HTTPS, restrict CORS to the deployed React origin, and rotate the service-role key if it is ever exposed.
+Deploy the backend as a Python web service with a start command such as `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`. Configure the Supabase URL, service-role key, CORS origin, and rate limit as platform secrets. Set Render `CORS_ORIGINS` to the exact Vercel origin (including `https://`); use HTTPS, restrict CORS to the deployed React origin, and rotate the service-role key if it is ever exposed.
 
 ## Demo data
 

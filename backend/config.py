@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     vapid_public_key: str | None = None
     vapid_private_key: str | None = None
     vapid_subject: str = "mailto:admin@nexcampus.app"
+    resend_api_key: str | None = None
+    email_from: str | None = None
+    email_app_url: str | None = None
+    email_poll_interval_seconds: float = 3.0
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
@@ -35,11 +39,16 @@ class Settings(BaseSettings):
 
     @property
     def allowed_origins(self) -> list[str]:
-        return [
-            origin.strip()
-            for origin in self.cors_origins.split(",")
-            if origin.strip()
-        ]
+        origins = []
+        for value in self.cors_origins.split(","):
+            origin = value.strip().rstrip("/")
+            if not origin:
+                continue
+            if "://" not in origin:
+                scheme = "http" if origin.startswith(("localhost", "127.0.0.1")) else "https"
+                origin = f"{scheme}://{origin}"
+            origins.append(origin)
+        return origins
 
 
 @lru_cache

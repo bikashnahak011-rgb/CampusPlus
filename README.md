@@ -46,8 +46,10 @@ Open **http://localhost:5173**
 5. Run `supabase/ai_engine.sql` to enable live insights and backend analysis tables
 6. Run `supabase/bus_tracking.sql` to enable secure GPS publishing and live bus route/location updates
 7. Run `supabase/faculty.sql` to enable the shared faculty directory and admin-only editing
-8. Deploy the FastAPI backend as a separate HTTPS service. Set its `SUPABASE_URL`, server-only `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ORIGINS` to the exact deployed frontend origin. See `backend/README.md`.
-9. Set these frontend environment variables in Vercel Project Settings → Environment Variables:
+8. Run `supabase/exam_results.sql` to enable SGPA/CGPA result publishing and student notifications
+9. Run `supabase/email_notifications.sql` to queue student email notifications for new in-app updates and journal reviews
+10. Deploy the FastAPI backend as a separate HTTPS service. Set its `SUPABASE_URL`, server-only `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS`, and the Resend email settings described in `backend/README.md`.
+11. Set these frontend environment variables in Vercel Project Settings → Environment Variables:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co

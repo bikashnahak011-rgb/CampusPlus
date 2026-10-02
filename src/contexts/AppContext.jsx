@@ -29,6 +29,7 @@ import {
 } from '../lib/dashboardVideos'
 import { requestBackend } from '../lib/backendApi'
 import { matchesNoticeTarget } from '../lib/noticeAudience'
+import { normalizeLanguage, translateText } from '../lib/translations'
 import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -90,6 +91,13 @@ export function AppProvider({ children }) {
   const [liteMode, setLiteMode] = useState(
     () => localStorage.getItem('cp_lite') === 'true'
   )
+
+  const [language, setLanguage] = useState(() => {
+    if (typeof localStorage === 'undefined') return 'en'
+    return normalizeLanguage(localStorage.getItem('cp_language'))
+  })
+
+  const t = useCallback((key, fallback, params) => translateText(language, key, fallback, params ?? (typeof fallback === 'object' && fallback !== null ? fallback : undefined)), [language])
 
   // ============================================================
   // DATA
@@ -630,6 +638,14 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('cp_language', language)
+    }
+
+    document.documentElement.lang = language
+  }, [language])
+
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
       localStorage.setItem(DASHBOARD_VIDEOS_STORAGE_KEY, JSON.stringify(sanitizeDashboardVideos(dashboardVideos)))
     }
   }, [dashboardVideos])
@@ -929,27 +945,25 @@ export function AppProvider({ children }) {
     const result = {
       id: crypto.randomUUID(),
       student_id: data.student_id,
-      exam_name: data.exam_name.trim(),
+      result_type: data.result_type,
+      result_value: Number(data.result_value),
       academic_year: data.academic_year.trim(),
       semester: Number(data.semester),
-      subject: data.subject.trim(),
-      subject_code: data.subject_code.trim() || null,
-      marks_obtained: Number(data.marks_obtained),
-      max_marks: Number(data.max_marks),
       published: true,
       published_at: new Date().toISOString(),
       created_by: user.id,
     }
-    if (!result.student_id || !result.exam_name || !result.academic_year || !result.subject) throw new Error('Complete all required result details.')
+    if (!result.student_id || !['SGPA', 'CGPA'].includes(result.result_type) || !result.academic_year) throw new Error('Complete all required result details.')
     if (!Number.isInteger(result.semester) || result.semester < 1 || result.semester > 12) throw new Error('Semester must be between 1 and 12.')
-    if (!Number.isFinite(result.marks_obtained) || !Number.isFinite(result.max_marks) || result.max_marks <= 0 || result.marks_obtained < 0 || result.marks_obtained > result.max_marks) {
-      throw new Error('Marks must be between zero and the maximum marks.')
-    }
+    if (!Number.isFinite(result.result_value) || result.result_value < 0 || result.result_value > 10) throw new Error('GPA must be between 0 and 10.')
 
     let saved = result
     if (!user.isDemo) {
       if (!supabase) throw new Error('Supabase is not configured.')
       const { data: created, error } = await supabase.from('exam_results').insert(result).select().single()
+      if (error?.code === 'PGRST205' || /could not find the table .*exam_results/i.test(error?.message || '')) {
+        throw new Error('Exam results are not set up in Supabase. Run supabase/exam_results.sql in the SQL Editor, then retry.')
+      }
       if (error) throw new Error(`Exam result could not be published: ${error.message}`)
       saved = created
     } else {
@@ -957,7 +971,7 @@ export function AppProvider({ children }) {
       if (!student) throw new Error('Choose a student from the current directory.')
       saved.student_name = student.name
       saved.student_roll = student.roll
-      addNotif(student.id, 'Exam result published', `${result.exam_name}: ${result.subject} result is ready.`, 'exam_result', '/student/results')
+      addNotif(student.id, 'Exam result published', `${result.result_type} ${result.result_value.toFixed(2)} is ready for semester ${result.semester}.`, 'exam_result', '/student/results')
     }
 
     setExamResults(previous => [saved, ...previous])
@@ -1278,6 +1292,11 @@ export function AppProvider({ children }) {
         // Lite mode
         liteMode,
         setLiteMode,
+
+        // Language
+        language,
+        setLanguage,
+        t,
 
         // Complaints
         complaints: user && !user.isDemo

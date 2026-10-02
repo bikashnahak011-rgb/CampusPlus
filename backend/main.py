@@ -1,5 +1,6 @@
+import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +12,7 @@ from slowapi.util import get_remote_address
 
 from .config import get_settings
 from .routes import assistant, attendance, complaints, insights, mess, notifications, push_notifications
+from .services.email_notifications import run_email_dispatcher
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("campuspulse-ai")
@@ -20,8 +22,14 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     logger.info("CampusPulse AI service started")
-    yield
-    logger.info("CampusPulse AI service stopped")
+    email_task = asyncio.create_task(run_email_dispatcher(), name="email-notification-dispatcher")
+    try:
+        yield
+    finally:
+        email_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await email_task
+        logger.info("CampusPulse AI service stopped")
 
 
 app = FastAPI(title="CampusPulse AI Automation Service", version="1.0.0", lifespan=lifespan)

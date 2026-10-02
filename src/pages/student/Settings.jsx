@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../../contexts/AppContext'
+import { LANGUAGE_OPTIONS } from '../../lib/translations'
 import { Zap, Bell, Eye, Moon, Globe, Shield } from 'lucide-react'
 
 const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) => (
@@ -23,10 +24,9 @@ const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) =
 )
 
 export default function SettingsPage() {
-  const { liteMode, setLiteMode } = useApp()
+  const { liteMode, setLiteMode, language, setLanguage, t } = useApp()
   const [largeText, setLargeText] = useState(() => localStorage.getItem('cp_large_text') === 'true')
   const [highContrast, setHighContrast] = useState(() => localStorage.getItem('cp_contrast') === 'true')
-  const [regionalLang, setRegionalLang] = useState(() => localStorage.getItem('cp_lang') === 'true')
 
   const handleLargeText = (v) => {
     setLargeText(v)
@@ -40,15 +40,10 @@ export default function SettingsPage() {
     document.body.classList.toggle('high-contrast', v)
   }
 
-  const handleRegionalLang = (v) => {
-    setRegionalLang(v)
-    localStorage.setItem('cp_lang', v)
-  }
-
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('settings')}</h1>
         <p className="text-gray-500 text-sm mt-1">Customize your NexCampus experience</p>
       </div>
 
@@ -82,11 +77,26 @@ export default function SettingsPage() {
           label="High Contrast" desc="Improve visibility with higher contrast"
           icon={Moon} accent="purple"
         />
-        <Toggle
-          value={regionalLang} onChange={handleRegionalLang}
-          label="Regional Language" desc="Switch to your preferred language (coming soon)"
-          icon={Globe} accent="purple"
-        />
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-purple-100 bg-purple-50 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
+              <Globe size={18} className="text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">{t('regionalLanguage')}</p>
+              <p className="text-xs text-gray-500">{t('languageDesc')}</p>
+            </div>
+          </div>
+          <select
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            className="rounded-xl border border-purple-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            {LANGUAGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.nativeLabel}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="card">
