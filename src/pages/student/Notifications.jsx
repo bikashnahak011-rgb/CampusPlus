@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, CheckCheck, CheckCircle, AlertCircle, Info, Megaphone, BellRing, FileCheck2, MessageSquareText, Award } from 'lucide-react'
+import { Bell, CheckCheck, CheckCircle, AlertCircle, Info, Megaphone, FileCheck2, MessageSquareText, Award } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import { EmptyState } from '../../components/ui/States'
-import { requestBackend } from '../../lib/backendApi'
-import { enablePushNotifications } from '../../lib/pushNotifications'
 import { matchesNoticeTarget } from '../../lib/noticeAudience'
 
 const typeIcon = { success: CheckCircle, warning: AlertCircle, info: Info, error: AlertCircle, message: MessageSquareText, notice: Megaphone, certificate: FileCheck2, exam_result: Award }
@@ -17,37 +15,6 @@ export default function NotificationsPage() {
   const { notifications, notices, markRead, markAllRead } = useApp()
   const navigate = useNavigate()
   const [tab, setTab] = useState('Notifications')
-  const [pushState, setPushState] = useState('idle')
-  const [pushError, setPushError] = useState('')
-
-  useEffect(() => {
-    let active = true
-    if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !('serviceWorker' in navigator)) return undefined
-
-    navigator.serviceWorker.ready
-      .then(registration => registration.pushManager.getSubscription())
-      .then(async subscription => {
-        if (!subscription) return
-        await requestBackend('notifications/push-subscription', { method: 'POST', body: subscription.toJSON() })
-        if (active) setPushState('enabled')
-      })
-      .catch(error => console.warn('Could not refresh this device push subscription:', error.message))
-
-    return () => { active = false }
-  }, [])
-
-  const enablePush = async () => {
-    setPushState('loading')
-    setPushError('')
-    try {
-      await enablePushNotifications()
-      setPushState('enabled')
-    } catch (error) {
-      setPushError(error.message || 'Could not enable push notifications.')
-      setPushState('error')
-    }
-  }
-
   const myNotifs = notifications.filter(n => n.user_id === user?.id)
   const myNotices = notices.filter(notice => matchesNoticeTarget(notice.target, user))
   const unread = myNotifs.filter(n => !n.read).length
@@ -71,22 +38,6 @@ export default function NotificationsPage() {
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${tab === t ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t}</button>
         ))}
       </div>
-
-      {tab === 'Notifications' && pushState !== 'enabled' && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
-          <div>
-            <p className="text-sm font-semibold text-gray-900">Get campus alerts on this device</p>
-            <p className="mt-1 text-xs text-gray-600">Allow notifications to receive notices when NexCampus is closed.</p>
-            {pushError && <p role="alert" className="mt-2 text-xs text-red-700">{pushError}</p>}
-          </div>
-          <button onClick={enablePush} disabled={pushState === 'loading'} className="btn-primary text-sm disabled:opacity-60">
-            <BellRing size={16} /> {pushState === 'loading' ? 'Enabling…' : 'Enable alerts'}
-          </button>
-        </div>
-      )}
-      {tab === 'Notifications' && pushState === 'enabled' && (
-        <p className="text-sm text-green-700">Alerts are enabled on this device.</p>
-      )}
 
       {tab === 'Notifications' && (
         <div className="space-y-2">
