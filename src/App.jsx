@@ -309,9 +309,9 @@ export default function App() {
 
       <AuthProvider>
 
-        <AppProvider>
+        <ToastProvider>
 
-          <ToastProvider>
+          <AppProvider>
 
             <PWAInstallPrompt />
 
@@ -609,9 +609,9 @@ export default function App() {
               </Routes>
             </Suspense>
 
-          </ToastProvider>
+          </AppProvider>
 
-        </AppProvider>
+        </ToastProvider>
 
       </AuthProvider>
 

@@ -33,6 +33,7 @@ import { sendEmailNotification } from '../lib/emailNotifications'
 import { normalizeLanguage, translateText } from '../lib/translations'
 import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../components/ui/Toast'
 
 const AppContext = createContext(null)
 
@@ -84,6 +85,7 @@ function normalizeCampusRoom(room) {
 
 export function AppProvider({ children }) {
   const { user } = useAuth()
+  const toast = useToast()
 
   // ============================================================
   // LITE MODE
@@ -545,7 +547,12 @@ export function AppProvider({ children }) {
     loadNotifications()
     const channel = supabase
       .channel(`notifications-${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, loadNotifications)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+        const n = payload.new
+        toast(n.title, n.message, n.type || 'info')
+        loadNotifications()
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, loadNotifications)
       .subscribe()
 
     return () => {
@@ -599,28 +606,14 @@ export function AppProvider({ children }) {
   // ============================================================
 
   const addNotif = useCallback(
-    (
-      userId,
-      title,
-      message,
-      type = 'info',
-      link = ''
-    ) => {
+    (userId, title, message, type = 'info', link = '') => {
+      if (userId === user?.id) toast(title, message, type)
       setNotifications((previous) => [
-        {
-          id: crypto.randomUUID(),
-          user_id: userId,
-          title,
-          message,
-          type,
-          read: false,
-          created_at: new Date().toISOString(),
-          link,
-        },
+        { id: crypto.randomUUID(), user_id: userId, title, message, type, read: false, created_at: new Date().toISOString(), link },
         ...previous,
       ])
     },
-    []
+    [user, toast]
   )
 
   // ============================================================
