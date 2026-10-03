@@ -891,12 +891,20 @@ export function AppProvider({ children }) {
     let saved = result
     if (!user.isDemo) {
       if (!supabase) throw new Error('Supabase is not configured.')
-      const { data: created, error } = await supabase.from('exam_results').insert(result).select().single()
-      if (error?.code === 'PGRST205' || /could not find the table .*exam_results/i.test(error?.message || '')) {
+      // Plain insert (no .select()) to avoid pg_net http_post trigger errors
+      const { error: insertError } = await supabase.from('exam_results').insert(result)
+      if (insertError?.code === 'PGRST205' || /could not find the table .*exam_results/i.test(insertError?.message || '')) {
         throw new Error('Exam results are not set up in Supabase. Run supabase/exam_results.sql in the SQL Editor, then retry.')
       }
-      if (error) throw new Error(`Exam result could not be published: ${error.message}`)
-      saved = created
+      if (insertError && !insertError.message?.includes('http_post') && !insertError.message?.includes('extensions.http')) {
+        throw new Error(`Exam result could not be published: ${insertError.message}`)
+      }
+      // Fetch the saved row back
+      const { data: fetched, error: fetchError } = await supabase.from('exam_results').select('*').eq('id', result.id).single()
+      if (fetchError || !fetched) {
+        throw new Error(`Exam result could not be published: ${insertError?.message || fetchError?.message}`)
+      }
+      saved = fetched
       sendEmailNotification('exam_result', {
         student_id: saved.student_id,
         result_type: saved.result_type,
