@@ -31,6 +31,7 @@ import AppLogo from '../components/AppLogo'
 import Ambient3DBackground from '../components/Ambient3DBackground'
 import { useApp } from '../contexts/AppContext'
 import { LANGUAGE_OPTIONS } from '../lib/translations'
+import { DEMO_COMPANIES } from '../lib/careerHub'
 
 const studentFeatures = [
   { icon: MessageSquareWarning, title: 'Smart Complaints', desc: 'AI-assisted issue reporting that routes the right concern to the correct office instantly.' },
@@ -189,6 +190,33 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="company-ticker-section py-14 sm:py-16 overflow-hidden">
+          <div className="text-center mb-8">
+            <div className="section-tag mx-auto">Campus placement partners</div>
+            <p className="mt-3 text-sm text-slate-500">Companies actively hiring from campuses like yours</p>
+          </div>
+          <div className="company-ticker-track">
+            <div className="company-ticker-row">
+              {[...DEMO_COMPANIES, ...DEMO_COMPANIES].map((company, i) => (
+                <div key={`row1-${company.id}-${i}`} className="company-ticker-card">
+                  <span className="company-ticker-dot" style={{ background: company.logo_color }} />
+                  <span className="company-ticker-name">{company.name}</span>
+                  <span className="company-ticker-industry">{company.industry}</span>
+                </div>
+              ))}
+            </div>
+            <div className="company-ticker-row reverse">
+              {[...DEMO_COMPANIES, ...DEMO_COMPANIES].reverse().map((company, i) => (
+                <div key={`row2-${company.id}-${i}`} className="company-ticker-card">
+                  <span className="company-ticker-dot" style={{ background: company.logo_color }} />
+                  <span className="company-ticker-name">{company.name}</span>
+                  <span className="company-ticker-industry">{company.industry}</span>
+                </div>
+              ))}
             </div>
           </div>
         </section>

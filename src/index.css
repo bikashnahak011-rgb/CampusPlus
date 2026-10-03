@@ -2245,3 +2245,88 @@ body.lite-mode * { animation: none !important; transition: none !important; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   COMPANY TICKER — Landing Page
+   ============================================================ */
+
+.company-ticker-section {
+  background: linear-gradient(to bottom, #f8f7ff, #ffffff);
+}
+
+.company-ticker-track {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.company-ticker-row {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.company-ticker-row.reverse {
+  animation: ticker-scroll-reverse 28s linear infinite;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes ticker-scroll-reverse {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.company-ticker-row:hover,
+.company-ticker-row.reverse:hover {
+  animation-play-state: paused;
+}
+
+.company-ticker-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: #ffffff;
+  border: 1px solid #ede9fe;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(109, 40, 217, 0.06);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  cursor: default;
+}
+
+.company-ticker-card:hover {
+  border-color: #c4b5fd;
+  box-shadow: 0 4px 16px rgba(109, 40, 217, 0.12);
+}
+
+.company-ticker-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.company-ticker-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1e1b4b;
+  letter-spacing: -0.01em;
+}
+
+.company-ticker-industry {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  background: #f5f3ff;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+}
