@@ -7,6 +7,7 @@ export default defineConfig({
     tailwindcss(),
     react(),
   ],
+  base: process.env.GITHUB_PAGES ? '/campusplus/' : '/',
   build: {
     rollupOptions: {
       output: {

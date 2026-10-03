@@ -523,106 +523,36 @@ export function AppProvider({ children }) {
   }, [user])
 
   // ============================================================
-  // FETCH NOTIFICATIONS FROM FASTAPI
-  // ============================================================
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      // Demo users use local demo notifications
-      if (user?.isDemo) {
-        return
-      }
-
-      if (!supabase || !user) {
-        return
-      }
-
-      if (!AI_API_URL) {
-        console.warn('Live notifications are unavailable: VITE_AI_API_URL is not configured.')
-        return
-      }
-
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession()
-
-      if (sessionError) {
-        console.error(
-          'Session error:',
-          sessionError.message
-        )
-        return
-      }
-
-      if (!session?.access_token) {
-        console.warn(
-          'No Supabase access token found.'
-        )
-        return
-      }
-
-      const response = await fetch(
-        `${AI_API_URL}/api/notifications/me`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-
-        console.error(
-          'Notification API error:',
-          response.status,
-          errorText
-        )
-
-        return
-      }
-
-      const data = await response.json()
-
-      console.log(
-        'Notifications received from FastAPI:',
-        data
-      )
-
-      if (Array.isArray(data)) {
-        setNotifications(data)
-      }
-    } catch (error) {
-      console.error(
-        'Failed to fetch notifications:',
-        error
-      )
-    }
-  }, [user])
-
-  // ============================================================
-  // LOAD REAL NOTIFICATIONS
+  // LOAD REAL NOTIFICATIONS FROM SUPABASE
   // ============================================================
 
   useEffect(() => {
-    if (!user || user.isDemo) {
-      return
+    if (!user || user.isDemo || !supabase) return undefined
+
+    let active = true
+    const loadNotifications = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (!active) return
+      if (error) { console.error('Failed to load notifications:', error.message); return }
+      setNotifications(data || [])
     }
 
-    fetchNotifications()
-
-    // Check every 5 seconds
-    const interval = setInterval(() => {
-      fetchNotifications()
-    }, 5000)
+    loadNotifications()
+    const channel = supabase
+      .channel(`notifications-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, loadNotifications)
+      .subscribe()
 
     return () => {
-      clearInterval(interval)
+      active = false
+      supabase.removeChannel(channel)
     }
-  }, [user, fetchNotifications])
+  }, [user])
 
   // ============================================================
   // LITE MODE
@@ -1113,7 +1043,9 @@ export function AppProvider({ children }) {
       return notification
     }
 
-    return requestBackend('notifications/admin', { method: 'POST', body: notification })
+    const { data, error } = await supabase.from('notifications').insert(notification).select().single()
+    if (error) throw new Error(`Message could not be sent: ${error.message}`)
+    return data
   }, [addNotif, user])
 
   // ============================================================
@@ -1164,6 +1096,31 @@ export function AppProvider({ children }) {
           })
         } catch (pushError) {
           console.warn('Notice was saved, but push delivery is unavailable:', pushError.message)
+        }
+
+        // Insert notification rows for all students so they appear in the Notifications tab
+        try {
+          const { data: targetedStudents } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'student')
+          if (targetedStudents?.length) {
+            const notifRows = targetedStudents
+              .filter(s => matchesNoticeTarget(saved.target, s))
+              .map(s => ({
+                user_id: s.id,
+                title: saved.title,
+                message: saved.content,
+                type: 'notice',
+                link: '/student/notifications',
+                read: false,
+              }))
+            if (notifRows.length) {
+              await supabase.from('notifications').insert(notifRows)
+            }
+          }
+        } catch (notifError) {
+          console.warn('Notice saved, but notification rows could not be created:', notifError.message)
         }
 
         setNotices(previous => [saved, ...previous])
