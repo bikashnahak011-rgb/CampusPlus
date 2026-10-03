@@ -1,11 +1,28 @@
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from backend.config import Settings
-from backend.services.email_notifications import build_email_content, send_notification_email
+from backend.services.email_notifications import (
+    _requeue_stale_sending_emails,
+    build_email_content,
+    send_notification_email,
+)
 
 
 class EmailNotificationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_startup_requeues_only_stale_sending_emails(self):
+        supabase = MagicMock()
+        query = supabase.table.return_value.update.return_value.eq.return_value.lt.return_value
+
+        with patch("backend.services.email_notifications.asyncio.to_thread", new_callable=AsyncMock) as to_thread:
+            await _requeue_stale_sending_emails(supabase)
+
+        supabase.table.assert_called_once_with("notification_email_queue")
+        supabase.table.return_value.update.assert_called_once_with({"status": "pending", "last_error": None})
+        supabase.table.return_value.update.return_value.eq.assert_called_once_with("status", "sending")
+        to_thread.assert_awaited_once()
+        self.assertIs(to_thread.await_args.args[1], query)
+
     def test_email_content_escapes_untrusted_text_and_links_to_the_app(self):
         html_body, text_body = build_email_content(
             {

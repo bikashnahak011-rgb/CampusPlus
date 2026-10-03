@@ -1877,6 +1877,13 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   animation: fadeIn 0.55s ease-out both;
 }
 
+/* Prevent dashboard cards from floating/bobbing */
+.dashboard-selectable .card,
+.dashboard-main .card {
+  animation: fadeIn 0.55s ease-out both !important;
+  transform: none;
+}
+
 .student-service-card:hover,
 .student-service-card:focus-visible {
   border-color: #8b5cf6;

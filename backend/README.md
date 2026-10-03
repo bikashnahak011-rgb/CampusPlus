@@ -28,7 +28,8 @@ Attendance uses the configured threshold, and recent `attendance_history` record
 4. Run `supabase/ai_engine.sql` to add history, AI analysis, clusters, forecasts, and notification priority.
 5. Run `supabase/web_push.sql` to create the browser-subscription table.
 6. Run `supabase/campus_journal.sql`, `supabase/exam_results.sql`, and `supabase/email_notifications.sql` to enable journal review notifications and asynchronous email delivery.
-7. Create a backend environment file:
+7. Run `supabase/career_hub.sql` after `production_hardening.sql` to create Career Hub content, student progress, private certificate storage, workshop registrations, and company verification policies.
+8. Create a backend environment file:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
@@ -40,7 +41,7 @@ For email notifications, create a Resend account, verify a sender domain, and se
 
 For Android/browser system notifications, generate a VAPID key pair with `npx web-push generate-vapid-keys` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in the backend environment. Keep the private key only on the backend. Deploy the frontend over HTTPS; each student must sign in, open Notifications, select **Enable alerts**, and allow notifications in the browser. Notice pushes go only to subscribed students matching the notice target.
 
-8. Install and run:
+9. Install and run:
 
 ```powershell
 py -3.11 -m venv .venv

@@ -37,6 +37,7 @@ import AdminLayout from './components/layout/AdminLayout'
 */
 
 const StudentDashboard = lazy(() => import('./pages/student/Dashboard'))
+const CareerHubPage = lazy(() => import('./pages/student/CareerHub'))
 const CampusJournalPage = lazy(() => import('./pages/student/CampusJournal'))
 const ServicesPage = lazy(() => import('./pages/student/Services'))
 const AttendancePage = lazy(() => import('./pages/student/Attendance'))
@@ -67,6 +68,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
 const AdminCampusJournal = lazy(() => import('./pages/admin/CampusJournal'))
 const AdminStudents = lazy(() => import('./pages/admin/Students'))
 const AdminExamResults = lazy(() => import('./pages/admin/ExamResults'))
+const AdminCareerManagement = lazy(() => import('./pages/admin/CareerManagement'))
 const AdminComplaints = lazy(() => import('./pages/admin/Complaints'))
 const AdminRequests = lazy(() => import('./pages/admin/Requests'))
 const AdminHostel = lazy(() => import('./pages/admin/Hostel'))
@@ -384,6 +386,11 @@ export default function App() {
                 />
 
                 <Route
+                  path="career-hub"
+                  element={<CareerHubPage />}
+                />
+
+                <Route
                   path="campus-journal"
                   element={<CampusJournalPage />}
                 />
@@ -552,6 +559,11 @@ export default function App() {
                 <Route
                   path="campus-journal"
                   element={<AdminCampusJournal />}
+                />
+
+                <Route
+                  path="career-management"
+                  element={<AdminCareerManagement />}
                 />
 
                 <Route

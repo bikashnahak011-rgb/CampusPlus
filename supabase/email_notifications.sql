@@ -35,6 +35,48 @@ CREATE TRIGGER notifications_email_queue_event
   AFTER INSERT ON public.notifications
   FOR EACH ROW EXECUTE FUNCTION public.enqueue_notification_email();
 
+CREATE OR REPLACE FUNCTION public.notify_students_of_notice()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.notifications (user_id, title, message, type, priority, link)
+  SELECT
+    profiles.id,
+    NEW.title,
+    NEW.content,
+    'notice',
+    CASE WHEN NEW.important THEN 'high' ELSE 'normal' END,
+    '/student/notifications'
+  FROM public.profiles AS profiles
+  WHERE profiles.role = 'student'
+    AND CASE
+      WHEN NEW.target = 'All Students' THEN TRUE
+      WHEN NEW.target = 'Computer Science' THEN
+        concat_ws(' ', profiles.department, profiles.branch) ~* '(computer|(^|[^a-z])cse([^a-z]|$)|(^|[^a-z])cs([^a-z]|$)|information technology)'
+      WHEN NEW.target = 'Mechanical Engg' THEN
+        concat_ws(' ', profiles.department, profiles.branch) ~* '(mechanical|(^|[^a-z])mech([^a-z]|$))'
+      WHEN NEW.target = 'Electronics' THEN
+        concat_ws(' ', profiles.department, profiles.branch) ~* '(electronics|(^|[^a-z])ece([^a-z]|$)|electrical)'
+      WHEN NEW.target ~ '^Year [0-9]+$' THEN
+        profiles.year = substring(NEW.target FROM '^Year ([0-9]+)$')::INTEGER
+      WHEN NEW.target = 'Hostel' THEN
+        NULLIF(profiles.hostel_block, '') IS NOT NULL
+      WHEN NEW.target = 'Day Scholars' THEN
+        NULLIF(profiles.hostel_block, '') IS NULL
+      ELSE FALSE
+    END;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS notices_notification_event ON public.notices;
+CREATE TRIGGER notices_notification_event
+  AFTER INSERT ON public.notices
+  FOR EACH ROW EXECUTE FUNCTION public.notify_students_of_notice();
+
 CREATE OR REPLACE FUNCTION public.notify_campus_journal_review()
 RETURNS TRIGGER
 LANGUAGE plpgsql

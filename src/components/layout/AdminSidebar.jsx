@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, GraduationCap, MessageSquareWarning, ClipboardList, Building2, UtensilsCrossed, BusFront, MapPinned, Megaphone, Calendar, BarChart3, Brain, Settings, LogOut, X, UserCircle, Award, BookOpen } from 'lucide-react'
+import { LayoutDashboard, Users, GraduationCap, MessageSquareWarning, ClipboardList, Building2, UtensilsCrossed, BusFront, MapPinned, Megaphone, Calendar, BarChart3, Brain, Settings, LogOut, X, UserCircle, Award, BookOpen, BriefcaseBusiness } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLogo from '../AppLogo'
 
@@ -18,6 +18,7 @@ const NAV = [
   { to: '/admin/room-finder', icon: MapPinned, label: 'Room Directory' },
   { to: '/admin/notices', icon: Megaphone, label: 'Notices' },
   { to: '/admin/campus-journal', icon: BookOpen, label: 'Campus Journal' },
+  { to: '/admin/career-management', icon: BriefcaseBusiness, label: 'Career Management' },
   { to: '/admin/attendance', icon: Calendar, label: 'Attendance' },
   { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/admin/ai-insights', icon: Brain, label: 'AI Insights' },

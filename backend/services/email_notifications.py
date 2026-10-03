@@ -147,6 +147,17 @@ async def dispatch_pending_emails_once(
     return sent
 
 
+async def _requeue_stale_sending_emails(supabase) -> None:
+    stale_time = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    await asyncio.to_thread(
+        _run_query,
+        supabase.table("notification_email_queue")
+        .update({"status": "pending", "last_error": None})
+        .eq("status", "sending")
+        .lt("updated_at", stale_time),
+    )
+
+
 async def run_email_dispatcher() -> None:
     settings = get_settings()
     if not settings.resend_api_key or not settings.email_from:
@@ -154,23 +165,8 @@ async def run_email_dispatcher() -> None:
         return
 
     supabase = get_supabase()
-    startup_time = datetime.now(timezone.utc).isoformat()
-    stale_time = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
     try:
-        await asyncio.to_thread(
-            _run_query,
-            supabase.table("notification_email_queue")
-            .update({"status": "skipped", "last_error": "Email notifications were enabled after this event."})
-            .eq("status", "pending")
-            .lt("created_at", startup_time),
-        )
-        await asyncio.to_thread(
-            _run_query,
-            supabase.table("notification_email_queue")
-            .update({"status": "pending", "last_error": None})
-            .eq("status", "sending")
-            .lt("updated_at", stale_time),
-        )
+        await _requeue_stale_sending_emails(supabase)
     except Exception:
         logger.exception("Could not initialize the email notification queue")
 

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Grid3X3, ClipboardList, Calendar, GraduationCap, Building2, UtensilsCrossed, BusFront, MapPinned, MessageSquareWarning, DoorOpen, FileText, CreditCard, Bell, User, Settings, LogOut, X, Zap, Award, BookOpen } from 'lucide-react'
+import { LayoutDashboard, Grid3X3, ClipboardList, Calendar, GraduationCap, Building2, UtensilsCrossed, BusFront, MapPinned, MessageSquareWarning, DoorOpen, FileText, CreditCard, Bell, User, Settings, LogOut, X, Zap, Award, BookOpen, BriefcaseBusiness } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import AppLogo from '../AppLogo'
@@ -26,6 +26,7 @@ export default function StudentSidebar({ open, onClose }) {
     { to: '/student/complaints', icon: MessageSquareWarning, label: t('complaints') },
     { to: '/student/leave', icon: DoorOpen, label: t('leaveGatePass') },
     { to: '/student/documents', icon: FileText, label: t('documents') },
+    { to: '/student/career-hub', icon: BriefcaseBusiness, label: 'Career Hub' },
     { to: '/student/fees', icon: CreditCard, label: t('feesDues') },
     { to: '/student/notifications', icon: Bell, label: t('notifications') },
     { to: '/student/profile', icon: User, label: t('profile') },

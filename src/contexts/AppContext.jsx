@@ -29,6 +29,7 @@ import {
 } from '../lib/dashboardVideos'
 import { requestBackend } from '../lib/backendApi'
 import { matchesNoticeTarget } from '../lib/noticeAudience'
+import { sendEmailNotification } from '../lib/emailNotifications'
 import { normalizeLanguage, translateText } from '../lib/translations'
 import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
@@ -966,6 +967,13 @@ export function AppProvider({ children }) {
       }
       if (error) throw new Error(`Exam result could not be published: ${error.message}`)
       saved = created
+      sendEmailNotification('exam_result', {
+        student_id: saved.student_id,
+        result_type: saved.result_type,
+        result_value: saved.result_value,
+        semester: saved.semester,
+        academic_year: saved.academic_year,
+      })
     } else {
       const student = students.find(item => item.id === result.student_id)
       if (!student) throw new Error('Choose a student from the current directory.')
@@ -1127,6 +1135,13 @@ export function AppProvider({ children }) {
         const { data: saved, error } = await supabase.from('notices').insert(notice).select().single()
         if (error) throw new Error(`Notice could not be published: ${error.message}`)
 
+        sendEmailNotification('notice', {
+          title: saved.title,
+          content: saved.content,
+          target: saved.target || 'All Students',
+          important: Boolean(saved.important),
+        })
+
         try {
           await requestBackend('notifications/push-notice', {
             method: 'POST',
@@ -1216,6 +1231,11 @@ export function AppProvider({ children }) {
       const { data, error } = await supabase.from('campus_journal').update(updates).eq('id', id).select().single()
       if (error) throw new Error(`Journal submission could not be reviewed: ${error.message}`)
       saved = data
+      sendEmailNotification('journal_review', {
+        student_id: saved.student_id,
+        title: saved.title,
+        status: saved.status,
+      })
     }
     setCampusJournalItems(previous => previous.map(item => item.id === id ? saved : item))
     return saved
