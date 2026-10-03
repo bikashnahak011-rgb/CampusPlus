@@ -1132,8 +1132,18 @@ export function AppProvider({ children }) {
       if (!user?.isDemo) {
         if (!supabase || user?.role !== 'admin') throw new Error('Only a signed-in administrator can publish notices.')
 
-        const { data: saved, error } = await supabase.from('notices').insert(notice).select().single()
-        if (error) throw new Error(`Notice could not be published: ${error.message}`)
+        // Use plain insert (no .select()) to avoid triggering pg_net http_post errors
+        const { error: insertError } = await supabase.from('notices').insert(notice)
+        if (insertError && !insertError.message?.includes('http_post') && !insertError.message?.includes('extensions.http')) {
+          throw new Error(`Notice could not be published: ${insertError.message}`)
+        }
+        // Fetch the saved row back
+        const { data: fetched, error: fetchError } = await supabase.from('notices').select('*').eq('id', notice.id).single()
+        if (fetchError || !fetched) {
+          // Row wasn't saved at all
+          throw new Error(`Notice could not be published: ${insertError?.message || fetchError?.message}`)
+        }
+        const saved = fetched
 
         sendEmailNotification('notice', {
           title: saved.title,
