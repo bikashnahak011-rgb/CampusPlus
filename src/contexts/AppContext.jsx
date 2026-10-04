@@ -606,10 +606,10 @@ export function AppProvider({ children }) {
   // ============================================================
 
   const addNotif = useCallback(
-    (userId, title, message, type = 'info', link = '') => {
+    (userId, title, message, type = 'info', link = '', priority = 'normal') => {
       if (userId === user?.id) toast(title, message, type)
       setNotifications((previous) => [
-        { id: crypto.randomUUID(), user_id: userId, title, message, type, read: false, created_at: new Date().toISOString(), link },
+        { id: crypto.randomUUID(), user_id: userId, title, message, type, priority, read: false, created_at: new Date().toISOString(), link },
         ...previous,
       ])
     },
@@ -1055,9 +1055,14 @@ export function AppProvider({ children }) {
 
   const addNotice = useCallback(
     async (data, adminName) => {
+      const priority = ['critical', 'important', 'normal'].includes(data.priority)
+        ? data.priority
+        : data.important ? 'important' : 'normal'
       const notice = {
         id: crypto.randomUUID(),
         ...data,
+        priority,
+        important: priority !== 'normal',
         created_by: adminName,
         created_at: new Date().toISOString(),
       }
@@ -1082,50 +1087,30 @@ export function AppProvider({ children }) {
           title: saved.title,
           content: saved.content,
           target: saved.target || 'All Students',
-          important: Boolean(saved.important),
+          priority: saved.priority || 'normal',
         })
 
+        setNotices(previous => [saved, ...previous])
+
+        let delivery = null
+        let deliveryError = ''
+
         try {
-          await requestBackend('notifications/push-notice', {
+          delivery = await requestBackend('notifications/push-notice', {
             method: 'POST',
             body: {
               title: saved.title,
               body: saved.content,
               target: saved.target || 'All Students',
-              important: Boolean(saved.important),
+              priority: saved.priority || 'normal',
             },
           })
         } catch (pushError) {
           console.warn('Notice was saved, but push delivery is unavailable:', pushError.message)
+          deliveryError = pushError.message
         }
 
-        // Insert notification rows for all students so they appear in the Notifications tab
-        try {
-          const { data: targetedStudents } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'student')
-          if (targetedStudents?.length) {
-            const notifRows = targetedStudents
-              .filter(s => matchesNoticeTarget(saved.target, s))
-              .map(s => ({
-                user_id: s.id,
-                title: saved.title,
-                message: saved.content,
-                type: 'notice',
-                link: '/student/notifications',
-                read: false,
-              }))
-            if (notifRows.length) {
-              await supabase.from('notifications').insert(notifRows)
-            }
-          }
-        } catch (notifError) {
-          console.warn('Notice saved, but notification rows could not be created:', notifError.message)
-        }
-
-        setNotices(previous => [saved, ...previous])
-        return saved
+        return { ...saved, delivery, deliveryError }
       }
 
       students
@@ -1135,7 +1120,8 @@ export function AppProvider({ children }) {
           notice.title,
           notice.content,
           'notice',
-          '/student/notifications'
+          '/student/notifications',
+          priority
         ))
 
       setNotices(previous => [notice, ...previous])

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../../contexts/AppContext'
 import { LANGUAGE_OPTIONS } from '../../lib/translations'
+import { Link } from 'react-router-dom'
 import { Zap, Bell, Eye, Moon, Globe, Shield } from 'lucide-react'
 
 const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) => (
@@ -61,7 +62,11 @@ export default function SettingsPage() {
         <h2 className="font-semibold text-gray-900 mb-2">Notifications</h2>
         <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4">
           <Bell size={20} className="shrink-0 text-blue-600" />
-          <div><p className="text-sm font-medium text-gray-900">In-app notifications</p><p className="text-xs text-gray-600">Alerts appear in the bell and Notifications page while you are signed in. Browser push while the app is closed is not configured.</p></div>
+          <div>
+            <p className="text-sm font-medium text-gray-900">Campus and browser alerts</p>
+            <p className="text-xs text-gray-600">Notices appear in your notification bell. Enable free browser push to receive alerts when you are away. Email verification codes use Supabase Auth.</p>
+            <Link to="/student/notifications" className="mt-2 inline-block text-xs font-semibold text-blue-700 hover:underline">Set up push notifications</Link>
+          </div>
         </div>
       </div>
 

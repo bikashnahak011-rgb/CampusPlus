@@ -1,6 +1,8 @@
 import unittest
 
-from backend.routes.push_notifications import _matches_target
+from pydantic import ValidationError
+
+from backend.routes.push_notifications import PushNotice, _matches_target
 
 
 class PushTargetTests(unittest.TestCase):
@@ -20,6 +22,19 @@ class PushTargetTests(unittest.TestCase):
         self.assertFalse(_matches_target("Day Scholars", hostel_profile))
         self.assertTrue(_matches_target("Day Scholars", day_profile))
 
+    def test_notice_priority_accepts_all_supported_levels(self):
+        for priority in ("critical", "important", "normal"):
+            with self.subTest(priority=priority):
+                notice = PushNotice(title="Campus update", body="Details", priority=priority)
+                self.assertEqual(notice.priority, priority)
+
+    def test_legacy_important_flag_maps_to_important_priority(self):
+        notice = PushNotice(title="Campus update", body="Details", important=True)
+        self.assertEqual(notice.priority, "important")
+
+    def test_notice_rejects_unknown_priority(self):
+        with self.assertRaises(ValidationError):
+            PushNotice(title="Campus update", body="Details", priority="urgent")
 
 if __name__ == "__main__":
     unittest.main()

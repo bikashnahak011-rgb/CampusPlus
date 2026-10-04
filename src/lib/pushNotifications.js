@@ -19,8 +19,15 @@ export async function enablePushNotifications() {
     throw new Error('Notifications are blocked. Allow them in your browser or phone settings, then try again.')
   }
 
+  let registration
+  try {
+    await navigator.serviceWorker.register('/sw.js')
+    registration = await navigator.serviceWorker.ready
+  } catch (error) {
+    throw new Error(`Could not start the notification service worker: ${error.message}`)
+  }
+
   const { public_key: publicKey } = await requestBackend('notifications/push-public-key')
-  const registration = await navigator.serviceWorker.ready
   const subscription = await registration.pushManager.getSubscription() || await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: decodeBase64Url(publicKey),

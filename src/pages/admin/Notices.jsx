@@ -6,6 +6,16 @@ import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 
 const TARGETS = ['All Students','Computer Science','Mechanical Engg','Electronics','Year 1','Year 2','Year 3','Hostel','Day Scholars']
+const PRIORITIES = [
+  { value: 'critical', label: 'Critical' },
+  { value: 'important', label: 'Important' },
+  { value: 'normal', label: 'Normal' },
+]
+const priorityStyles = {
+  critical: 'bg-red-100 text-red-700',
+  important: 'bg-orange-100 text-orange-700',
+  normal: 'bg-gray-100 text-gray-600',
+}
 
 export default function AdminNotices() {
   const { user } = useAuth()
@@ -13,17 +23,32 @@ export default function AdminNotices() {
   const toast = useToast()
   const [showForm, setShowForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [form, setForm] = useState({ title:'', content:'', target:'All Students', important:false })
+  const [form, setForm] = useState({ title:'', content:'', target:'All Students', priority:'normal' })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.title || !form.content) { toast('Please fill all fields.','warning'); return }
     setSubmitting(true)
     try {
-      await addNotice(form, user?.name)
+      const publishedNotice = await addNotice(form, user?.name)
       setShowForm(false)
-      setForm({ title:'', content:'', target:'All Students', important:false })
-      toast('Notice published successfully.','success')
+      setForm({ title:'', content:'', target:'All Students', priority:'normal' })
+      if (user?.isDemo) {
+        toast('Demo notice published. Live push requires a connected backend.', 'success')
+        return
+      }
+      const delivery = publishedNotice.delivery
+      if (publishedNotice.deliveryError || delivery?.in_app_failed > 0 || !delivery?.push_configured || delivery?.push_eligible === 0) {
+        const unavailable = publishedNotice.deliveryError || [
+          delivery?.in_app_failed > 0 && 'in-app bell alerts could not be created',
+          delivery?.notified === 0 && 'there are no students in this notice audience',
+          !delivery?.push_configured && 'push service is not configured',
+          delivery?.push_configured && delivery?.push_eligible === 0 && 'no students have enabled browser push',
+        ].filter(Boolean).join('; ')
+        toast(`Notice published, but ${unavailable}.`, 'warning')
+      } else {
+        toast(`Notice published. Browser push alerts sent: ${delivery.push_sent}.`, 'success')
+      }
     } catch (error) {
       toast(error.message, 'error')
     } finally {
@@ -42,11 +67,13 @@ export default function AdminNotices() {
         {notices.length === 0
           ? <div className="card text-center py-10"><Megaphone size={32} className="text-gray-300 mx-auto mb-2" /><p className="text-gray-400">No notices yet.</p></div>
           : notices.map(n => (
-            <div key={n.id} className={`card ${n.important ? 'border-l-4 border-l-orange-400' : ''}`}>
+            <div key={n.id} className={`card ${n.priority === 'critical' ? 'border-l-4 border-l-red-500' : n.priority === 'important' || n.important ? 'border-l-4 border-l-orange-400' : ''}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    {n.important && <span className="badge bg-orange-100 text-orange-700 text-xs">Important</span>}
+                    <span className={`badge text-xs capitalize ${priorityStyles[n.priority || (n.important ? 'important' : 'normal')]}`}>
+                      {n.priority || (n.important ? 'Important' : 'Normal')}
+                    </span>
                     <span className="badge bg-blue-100 text-blue-700 text-xs">{n.target}</span>
                   </div>
                   <h3 className="font-semibold text-gray-900">{n.title}</h3>
@@ -75,9 +102,12 @@ export default function AdminNotices() {
               {TARGETS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
-          <div className="flex items-center gap-3">
-            <input type="checkbox" id="imp" checked={form.important} onChange={e => setForm(f=>({...f,important:e.target.checked}))} className="w-4 h-4 rounded" />
-            <label htmlFor="imp" className="text-sm text-gray-700">Mark as Important</label>
+          <div>
+            <label htmlFor="notice-priority" className="block text-sm font-medium text-gray-700 mb-1.5">Priority</label>
+            <select id="notice-priority" value={form.priority} onChange={e => setForm(f=>({...f,priority:e.target.value}))} className="input">
+              {PRIORITIES.map(priority => <option key={priority.value} value={priority.value}>{priority.label}</option>)}
+            </select>
+            <p className="mt-1.5 text-xs text-gray-500">All notices appear in the student bell and send browser push alerts to students who enabled them. No SMS service is used.</p>
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1 justify-center">Cancel</button>

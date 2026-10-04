@@ -209,6 +209,7 @@ CREATE TABLE IF NOT EXISTS notices (
   content TEXT NOT NULL,
   target TEXT NOT NULL DEFAULT 'All Students',
   important BOOLEAN DEFAULT FALSE,
+  priority TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('critical', 'important', 'normal')),
   created_by TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

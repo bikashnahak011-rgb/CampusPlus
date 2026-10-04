@@ -19,6 +19,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import DashboardVideoShowcase from '../../components/DashboardVideoShowcase'
 import CampusJournalPreview from '../../components/CampusJournalPreview'
+import EmailVerificationPrompt from '../../components/EmailVerificationPrompt'
 import LiquidGlassActions from '../../components/LiquidGlassActions'
 import { StatusBadge } from '../../components/ui/States'
 import { supabase } from '../../lib/supabase'
@@ -210,6 +211,8 @@ export default function StudentDashboard() {
 
       {/* MAIN CONTENT */}
       <div className="flex-1 min-w-0 space-y-6">
+
+        <EmailVerificationPrompt />
 
         {importantNotices.length > 0 && (
           <section aria-label="Important campus notices" className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-pink-50 px-3 py-2.5 shadow-sm sm:px-4">

@@ -6,6 +6,12 @@ import { useApp } from '../../contexts/AppContext'
 import { LANGUAGE_OPTIONS } from '../../lib/translations'
 import AppLogo from '../AppLogo'
 
+const priorityStyles = {
+  critical: 'bg-red-100 text-red-700',
+  important: 'bg-orange-100 text-orange-700',
+  normal: 'bg-gray-100 text-gray-600',
+}
+
 export default function TopHeader({ onMenuClick }) {
   const { user, signOut } = useAuth()
   const { unreadCount, notifications, markRead, searchQuery, setSearchQuery, language, setLanguage, t } = useApp()
@@ -91,7 +97,10 @@ export default function TopHeader({ onMenuClick }) {
                         onClick={() => { markRead(n.id); navigate(n.link || '/student/notifications'); setShowNotifs(false) }}
                         className={`p-3 border-b border-gray-50 cursor-pointer hover:bg-violet-50 ${!n.read ? 'bg-violet-50/40' : ''}`}
                       >
-                        <p className="text-sm font-medium text-gray-800">{n.title}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="min-w-0 flex-1 truncate text-sm font-medium text-gray-800">{n.title}</p>
+                          {n.priority && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${priorityStyles[n.priority] || priorityStyles.normal}`}>{n.priority}</span>}
+                        </div>
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
                       </div>
                     ))

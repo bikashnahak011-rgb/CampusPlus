@@ -1,4 +1,4 @@
-const CACHE = 'nexcampus-shell-v2'
+const CACHE = 'nexcampus-shell-v3'
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/favicon.svg', '/icon-192.svg']
 const STATIC_FILE = /\.(?:css|js|mjs|svg|png|jpg|jpeg|webp|woff2?)$/i
 
@@ -28,11 +28,15 @@ self.addEventListener('push', event => {
     payload = { body: event.data?.text() || '' }
   }
 
+  const priority = ['critical', 'important', 'normal'].includes(payload.priority) ? payload.priority : 'normal'
   event.waitUntil(self.registration.showNotification(payload.title || 'NexCampus', {
     body: payload.body || 'You have a new campus update.',
     icon: '/icon-192.svg',
     badge: '/icon-192.svg',
     tag: payload.tag || 'nexcampus-notice',
+    renotify: true,
+    requireInteraction: priority === 'critical',
+    vibrate: priority === 'critical' ? [250, 100, 250, 100, 400] : priority === 'important' ? [200, 100, 200] : [100],
     data: { url: payload.url || '/student/notifications' },
   }))
 })

@@ -2,10 +2,10 @@ import asyncio
 import json
 import logging
 import uuid
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 from pywebpush import WebPushException, webpush
 
 from ..auth import CurrentUser, get_current_user, require_admin
@@ -30,7 +30,14 @@ class PushNotice(BaseModel):
     title: str = Field(min_length=1, max_length=160)
     body: str = Field(min_length=1, max_length=4000)
     target: str = "All Students"
+    priority: Literal["critical", "important", "normal"] = "normal"
     important: bool = False
+
+    @model_validator(mode="after")
+    def keep_legacy_important_notices_important(self):
+        if self.important and self.priority == "normal":
+            self.priority = "important"
+        return self
 
 
 def _matches_target(target: str, profile: dict[str, Any]) -> bool:
@@ -87,12 +94,14 @@ async def delete_push_subscription(payload: PushSubscription, user: CurrentUser 
 
 
 async def _send_push(subscription: dict[str, Any], payload: str, private_key: str, subject: str):
+    urgency = {"critical": "high", "important": "normal", "normal": "low"}
     return await asyncio.to_thread(
         webpush,
         subscription_info={"endpoint": subscription["endpoint"], "keys": subscription["keys"]},
         data=payload,
         vapid_private_key=private_key,
         vapid_claims={"sub": subject},
+        headers={"Urgency": urgency.get(json.loads(payload).get("priority", "normal"), "normal")},
     )
 
 
@@ -108,42 +117,88 @@ async def send_notice_push(payload: PushNotice, _: CurrentUser = Depends(require
         .data
         or []
     )
-    user_ids = [profile["id"] for profile in profiles if _matches_target(payload.target, profile)]
+    matching_profiles = [profile for profile in profiles if _matches_target(payload.target, profile)]
+    user_ids = [profile["id"] for profile in matching_profiles]
     if not user_ids:
-        return {"sent": 0, "expired": 0, "notified": 0}
+        return {
+            "in_app_sent": 0,
+            "in_app_failed": 0,
+            "push_eligible": 0,
+            "push_sent": 0,
+            "expired": 0,
+            "notified": 0,
+            "push_configured": bool(settings.vapid_private_key and settings.vapid_public_key),
+        }
 
-    if not settings.vapid_private_key or not settings.vapid_public_key:
-        return {"sent": 0, "expired": 0, "notified": len(user_ids)}
+    notification_rows = [
+        {
+            "user_id": profile["id"],
+            "title": payload.title,
+            "message": payload.body,
+            "type": "notice",
+            "priority": payload.priority,
+            "link": "/student/notifications",
+            "read": False,
+        }
+        for profile in matching_profiles
+    ]
+    in_app_sent = 0
+    in_app_failed = 0
+    try:
+        supabase.table("notifications").insert(notification_rows).execute()
+        in_app_sent = len(notification_rows)
+    except Exception:
+        logger.exception("Could not create in-app notifications for notice %s", payload.title)
+        in_app_failed = len(notification_rows)
 
-    subscriptions = (
-        supabase.table("push_subscriptions")
-        .select("user_id, endpoint, keys")
-        .in_("user_id", user_ids)
-        .execute()
-        .data
-        or []
-    )
-    message = json.dumps({
-        "title": payload.title,
-        "body": payload.body[:400],
-        "url": "/student/notifications",
-        "tag": "notice-" + str(uuid.uuid4()),
-    })
-
-    sent = 0
+    push_sent = 0
     expired = 0
-    for subscription in subscriptions:
-        try:
-            await _send_push(subscription, message, settings.vapid_private_key, settings.vapid_subject)
-            sent += 1
-        except WebPushException as exc:
-            status_code = getattr(getattr(exc, "response", None), "status_code", None)
-            if status_code in (404, 410):
-                supabase.table("push_subscriptions").delete().eq("endpoint", subscription["endpoint"]).execute()
-                expired += 1
-            else:
-                logger.warning("Push delivery failed with status %s", status_code)
-        except Exception:
-            logger.exception("Push delivery failed")
+    push_eligible = 0
+    if settings.vapid_private_key and settings.vapid_public_key:
+        subscriptions = (
+            supabase.table("push_subscriptions")
+            .select("user_id, endpoint, keys")
+            .in_("user_id", user_ids)
+            .execute()
+            .data
+            or []
+        )
+        push_eligible = len(subscriptions)
+        message = json.dumps({
+            "title": payload.title,
+            "body": payload.body[:400],
+            "priority": payload.priority,
+            "url": "/student/notifications",
+            "tag": "notice-" + str(uuid.uuid4()),
+        })
 
-    return {"sent": sent, "expired": expired, "notified": len(user_ids)}
+        push_semaphore = asyncio.Semaphore(20)
+
+        async def send_to_subscription(subscription: dict[str, Any]) -> tuple[bool, bool]:
+            async with push_semaphore:
+                try:
+                    await _send_push(subscription, message, settings.vapid_private_key, settings.vapid_subject)
+                    return True, False
+                except WebPushException as exc:
+                    status_code = getattr(getattr(exc, "response", None), "status_code", None)
+                    if status_code in (404, 410):
+                        supabase.table("push_subscriptions").delete().eq("endpoint", subscription["endpoint"]).execute()
+                        return False, True
+                    logger.warning("Push delivery failed with status %s", status_code)
+                except Exception:
+                    logger.exception("Push delivery failed")
+                return False, False
+
+        push_results = await asyncio.gather(*(send_to_subscription(subscription) for subscription in subscriptions))
+        push_sent = sum(sent for sent, _ in push_results)
+        expired = sum(was_expired for _, was_expired in push_results)
+
+    return {
+        "in_app_sent": in_app_sent,
+        "in_app_failed": in_app_failed,
+        "push_eligible": push_eligible,
+        "push_sent": push_sent,
+        "expired": expired,
+        "notified": len(user_ids),
+        "push_configured": bool(settings.vapid_private_key and settings.vapid_public_key),
+    }

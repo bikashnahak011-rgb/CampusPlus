@@ -27,9 +27,10 @@ Attendance uses the configured threshold, and recent `attendance_history` record
 3. Run `supabase/complaints_realtime.sql` to enable the secured live complaint workflow.
 4. Run `supabase/ai_engine.sql` to add history, AI analysis, clusters, forecasts, and notification priority.
 5. Run `supabase/web_push.sql` to create the browser-subscription table.
-6. Run `supabase/campus_journal.sql`, `supabase/exam_results.sql`, and `supabase/email_notifications.sql` to enable journal review notifications and asynchronous email delivery.
-7. Run `supabase/career_hub.sql` after `production_hardening.sql` to create Career Hub content, student progress, private certificate storage, workshop registrations, and company verification policies.
-8. Create a backend environment file:
+6. Run `supabase/notifications_priority.sql` to add notice priorities, enable notification realtime, and remove the obsolete phone-verification marker.
+7. Run `supabase/campus_journal.sql`, `supabase/exam_results.sql`, and `supabase/email_notifications.sql` to enable journal review notifications and asynchronous email delivery.
+8. Run `supabase/career_hub.sql` after `production_hardening.sql` to create Career Hub content, student progress, private certificate storage, workshop registrations, and company verification policies.
+9. Create a backend environment file:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env
@@ -37,11 +38,15 @@ Copy-Item backend/.env.example backend/.env
 
 Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `CORS_ORIGINS`. Include the exact frontend origin, including `https://` (for example, `https://campus-plus-zeta.vercel.app`); separate multiple origins with commas. Never expose the service-role key to React or commit `.env`.
 
-For email notifications, create a Resend account, verify a sender domain, and set `RESEND_API_KEY`, `EMAIL_FROM` (for example, `CampusOne <updates@your-verified-domain.edu>`), and `EMAIL_APP_URL` in the backend environment. The queue sends new notification emails in the background, normally within a few seconds, and retries transient failures up to five times. Do not put the Resend key in a `VITE_*` variable. Email delivery stays disabled until the API key and sender are configured.
+Optional separate feature (not required for email verification, the notification bell, or browser push): for transactional notification emails, create a Resend account, verify a sender domain, and set `RESEND_API_KEY`, `EMAIL_FROM` (for example, `CampusOne <updates@your-verified-domain.edu>`), and `EMAIL_APP_URL` in the backend environment. The queue sends new notification emails in the background, normally within a few seconds, and retries transient failures up to five times. Do not put the Resend key in a `VITE_*` variable. Email delivery stays disabled until the API key and sender are configured; provider limits or pricing may apply.
 
-For Android/browser system notifications, generate a VAPID key pair with `npx web-push generate-vapid-keys` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in the backend environment. Keep the private key only on the backend. Deploy the frontend over HTTPS; each student must sign in, open Notifications, select **Enable alerts**, and allow notifications in the browser. Notice pushes go only to subscribed students matching the notice target.
+For Android/browser system notifications, generate a VAPID key pair with `npx web-push generate-vapid-keys` and set `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in the backend environment. Keep the private key only on the backend. Deploy the frontend over HTTPS; each student must sign in, open Notifications, select **Enable push alerts**, and allow notifications in the browser. On iPhone/iPad, install the site to the Home Screen and enable push from that installed web app (supported iOS/iPadOS versions only). Notice pushes go only to subscribed students matching the notice target.
 
-9. Install and run:
+There is no paid SMS integration. Email verification uses Supabase Auth for the student's signed-in email address. In the Supabase dashboard, open **Authentication → Email Templates** and make sure the email OTP template includes the `{{ .Token }}` value so students can enter the code shown in the email. Supabase's built-in email sender has low rate limits and is intended for testing; for larger production use, configure an SMTP provider, which may have its own cost or free-tier limits.
+
+All notice priorities create an in-app bell notification and send browser push to subscribed devices. Browser push uses VAPID and has no per-message SMS charge. Critical and Important priorities are visually emphasized; none of the priorities sends SMS.
+
+10. Install and run:
 
 ```powershell
 py -3.11 -m venv .venv

@@ -5,6 +5,7 @@ import TopHeader from './TopHeader'
 import AIAssistant from '../AIAssistant'
 import MobileBottomNav from '../MobileBottomNav'
 import Ambient3DBackground from '../Ambient3DBackground'
+import WelcomePopup from '../WelcomePopup'
 
 export default function StudentLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -21,6 +22,7 @@ export default function StudentLayout() {
       </div>
       <AIAssistant />
       <MobileBottomNav />
+      <WelcomePopup />
     </div>
   )
 }
