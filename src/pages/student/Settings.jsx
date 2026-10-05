@@ -4,40 +4,74 @@ import { LANGUAGE_OPTIONS } from '../../lib/translations'
 import { Link } from 'react-router-dom'
 import { Zap, Bell, Eye, Moon, Globe, Shield } from 'lucide-react'
 
-const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) => (
-  <div className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-colors ${value ? `bg-${accent}-50 border-${accent}-200` : 'bg-gray-50 border-transparent'}`}>
-    <div className="flex items-center gap-3">
-      <div className={`w-10 h-10 bg-${accent}-100 rounded-xl flex items-center justify-center`}>
-        <Icon size={18} className={`text-${accent}-600`} />
+const accentStyles = {
+  blue: {
+    container: 'bg-blue-50 border-blue-200',
+    iconBox: 'bg-blue-100',
+    icon: 'text-blue-600',
+    switch: 'bg-blue-600',
+  },
+  yellow: {
+    container: 'bg-yellow-50 border-yellow-200',
+    iconBox: 'bg-yellow-100',
+    icon: 'text-yellow-600',
+    switch: 'bg-yellow-600',
+  },
+  purple: {
+    container: 'bg-purple-50 border-purple-200',
+    iconBox: 'bg-purple-100',
+    icon: 'text-purple-600',
+    switch: 'bg-purple-600',
+  },
+}
+
+const getStoredBoolean = (key) => {
+  if (typeof window === 'undefined' || !window.localStorage) return false
+  return window.localStorage.getItem(key) === 'true'
+}
+
+const Toggle = ({ value, onChange, label, desc, icon: Icon, accent = 'blue' }) => {
+  const styles = accentStyles[accent] ?? accentStyles.blue
+
+  return (
+    <div className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-colors ${value ? `${styles.container}` : 'bg-gray-50 border-transparent'}`}>
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 ${styles.iconBox} rounded-xl flex items-center justify-center`}>
+          <Icon size={18} className={styles.icon} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-900">{label}</p>
+          <p className="text-xs text-gray-500">{desc}</p>
+        </div>
       </div>
-      <div>
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        <p className="text-xs text-gray-500">{desc}</p>
-      </div>
+      <button
+        onClick={() => onChange(!value)}
+        className={`relative w-12 h-6 rounded-full transition-colors ${value ? styles.switch : 'bg-gray-300'}`}
+      >
+        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-7' : 'translate-x-1'}`} />
+      </button>
     </div>
-    <button
-      onClick={() => onChange(!value)}
-      className={`relative w-12 h-6 rounded-full transition-colors ${value ? `bg-${accent}-600` : 'bg-gray-300'}`}
-    >
-      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-7' : 'translate-x-1'}`} />
-    </button>
-  </div>
-)
+  )
+}
 
 export default function SettingsPage() {
   const { liteMode, setLiteMode, language, setLanguage, t } = useApp()
-  const [largeText, setLargeText] = useState(() => localStorage.getItem('cp_large_text') === 'true')
-  const [highContrast, setHighContrast] = useState(() => localStorage.getItem('cp_contrast') === 'true')
+  const [largeText, setLargeText] = useState(() => getStoredBoolean('cp_large_text'))
+  const [highContrast, setHighContrast] = useState(() => getStoredBoolean('cp_contrast'))
 
   const handleLargeText = (v) => {
     setLargeText(v)
-    localStorage.setItem('cp_large_text', v)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('cp_large_text', String(v))
+    }
     document.documentElement.style.fontSize = v ? '18px' : ''
   }
 
   const handleHighContrast = (v) => {
     setHighContrast(v)
-    localStorage.setItem('cp_contrast', v)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('cp_contrast', String(v))
+    }
     document.body.classList.toggle('high-contrast', v)
   }
 

@@ -241,6 +241,7 @@ export async function askCampusAssistant(message, user = {}, { signal } = {}) {
     return String(result.answer || 'The campus assistant returned no answer.')
   } catch (error) {
     if (signal?.aborted) throw error
-    return 'The campus data assistant is unavailable. Check your connection and try again; live attendance and campus records are not available offline.'
+    const reason = error instanceof Error ? error.message : 'Check your connection and try again.'
+    return `The campus data assistant is unavailable. ${reason} Live attendance and campus records are not available offline.`
   }
 }

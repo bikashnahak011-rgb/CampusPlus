@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react'
+import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { askCampusAssistant } from '../lib/aiService'
 
@@ -77,7 +77,7 @@ export default function AIAssistant() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wide">Live</span>
+              <span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-medium uppercase tracking-wide">Campus help</span>
               <button onClick={() => setOpen(false)} className="rounded-full p-1 hover:bg-white/10 transition-colors"><X size={18} /></button>
             </div>
           </div>
