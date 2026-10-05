@@ -1,3 +1,9 @@
+import rameshPortrait from '../assets/faculty/ramesh.jpg'
+import sunitaPortrait from '../assets/faculty/sunita.jpg'
+import anilPortrait from '../assets/faculty/anil.jpg'
+import kavitaPortrait from '../assets/faculty/kavita.jpg'
+import deepakPortrait from '../assets/faculty/deepak.jpg'
+
 export const DEMO_STUDENT = {
   id: 'stu-001', email: 'student@campusone.demo', role: 'student',
   name: 'Arjun Sharma', roll_no: 'CS2021047', department: 'Computer Science',
@@ -19,11 +25,11 @@ export const DEMO_SUBJECTS = [
 ]
 
 export const INITIAL_FACULTY = [
-  { id: 'faculty-001', name: 'Prof. Ramesh Kumar', qualification: 'M.Tech, Ph.D.', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Programming in Python'] },
-  { id: 'faculty-002', name: 'Prof. Sunita Rao', qualification: 'M.Tech', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Database Management'] },
-  { id: 'faculty-003', name: 'Prof. Anil Verma', qualification: 'M.E.', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Computer Networks'] },
-  { id: 'faculty-004', name: 'Prof. Kavita Singh', qualification: 'M.Sc., Ph.D.', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Mathematics III'] },
-  { id: 'faculty-005', name: 'Prof. Deepak Joshi', qualification: 'M.Tech', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Software Engineering'] },
+  { id: 'faculty-001', name: 'Prof. Ramesh Kumar', qualification: 'M.Tech, Ph.D.', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Programming in Python'], avatar_url: rameshPortrait },
+  { id: 'faculty-002', name: 'Prof. Sunita Rao', qualification: 'M.Tech', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Database Management'], avatar_url: sunitaPortrait },
+  { id: 'faculty-003', name: 'Prof. Anil Verma', qualification: 'M.E.', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Computer Networks'], avatar_url: anilPortrait },
+  { id: 'faculty-004', name: 'Prof. Kavita Singh', qualification: 'M.Sc., Ph.D.', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Mathematics III'], avatar_url: kavitaPortrait },
+  { id: 'faculty-005', name: 'Prof. Deepak Joshi', qualification: 'M.Tech', classes_taught: ['B.Tech CSE - Year 3'], subjects: ['Software Engineering'], avatar_url: deepakPortrait },
 ]
 
 export const DEMO_TIMETABLE = [

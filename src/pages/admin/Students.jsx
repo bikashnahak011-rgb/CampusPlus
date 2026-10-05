@@ -14,7 +14,8 @@ export default function AdminStudents() {
   const [draft, setDraft] = useState({ title: '', message: '' })
   const [sending, setSending] = useState(false)
 
-  const depts = ['All', ...new Set(students.map(s => s.dept))]
+  const depts = ['All', ...new Set(students.map(s => s.dept).filter(dept => dept && dept.toLowerCase() !== 'unassigned'))]
+  const getDepartmentLabel = department => department?.toLowerCase() === 'unassigned' ? '—' : department
   const filtered = students.filter(s => {
     const ms = !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.roll.toLowerCase().includes(search.toLowerCase())
     const md = deptFilter === 'All' || s.dept === deptFilter
@@ -76,7 +77,7 @@ export default function AdminStudents() {
                         </div>
                       </td>
                       <td className="py-3 px-4 font-mono text-xs text-gray-600">{s.roll}</td>
-                      <td className="py-3 px-4 text-gray-700">{s.dept}</td>
+                      <td className="py-3 px-4 text-gray-700">{getDepartmentLabel(s.dept)}</td>
                       <td className="py-3 px-4 text-gray-500">Year {s.year}</td>
                       <td className="py-3 px-4 text-gray-500">{s.hostel}</td>
                       <td className="py-3 px-4"><StatusBadge status={s.status} /></td>
@@ -101,7 +102,7 @@ export default function AdminStudents() {
                     <StatusBadge status={s.status} />
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-200/70 pt-2 text-xs">
-                    <div><p className="text-gray-400">Department</p><p className="font-medium text-gray-700 truncate">{s.dept}</p></div>
+                    <div><p className="text-gray-400">Department</p><p className="font-medium text-gray-700 truncate">{getDepartmentLabel(s.dept)}</p></div>
                     <div><p className="text-gray-400">Year</p><p className="font-medium text-gray-700">Year {s.year}</p></div>
                     <div><p className="text-gray-400">Hostel</p><p className="font-medium text-gray-700">{s.hostel}</p></div>
                   </div>

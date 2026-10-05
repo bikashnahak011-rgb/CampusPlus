@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { getAdminHomePath } from '../lib/adminRoles'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -20,6 +21,11 @@ export default function AuthCallback() {
     if (!user) {
       console.error('No authenticated user found')
       setError('Google authentication failed. No user session was found.')
+      return
+    }
+
+    if (user.is_active === false) {
+      setError('This account is disabled. Contact your main administrator for help.')
       return
     }
 
@@ -53,7 +59,7 @@ export default function AuthCallback() {
     // Role comes from public.profiles.role
     if (user.role === 'admin') {
       console.log('Redirecting to ADMIN dashboard')
-      navigate('/admin/dashboard', { replace: true })
+      navigate(getAdminHomePath(user.admin_role), { replace: true })
     } else {
       console.log('Redirecting to STUDENT dashboard')
       navigate('/student/dashboard', { replace: true })

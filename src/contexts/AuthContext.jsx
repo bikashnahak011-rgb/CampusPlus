@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { ADMIN_ROLES } from '../lib/adminRoles'
 
 const AuthContext = createContext(null)
 
@@ -14,6 +15,8 @@ const DEMO_USERS = {
     id: 'stu-001',
     email: 'student@demo.com',
     role: 'student',
+    admin_role: null,
+    is_active: true,
     name: 'Demo Student',
     roll_no: 'DEMO001',
     department: 'Computer Science',
@@ -28,7 +31,9 @@ const DEMO_USERS = {
     id: 'demo-admin-001',
     email: 'admin@demo.com',
     role: 'admin',
+    admin_role: ADMIN_ROLES.MAIN_ADMINISTRATOR,
     name: 'Demo Admin',
+    is_active: true,
     profileComplete: true,
     isDemo: true,
   },
@@ -217,6 +222,8 @@ export function AuthProvider({ children }) {
         setUser({
           ...authUser,
           role: null,
+          admin_role: null,
+          is_active: true,
           name:
             authUser.user_metadata?.full_name ||
             authUser.email ||
@@ -230,14 +237,17 @@ export function AuthProvider({ children }) {
         return
       }
 
-      const role = data?.role || 'student'
+      const role = data?.role === 'admin' ? 'admin' : data?.role === 'student' ? 'student' : null
+      const admin_role = role === 'admin'
+        ? data?.admin_role || ADMIN_ROLES.MAIN_ADMINISTRATOR
+        : null
 
       const profileComplete =
         !!(
           data?.name &&
           (
             role === 'admin' ||
-            data?.roll_no
+            (role === 'student' && data?.roll_no)
           )
         )
 
@@ -247,6 +257,8 @@ export function AuthProvider({ children }) {
         ...data,
 
         role,
+        admin_role,
+        is_active: data?.is_active !== false,
 
         name:
           data?.name ||
@@ -268,6 +280,8 @@ export function AuthProvider({ children }) {
       setUser({
         ...authUser,
         role: null,
+        admin_role: null,
+        is_active: true,
         name:
           authUser.user_metadata?.full_name ||
           authUser.email ||

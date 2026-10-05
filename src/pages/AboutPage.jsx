@@ -90,7 +90,7 @@ export default function AboutPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="public-page page-shell min-h-screen flex flex-col bg-violet-50">
+    <div className="public-page about-page page-shell min-h-screen flex flex-col bg-violet-50">
       <Ambient3DBackground variant="public" />
       {/* Nav */}
       <nav className="about-nav sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-violet-100">

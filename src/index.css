@@ -186,6 +186,27 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   background-attachment: fixed;
 }
 
+.landing-page,
+.about-page {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.landing-page h1,
+.landing-page h2,
+.landing-page h3,
+.about-page h1,
+.about-page h2,
+.about-page h3 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.landing-page h1,
+.about-page h1 {
+  letter-spacing: -0.035em;
+}
+
 .ambient-3d {
   position: absolute;
   inset: 0;
@@ -466,6 +487,68 @@ body.lite-mode * { animation: none !important; transition: none !important; }
 .landing-nav {
   isolation: isolate;
   box-shadow: 0 8px 24px rgba(76, 29, 149, 0.08);
+}
+
+.landing-nav-links,
+.landing-nav-actions,
+.about-nav {
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+}
+
+.landing-nav-links {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+}
+
+.landing-nav-link {
+  position: relative;
+  padding-block: 0.45rem;
+  text-transform: uppercase;
+}
+
+.landing-nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: currentColor;
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms ease;
+}
+
+.landing-nav-link:hover::after,
+.landing-nav-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.landing-nav-actions {
+  letter-spacing: 0.015em;
+}
+
+.landing-nav-actions .primary-button,
+.about-nav-signin {
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.about-nav-back,
+.about-nav-brand,
+.landing-mobile-nav-link {
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.015em;
+}
+
+.about-nav-back {
+  font-weight: 600;
+}
+
+.landing-mobile-nav-link {
+  text-transform: uppercase;
 }
 
 .landing-nav::after {

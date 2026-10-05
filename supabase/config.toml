@@ -1,0 +1,4 @@
+project_id = "campusplus"
+
+[functions.manage-admin-users]
+verify_jwt = true

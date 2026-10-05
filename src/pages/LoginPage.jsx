@@ -20,6 +20,7 @@ import { useApp } from '../contexts/AppContext'
 import AppLogo from '../components/AppLogo'
 import Ambient3DBackground from '../components/Ambient3DBackground'
 import { LANGUAGE_OPTIONS } from '../lib/translations'
+import { getAdminHomePath } from '../lib/adminRoles'
 
 export default function LoginPage() {
 
@@ -52,6 +53,11 @@ export default function LoginPage() {
     console.log('LOGIN USER:', user)
     console.log('LOGIN ROLE:', user.role)
 
+    if (user.is_active === false || !['student', 'admin'].includes(user.role)) {
+      navigate('/unauthorized', { replace: true })
+      return
+    }
+
     const isAdmin = user.role === 'admin'
 
     /*
@@ -62,7 +68,7 @@ export default function LoginPage() {
     if (user.profileComplete) {
 
       if (isAdmin) {
-        navigate('/admin/dashboard', {
+        navigate(getAdminHomePath(user.admin_role), {
           replace: true
         })
       } else {
@@ -192,7 +198,7 @@ export default function LoginPage() {
 
         if (loggedUser.role === 'admin') {
 
-          navigate('/admin/dashboard', {
+          navigate(getAdminHomePath(loggedUser.admin_role), {
             replace: true
           })
 
@@ -383,7 +389,7 @@ export default function LoginPage() {
 
         if (loggedUser.role === 'admin') {
 
-          navigate('/admin/dashboard', {
+          navigate(getAdminHomePath(loggedUser.admin_role), {
             replace: true
           })
 

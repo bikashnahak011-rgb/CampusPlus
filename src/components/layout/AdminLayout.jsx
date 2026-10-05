@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Menu, Bell, ChevronDown, LogOut, Settings, Search } from 'lucide-react'
 import AdminSidebar from './AdminSidebar'
 import AdminMobileBottomNav from '../AdminMobileBottomNav'
@@ -7,6 +7,22 @@ import AIAssistant from '../AIAssistant'
 import { useAuth } from '../../contexts/AuthContext'
 import Ambient3DBackground from '../Ambient3DBackground'
 import AppLogo from '../AppLogo'
+import { ADMIN_ROLES, ADMIN_ROLE_LABELS, canAccessAdminPath, getAdminHomePath } from '../../lib/adminRoles'
+
+function AdminModuleGuard() {
+  const { user } = useAuth()
+  const { pathname } = useLocation()
+
+  if (user?.role !== 'admin' || !user?.admin_role || user?.is_active === false) {
+    return <Navigate to="/unauthorized" replace />
+  }
+
+  if (!canAccessAdminPath(user.admin_role, pathname)) {
+    return <Navigate to={getAdminHomePath(user.admin_role)} replace />
+  }
+
+  return <Outlet />
+}
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -38,11 +54,11 @@ export default function AdminLayout() {
           {/* Mobile title */}
           <div className="sm:hidden flex-1 min-w-0 flex items-center gap-2 text-sm font-bold text-gray-800">
             <AppLogo size={24} />
-            <span>Admin Panel</span>
+            <span>{ADMIN_ROLE_LABELS[user?.admin_role] || 'Admin Panel'}</span>
           </div>
 
           <div className="ml-auto flex items-center gap-1">
-            <button onClick={() => navigate('/admin/requests')} className="relative p-2 hover:bg-gray-100 rounded-xl">
+            <button onClick={() => navigate('/admin/notifications')} className="relative p-2 hover:bg-gray-100 rounded-xl" aria-label="Notifications">
               <Bell size={19} className="text-gray-600" />
             </button>
             <div className="relative">
@@ -59,7 +75,9 @@ export default function AdminLayout() {
               {showProfile && (
                 <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl w-44 z-50 py-1">
                   <button onClick={() => { navigate('/admin/profile'); setShowProfile(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2">Profile</button>
-                  <button onClick={() => { navigate('/admin/settings'); setShowProfile(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2"><Settings size={15} /> Settings</button>
+                  {user?.admin_role === ADMIN_ROLES.MAIN_ADMINISTRATOR && (
+                    <button onClick={() => { navigate('/admin/settings'); setShowProfile(false) }} className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center gap-2"><Settings size={15} /> Settings</button>
+                  )}
                   <hr className="my-1 border-gray-100" />
                   <button onClick={async () => { await signOut(); navigate('/') }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"><LogOut size={15} /> Logout</button>
                 </div>
@@ -70,7 +88,7 @@ export default function AdminLayout() {
 
         {/* Main content — pb-20 on mobile for bottom nav */}
         <main className="dashboard-main flex-1 min-w-0 w-full p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6 animate-fade-in">
-          <div className="page-enter"><Outlet /></div>
+          <div className="page-enter"><AdminModuleGuard /></div>
         </main>
       </div>
       <AdminMobileBottomNav />

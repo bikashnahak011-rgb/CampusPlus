@@ -64,7 +64,7 @@ export default function LandingPage() {
   const closeMenu = () => setMenuOpen(false)
 
   return (
-    <div className="public-page page-shell min-h-screen flex flex-col text-slate-900">
+    <div className="public-page landing-page page-shell min-h-screen flex flex-col text-slate-900">
       <Ambient3DBackground variant="public" />
       <div className="hero-orb one" />
       <div className="hero-orb two" />
@@ -76,11 +76,11 @@ export default function LandingPage() {
             <AppLogo size={29} showText />
           </button>
 
-          <div className="hidden md:flex items-center gap-7 text-sm text-violet-800">
-            <button onClick={() => scrollTo('features')} className="transition-colors duration-200">{t('features')}</button>
-            <button onClick={() => scrollTo('how-it-works')} className="transition-colors duration-200">{t('howItWorks')}</button>
-            <button onClick={() => scrollTo('admin')} className="transition-colors duration-200">{t('forAdmins')}</button>
-            <button onClick={() => navigate('/about')} className="inline-flex items-center gap-1.5 transition-colors duration-200">
+          <div className="landing-nav-links hidden md:flex items-center gap-7 text-sm text-violet-800">
+            <button onClick={() => scrollTo('features')} className="landing-nav-link transition-colors duration-200">{t('features')}</button>
+            <button onClick={() => scrollTo('how-it-works')} className="landing-nav-link transition-colors duration-200">{t('howItWorks')}</button>
+            <button onClick={() => scrollTo('admin')} className="landing-nav-link transition-colors duration-200">{t('forAdmins')}</button>
+            <button onClick={() => navigate('/about')} className="landing-nav-link inline-flex items-center gap-1.5 transition-colors duration-200">
               <Info size={14} /> {t('about')}
             </button>
           </div>
@@ -108,9 +108,9 @@ export default function LandingPage() {
         {menuOpen && (
           <div className="md:hidden border-t border-violet-100 bg-white/95 px-4 py-3 shadow-lg">
             {[['features', t('features')], ['how-it-works', t('howItWorks')], ['admin', t('forAdmins')]].map(([id, label]) => (
-              <button key={id} onClick={() => { scrollTo(id); closeMenu() }} className="block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">{label}</button>
+              <button key={id} onClick={() => { scrollTo(id); closeMenu() }} className="landing-mobile-nav-link block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">{label}</button>
             ))}
-            <button onClick={() => navigate('/about')} className="block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">{t('aboutNexCampus')}</button>
+            <button onClick={() => navigate('/about')} className="landing-mobile-nav-link block w-full rounded-xl px-3 py-3 text-left text-sm font-semibold text-violet-900 hover:bg-violet-50">{t('aboutNexCampus')}</button>
           </div>
         )}
       </nav>

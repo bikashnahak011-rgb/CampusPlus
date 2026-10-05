@@ -15,8 +15,10 @@ export default function AdminRequests() {
   const [comment, setComment] = useState('')
   const [updating, setUpdating] = useState(false)
 
-  const allDocs = requests.filter(r => !search || r.id.toLowerCase().includes(search.toLowerCase()) || r.student_name.toLowerCase().includes(search.toLowerCase()) || r.type.toLowerCase().includes(search.toLowerCase()))
-  const allLeave = leaveRequests.filter(l => !search || l.id.toLowerCase().includes(search.toLowerCase()) || l.student_name.toLowerCase().includes(search.toLowerCase()))
+  const allDocs = requests.filter(r => r.status?.toLowerCase() !== 'approved')
+    .filter(r => !search || r.id.toLowerCase().includes(search.toLowerCase()) || r.student_name.toLowerCase().includes(search.toLowerCase()) || r.type.toLowerCase().includes(search.toLowerCase()))
+  const allLeave = leaveRequests.filter(l => l.status?.toLowerCase() !== 'approved')
+    .filter(l => !search || l.id.toLowerCase().includes(search.toLowerCase()) || l.student_name.toLowerCase().includes(search.toLowerCase()))
 
   const openDoc = (r) => { setDetail(r); setDetailType('doc'); setComment(r.admin_comment || '') }
   const openLeave = (l) => { setDetail(l); setDetailType('leave'); setComment(l.admin_comment || '') }
@@ -63,7 +65,7 @@ export default function AdminRequests() {
 
       {tab === 'Documents' && (
         <div className="card overflow-x-auto">
-          {allDocs.length === 0 ? <EmptyState message="No document requests." /> : (
+          {allDocs.length === 0 ? <EmptyState message="No active document requests." /> : (
             <table className="w-full text-sm">
               <thead><tr className="border-b border-gray-100">{['Request ID', 'Student', 'Type', 'Reason', 'Age', 'Status', 'Actions'].map(h => <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{h}</th>)}</tr></thead>
               <tbody>
@@ -94,7 +96,7 @@ export default function AdminRequests() {
 
       {tab === 'Leave & Gate Pass' && (
         <div className="card overflow-x-auto">
-          {allLeave.length === 0 ? <EmptyState message="No leave requests." /> : (
+          {allLeave.length === 0 ? <EmptyState message="No active leave or gate pass requests." /> : (
             <table className="w-full text-sm">
               <thead><tr className="border-b border-gray-100">{['ID', 'Student', 'Type', 'Reason', 'Destination', 'Dates', 'Status', 'Actions'].map(h => <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{h}</th>)}</tr></thead>
               <tbody>

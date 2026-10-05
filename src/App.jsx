@@ -5,6 +5,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
 } from 'react-router-dom'
 
 import {
@@ -28,6 +29,7 @@ import PWAInstallPrompt from './components/PWAInstallPrompt'
 
 import StudentLayout from './components/layout/StudentLayout'
 import AdminLayout from './components/layout/AdminLayout'
+import { getAdminHomePath } from './lib/adminRoles'
 
 
 /*
@@ -81,6 +83,9 @@ const AdminSettings = lazy(() => import('./pages/admin/Settings'))
 const AdminProfile = lazy(() => import('./pages/admin/Profile'))
 const AdminBusRoutes = lazy(() => import('./pages/admin/BusRoutes'))
 const AdminRoomFinder = lazy(() => import('./pages/admin/RoomFinder'))
+const AdminUsers = lazy(() => import('./pages/admin/Users'))
+const AdminFinance = lazy(() => import('./pages/admin/Finance'))
+const AdminNotifications = lazy(() => import('./pages/admin/Notifications'))
 
 
 /*
@@ -142,9 +147,10 @@ function getUserHome(user) {
     return '/login'
   }
 
-  return user.role === 'admin'
-    ? '/admin/dashboard'
-    : '/student/dashboard'
+  if (user.is_active === false) return '/unauthorized'
+  if (user.role === 'admin') return getAdminHomePath(user.admin_role)
+  if (user.role === 'student') return '/student/dashboard'
+  return '/unauthorized'
 }
 
 
@@ -178,6 +184,10 @@ function ProtectedRoute({ children, role }) {
     )
   }
 
+  if (user.is_active === false || !['student', 'admin'].includes(user.role)) {
+    return <Navigate to="/unauthorized" replace />
+  }
+
   /*
     Prevent student from opening admin pages
     and admin from opening student pages.
@@ -193,6 +203,35 @@ function ProtectedRoute({ children, role }) {
   }
 
   return children
+}
+
+function AdminHomeRedirect() {
+  const { user } = useAuth()
+  return <Navigate to={getAdminHomePath(user?.admin_role)} replace />
+}
+
+function UnauthorizedPage() {
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-violet-50 p-6">
+      <section className="card w-full max-w-md text-center">
+        <h1 className="text-xl font-bold text-gray-900">Access unavailable</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          {user?.is_active === false
+            ? 'This account is disabled. Contact your main administrator for help.'
+            : 'This account does not have access to this page. Sign in with an assigned campus account.'}
+        </p>
+        <button
+          onClick={async () => { await signOut(); navigate('/login', { replace: true }) }}
+          className="primary-button mt-5 w-full justify-center"
+        >
+          Return to login
+        </button>
+      </section>
+    </main>
+  )
 }
 
 
@@ -351,6 +390,7 @@ export default function App() {
                 element={<AuthCallback />}
               />
 
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
               {/* ================================================= */}
               {/*                    STUDENT                        */}
@@ -493,12 +533,7 @@ export default function App() {
 
                 <Route
                   index
-                  element={
-                    <Navigate
-                      to="dashboard"
-                      replace
-                    />
-                  }
+                  element={<AdminHomeRedirect />}
                 />
 
                 <Route
@@ -506,15 +541,34 @@ export default function App() {
                   element={<AdminDashboard />}
                 />
 
+                <Route path="main" element={<AdminDashboard />} />
+                <Route path="accounts-examination" element={<AdminFinance />} />
+                <Route path="room-allocation" element={<AdminHostel />} />
+                <Route path="maintenance" element={<AdminHostel />} />
+                <Route path="todays-menu" element={<AdminMess />} />
+                <Route path="mess-attendance" element={<AdminMess />} />
+                <Route path="classes" element={<FacultyDirectoryPage />} />
+                <Route path="assignments" element={<AdminExamResults />} />
+                <Route path="academic-performance" element={<AdminAnalytics />} />
+
                 <Route
                   path="students"
                   element={<AdminStudents />}
                 />
 
+                <Route path="hostel-students" element={<AdminStudents />} />
                 <Route
                   path="results"
                   element={<AdminExamResults />}
                 />
+                <Route path="examination" element={<AdminExamResults />} />
+                <Route path="marks" element={<AdminExamResults />} />
+                <Route path="fees" element={<AdminFinance />} />
+                <Route path="payments" element={<AdminFinance />} />
+                <Route path="accounts" element={<AdminFinance />} />
+                <Route path="reports" element={<AdminAnalytics />} />
+                <Route path="notifications" element={<AdminNotifications />} />
+                <Route path="users" element={<AdminUsers />} />
 
                 <Route
                   path="faculty"
@@ -590,6 +644,8 @@ export default function App() {
                   path="profile"
                   element={<AdminProfile />}
                 />
+
+                <Route path="*" element={<AdminHomeRedirect />} />
 
               </Route>
 

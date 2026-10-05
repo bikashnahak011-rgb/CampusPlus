@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BookOpen, GraduationCap, Pencil, Plus, Search, Trash2, Users } from 'lucide-react'
+import { BookOpen, GraduationCap, Pencil, Plus, Search, Trash2, UserRound, Users } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../components/ui/Toast'
@@ -116,45 +116,50 @@ export default function FacultyDirectoryPage() {
         </div>
       ) : (
         <div className="grid min-w-0 gap-3 lg:grid-cols-2">
-          {filteredFaculty.map(member => (
-            <article key={member.id} className="card min-w-0 border border-gray-200 p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
-                    <GraduationCap size={20} />
+          {filteredFaculty.map(member => {
+            return (
+              <article key={member.id} className="card min-w-0 border border-gray-200 p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-cyan-100 text-cyan-700 shadow-sm ring-1 ring-gray-100">
+                      {member.avatar_url
+                        ? <img src={member.avatar_url} alt={`${member.name} profile`} className="h-full w-full object-cover" />
+                        : <UserRound size={30} strokeWidth={1.8} aria-hidden="true" />
+                      }
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="wrap-break-word font-semibold text-gray-900">{member.name}</h2>
+                      <p className="mt-0.5 wrap-break-word text-sm text-gray-500">{member.qualification}</p>
+                    </div>
+                  </div>
+                  {isAdmin && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button type="button" onClick={() => openEditor(member)} aria-label={`Edit ${member.name}`} title="Edit faculty" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-cyan-700">
+                        <Pencil size={16} />
+                      </button>
+                      <button type="button" onClick={() => handleDelete(member)} aria-label={`Remove ${member.name}`} title="Remove faculty" className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-gray-500 hover:bg-red-50 hover:text-red-700">
+                        <Trash2 size={15} /> <span>Remove</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2">
+                  <div className="min-w-0">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase text-gray-400"><Users size={14} /> Classes taught</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(member.classes_taught || []).map(item => <span key={item} className="max-w-full wrap-break-word rounded-md bg-cyan-50 px-2 py-1 text-xs text-cyan-800">{item}</span>)}
+                    </div>
                   </div>
                   <div className="min-w-0">
-                    <h2 className="wrap-break-word font-semibold text-gray-900">{member.name}</h2>
-                    <p className="mt-0.5 wrap-break-word text-sm text-gray-500">{member.qualification}</p>
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase text-gray-400"><BookOpen size={14} /> Subjects</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(member.subjects || []).map(item => <span key={item} className="max-w-full wrap-break-word rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800">{item}</span>)}
+                    </div>
                   </div>
                 </div>
-                {isAdmin && (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button type="button" onClick={() => openEditor(member)} aria-label={`Edit ${member.name}`} title="Edit faculty" className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-cyan-700">
-                      <Pencil size={16} />
-                    </button>
-                    <button type="button" onClick={() => handleDelete(member)} aria-label={`Remove ${member.name}`} title="Remove faculty" className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold text-gray-500 hover:bg-red-50 hover:text-red-700">
-                      <Trash2 size={15} /> <span>Remove</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2">
-                <div className="min-w-0">
-                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase text-gray-400"><Users size={14} /> Classes taught</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(member.classes_taught || []).map(item => <span key={item} className="max-w-full wrap-break-word rounded-md bg-cyan-50 px-2 py-1 text-xs text-cyan-800">{item}</span>)}
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase text-gray-400"><BookOpen size={14} /> Subjects</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(member.subjects || []).map(item => <span key={item} className="max-w-full wrap-break-word rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800">{item}</span>)}
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            )
+          })}
         </div>
       )}
 
