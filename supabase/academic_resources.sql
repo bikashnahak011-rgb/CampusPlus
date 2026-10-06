@@ -71,6 +71,7 @@ CREATE INDEX IF NOT EXISTS academic_resources_uploader_idx
 
 -- Extend the existing timetable table without replacing its legacy columns.
 ALTER TABLE public.timetable
+  ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   ADD COLUMN IF NOT EXISTS department TEXT,
   ADD COLUMN IF NOT EXISTS course TEXT,
   ADD COLUMN IF NOT EXISTS semester INTEGER CHECK (semester BETWEEN 1 AND 12),

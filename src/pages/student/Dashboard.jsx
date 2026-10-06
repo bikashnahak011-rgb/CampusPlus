@@ -124,12 +124,21 @@ export default function StudentDashboard() {
 
     let active = true
     const loadAcademicData = async () => {
-      const scheduleQuery = user.department
-        ? supabase.from('timetable').select('id,day,time,room,subject:subjects(name,faculty)').eq('department', user.department).order('time')
-        : Promise.resolve({ data: [], error: null })
+      const loadSchedule = async () => {
+        const [departmentResult, personalResult] = await Promise.all([
+          user.department
+            ? supabase.from('timetable').select('id,day,time,room,subject:subjects(name,faculty)').eq('department', user.department).is('student_id', null).order('time')
+            : Promise.resolve({ data: [], error: null }),
+          supabase.from('timetable').select('id,day,time,room,subject:subjects(name,faculty)').eq('student_id', user.id).order('time'),
+        ])
+        return {
+          data: [...(departmentResult.data || []), ...(personalResult.data || [])],
+          error: departmentResult.error || personalResult.error,
+        }
+      }
       const [attendanceResult, scheduleResult, eventsResult] = await Promise.all([
         supabase.from('attendance').select('subject_id,total_classes,present_classes,subject:subjects(id,name,code,faculty)').eq('student_id', user.id),
-        scheduleQuery,
+        loadSchedule(),
         supabase.from('events').select('id,title,event_date,type').gte('event_date', new Date().toISOString()).order('event_date').limit(5),
       ])
       if (!active) return
@@ -366,12 +375,17 @@ export default function StudentDashboard() {
         />
 
         {/* SUMMARY CARDS */}
+        {user?.isDemo && (
+          <p className="text-xs text-violet-700">
+            Live summary figures appear for registered student accounts when database records are available.
+          </p>
+        )}
         <div className="internal-stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
           {[
             {
               label: t('attendance'),
-              value: avgAtt === null ? '—' : `${avgAtt}%`,
+              value: user?.isDemo ? '—' : avgAtt === null ? 'No data' : `${avgAtt}%`,
               icon: ClipboardList,
               color: 'text-emerald-700',
               bg: 'bg-emerald-50',
@@ -379,7 +393,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('pendingRequests'),
-              value: pendingReqs,
+              value: user?.isDemo ? '—' : pendingReqs,
               icon: FileText,
               color: 'text-amber-700',
               bg: 'bg-amber-50',
@@ -387,7 +401,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('openComplaints'),
-              value: openComplaints,
+              value: user?.isDemo ? '—' : openComplaints,
               icon: MessageSquareWarning,
               color: 'text-red-600',
               bg: 'bg-red-50',
@@ -395,7 +409,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('todaysClasses'),
-              value: todayClasses.length,
+              value: user?.isDemo ? '—' : todayClasses.length,
               icon: BookOpen,
               color: 'text-teal-700',
               bg: 'bg-teal-50',

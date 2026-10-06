@@ -47,7 +47,7 @@ export default function TimetablePage() {
   const { user } = useAuth()
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const [entries, setEntries] = useState(() => user?.isDemo ? demoEntries(user) : [])
-  const [loading, setLoading] = useState(!user?.isDemo && Boolean(supabase && user?.department))
+  const [loading, setLoading] = useState(!user?.isDemo && Boolean(supabase && user))
   const [error, setError] = useState(!user?.isDemo && !supabase ? 'Live timetable is unavailable because Supabase is not configured.' : '')
   const [activeDay, setActiveDay] = useState(DAYS.includes(today) ? today : 'Monday')
   const [view, setView] = useState('week')
@@ -63,19 +63,19 @@ export default function TimetablePage() {
     if (!supabase) {
       return
     }
-    if (!user.department) {
-      return
-    }
-    let query = supabase.from('timetable').select('*').eq('department', user.department).order('start_time')
-    if (user.semester) query = query.eq('semester', user.semester)
-    if (user.section) query = query.eq('section', user.section)
-    const { data, error: queryError } = await query
+    const [departmentResult, personalResult] = await Promise.all([
+      user.department
+        ? supabase.from('timetable').select('*').eq('department', user.department).is('student_id', null).order('start_time')
+        : Promise.resolve({ data: [], error: null }),
+      supabase.from('timetable').select('*').eq('student_id', user.id).order('start_time'),
+    ])
+    const queryError = departmentResult.error || personalResult.error
     if (queryError) {
       setError(`Could not load timetable: ${queryError.message}`)
       setEntries([])
     } else {
       setError('')
-      setEntries((data || []).map(normalizeRow))
+      setEntries([...(departmentResult.data || []), ...(personalResult.data || [])].map(normalizeRow))
     }
     setLoading(false)
   }, [user, setEntries, setError, setLoading])
@@ -127,7 +127,7 @@ export default function TimetablePage() {
         </label>
       </div>
 
-      {loading ? <div className="card"><LoadingState message="Loading your timetable…" /></div> : error || (!user?.department && !user?.isDemo) ? <div className="card"><ErrorState message={error || 'Add your department to your profile to load the correct timetable.'} onRetry={load} /></div> : matchingEntries.length === 0 ? (
+      {loading ? <div className="card"><LoadingState message="Loading your timetable…" /></div> : error ? <div className="card"><ErrorState message={error} onRetry={load} /></div> : matchingEntries.length === 0 ? (
         <div className="card"><EmptyState message="No timetable has been published for your department, semester, and section." icon={CalendarDays} /></div>
       ) : (
         <div className="card">

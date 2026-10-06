@@ -35,6 +35,29 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- CREATE TABLE IF NOT EXISTS does not add columns to profiles on an existing
+-- Supabase project. Keep the schema script safe to rerun for profile updates.
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS phone TEXT,
+  ADD COLUMN IF NOT EXISTS father_name TEXT,
+  ADD COLUMN IF NOT EXISTS father_mobile TEXT,
+  ADD COLUMN IF NOT EXISTS blood_group TEXT,
+  ADD COLUMN IF NOT EXISTS tenth_result TEXT,
+  ADD COLUMN IF NOT EXISTS twelfth_result TEXT,
+  ADD COLUMN IF NOT EXISTS avatar_url TEXT,
+  ADD COLUMN IF NOT EXISTS roll_no TEXT,
+  ADD COLUMN IF NOT EXISTS department TEXT,
+  ADD COLUMN IF NOT EXISTS branch TEXT,
+  ADD COLUMN IF NOT EXISTS section TEXT,
+  ADD COLUMN IF NOT EXISTS gender TEXT,
+  ADD COLUMN IF NOT EXISTS year INTEGER,
+  ADD COLUMN IF NOT EXISTS semester INTEGER,
+  ADD COLUMN IF NOT EXISTS hostel_block TEXT,
+  ADD COLUMN IF NOT EXISTS room_number TEXT,
+  ADD COLUMN IF NOT EXISTS designation TEXT,
+  ADD COLUMN IF NOT EXISTS employee_id TEXT,
+  ADD COLUMN IF NOT EXISTS office TEXT;
+
 -- ============================================================
 -- SUBJECTS
 -- ============================================================
@@ -82,6 +105,7 @@ CREATE TABLE IF NOT EXISTS exam_results (
 CREATE TABLE IF NOT EXISTS timetable (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   subject_id UUID REFERENCES subjects(id),
+  student_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   day TEXT NOT NULL,
   time TEXT NOT NULL,
   room TEXT,
@@ -337,6 +361,51 @@ GRANT SELECT, INSERT ON TABLE mess_feedback TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE events TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE bus_routes, campus_rooms TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE hostels, rooms TO authenticated;
+
+-- Make policy creation below safe when schema.sql is rerun on an existing
+-- Supabase project.
+DROP POLICY IF EXISTS "own_profile_select" ON profiles;
+DROP POLICY IF EXISTS "own_profile_update" ON profiles;
+DROP POLICY IF EXISTS "admin_profiles_select" ON profiles;
+DROP POLICY IF EXISTS "student_published_exam_results" ON exam_results;
+DROP POLICY IF EXISTS "admin_manage_exam_results" ON exam_results;
+DROP POLICY IF EXISTS "authenticated_read_subjects" ON subjects;
+DROP POLICY IF EXISTS "admins_manage_subjects" ON subjects;
+DROP POLICY IF EXISTS "authenticated_read_timetable" ON timetable;
+DROP POLICY IF EXISTS "admins_manage_timetable" ON timetable;
+DROP POLICY IF EXISTS "student_complaints" ON complaints;
+DROP POLICY IF EXISTS "admin_complaints" ON complaints;
+DROP POLICY IF EXISTS "complaint_updates_access" ON complaint_updates;
+DROP POLICY IF EXISTS "student_requests_select" ON requests;
+DROP POLICY IF EXISTS "student_requests_insert" ON requests;
+DROP POLICY IF EXISTS "admin_requests_select" ON requests;
+DROP POLICY IF EXISTS "admin_requests_update" ON requests;
+DROP POLICY IF EXISTS "student_leave_select" ON leave_requests;
+DROP POLICY IF EXISTS "student_leave_insert" ON leave_requests;
+DROP POLICY IF EXISTS "admin_leave_select" ON leave_requests;
+DROP POLICY IF EXISTS "admin_leave_update" ON leave_requests;
+DROP POLICY IF EXISTS "own_notifications" ON notifications;
+DROP POLICY IF EXISTS "authenticated_read_notices" ON notices;
+DROP POLICY IF EXISTS "admins_manage_notices" ON notices;
+DROP POLICY IF EXISTS "student_attendance" ON attendance;
+DROP POLICY IF EXISTS "admin_attendance" ON attendance;
+DROP POLICY IF EXISTS "student_feedback_insert" ON mess_feedback;
+DROP POLICY IF EXISTS "student_feedback_select" ON mess_feedback;
+DROP POLICY IF EXISTS "admin_feedback" ON mess_feedback;
+DROP POLICY IF EXISTS "student_fees" ON fees;
+DROP POLICY IF EXISTS "admin_fees" ON fees;
+DROP POLICY IF EXISTS "authenticated_read_mess_menu" ON mess_menu;
+DROP POLICY IF EXISTS "admins_manage_mess_menu" ON mess_menu;
+DROP POLICY IF EXISTS "authenticated_read_events" ON events;
+DROP POLICY IF EXISTS "admins_manage_events" ON events;
+DROP POLICY IF EXISTS "authenticated_read_bus_routes" ON bus_routes;
+DROP POLICY IF EXISTS "admins_manage_bus_routes" ON bus_routes;
+DROP POLICY IF EXISTS "authenticated_read_campus_rooms" ON campus_rooms;
+DROP POLICY IF EXISTS "admins_manage_campus_rooms" ON campus_rooms;
+DROP POLICY IF EXISTS "authenticated_read_hostels" ON hostels;
+DROP POLICY IF EXISTS "admins_manage_hostels" ON hostels;
+DROP POLICY IF EXISTS "authenticated_read_rooms" ON rooms;
+DROP POLICY IF EXISTS "admins_manage_rooms" ON rooms;
 
 -- Profiles: own profile + admins see all
 CREATE POLICY "own_profile_select" ON profiles FOR SELECT USING (auth.uid() = id);
