@@ -18,11 +18,9 @@ class Settings(BaseSettings):
     attendance_required: float = 75.0
     rate_limit_per_minute: int = 60
 
-    ai_provider: str = "rules"
+    ai_provider: str = "poe"
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
-    gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.0-flash"
     poe_api_key: str | None = None
     poe_model: str = "assistant"
     poe_timeout_seconds: float = Field(default=30.0, ge=1.0, le=120.0)

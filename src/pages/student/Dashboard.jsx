@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -33,7 +33,12 @@ import {
   DEMO_TIMETABLE,
   DEMO_MESS_MENU,
   DEMO_HOSTEL,
-  DEMO_EVENTS
+  getDemoAttendance,
+  getDemoTimetable,
+  DEMO_EVENTS,
+  INITIAL_COMPLAINTS,
+  INITIAL_REQUESTS,
+  INITIAL_LEAVE,
 } from '../../data/demoData'
 
 function getGreeting(t) {
@@ -101,6 +106,7 @@ export default function StudentDashboard() {
   } = useApp()
 
   const navigate = useNavigate()
+  const [showSamplePreview, setShowSamplePreview] = useState(false)
   const [academicData, setAcademicData] = useState({ subjects: [], classes: [], events: [] })
   const [dismissedNoticeState, setDismissedNoticeState] = useState(() => ({
     userId: user?.id,
@@ -114,7 +120,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user) return
     if (user.isDemo) {
-      setAcademicData({ subjects: DEMO_SUBJECTS, classes: DEMO_TIMETABLE, events: DEMO_EVENTS })
+      setAcademicData({ subjects: getDemoAttendance(user), classes: getDemoTimetable(user), events: DEMO_EVENTS })
       return
     }
     if (!supabase) {
@@ -205,6 +211,27 @@ export default function StudentDashboard() {
   const avgAtt = attendanceTotal ? Math.round((attendancePresent / attendanceTotal) * 100) : null
   const attendanceGauge = avgAtt ?? 0
   const hasLowAttendance = academicData.subjects.some(subject => subject.total > 0 && (subject.present / subject.total) * 100 < 80)
+
+  const samplePreview = useMemo(() => {
+    const attendanceTotal = DEMO_SUBJECTS.reduce((sum, subject) => sum + subject.total, 0)
+    const attendancePresent = DEMO_SUBJECTS.reduce((sum, subject) => sum + subject.present, 0)
+    const todaySampleClasses = DEMO_TIMETABLE.filter(item => item.day === today).length
+    const activeSampleComplaints = INITIAL_COMPLAINTS.filter(complaint =>
+      complaint.student_id === 'stu-001' && !['resolved', 'closed'].includes(String(complaint.status).toLowerCase()),
+    ).length
+    const pendingSampleRequests = INITIAL_REQUESTS.filter(request =>
+      request.student_id === 'stu-001' && !['approved', 'rejected'].includes(String(request.status).toLowerCase()),
+    ).length + INITIAL_LEAVE.filter(request =>
+      request.student_id === 'stu-001' && String(request.status).toLowerCase() === 'pending',
+    ).length
+
+    return {
+      attendance: attendanceTotal ? `${Math.round((attendancePresent / attendanceTotal) * 100)}%` : '—',
+      requests: pendingSampleRequests,
+      complaints: activeSampleComplaints,
+      classes: todaySampleClasses,
+    }
+  }, [today])
 
   const selectDashboardCard = event => {
     const card = event.target.closest('.card')
@@ -375,17 +402,26 @@ export default function StudentDashboard() {
         />
 
         {/* SUMMARY CARDS */}
-        {user?.isDemo && (
-          <p className="text-xs text-violet-700">
-            Live summary figures appear for registered student accounts when database records are available.
-          </p>
+        {!user?.isDemo && (
+          <div className="flex flex-col gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950 sm:flex-row sm:items-center sm:justify-between">
+            <p>{showSamplePreview
+              ? 'Sample preview figures are shown below. They are examples only and are not your campus records.'
+              : 'New here? Preview example dashboard figures while your campus records are being added.'}</p>
+            <button
+              type="button"
+              onClick={() => setShowSamplePreview(value => !value)}
+              className="shrink-0 rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-100"
+            >
+              {showSamplePreview ? 'Show my live figures' : 'Show sample preview'}
+            </button>
+          </div>
         )}
         <div className="internal-stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
           {[
             {
               label: t('attendance'),
-              value: user?.isDemo ? '—' : avgAtt === null ? 'No data' : `${avgAtt}%`,
+              value: !user?.isDemo && showSamplePreview ? samplePreview.attendance : avgAtt === null ? 'No data' : `${avgAtt}%`,
               icon: ClipboardList,
               color: 'text-emerald-700',
               bg: 'bg-emerald-50',
@@ -393,7 +429,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('pendingRequests'),
-              value: user?.isDemo ? '—' : pendingReqs,
+              value: !user?.isDemo && showSamplePreview ? samplePreview.requests : pendingReqs,
               icon: FileText,
               color: 'text-amber-700',
               bg: 'bg-amber-50',
@@ -401,7 +437,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('openComplaints'),
-              value: user?.isDemo ? '—' : openComplaints,
+              value: !user?.isDemo && showSamplePreview ? samplePreview.complaints : openComplaints,
               icon: MessageSquareWarning,
               color: 'text-red-600',
               bg: 'bg-red-50',
@@ -409,7 +445,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('todaysClasses'),
-              value: user?.isDemo ? '—' : todayClasses.length,
+              value: !user?.isDemo && showSamplePreview ? samplePreview.classes : todayClasses.length,
               icon: BookOpen,
               color: 'text-teal-700',
               bg: 'bg-teal-50',

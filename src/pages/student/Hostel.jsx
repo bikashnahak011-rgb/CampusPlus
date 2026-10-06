@@ -21,6 +21,7 @@ export default function HostelPage() {
   const [hostel, setHostel] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [assignmentMessage, setAssignmentMessage] = useState('')
 
   useEffect(() => {
     if (!user) return
@@ -28,24 +29,27 @@ export default function HostelPage() {
       setHostel(DEMO_HOSTEL)
       setLoading(false)
       setError('')
+      setAssignmentMessage('')
       return
     }
     if (!supabase) {
-      setHostel(null)
+      setHostel({ block: user.hostel_block || '', room: user.room_number || '', roommates: [] })
       setLoading(false)
       setError('Live hostel information is unavailable because Supabase is not configured.')
       return
     }
     if (!user.hostel_block) {
-      setHostel(null)
+      setHostel({ block: '', room: user.room_number || '', roommates: [] })
       setLoading(false)
-      setError('No hostel block is assigned to your profile. Contact the hostel office.')
+      setError('')
+      setAssignmentMessage('No hostel block is assigned to your profile. Add your hostel details in your profile, or contact the hostel office to confirm your assignment.')
       return
     }
 
     let active = true
     setLoading(true)
     setError('')
+    setAssignmentMessage('')
     const loadHostel = async () => {
       const { data: hostelData, error: hostelError } = await supabase
         .from('hostels')
@@ -55,12 +59,13 @@ export default function HostelPage() {
       if (!active) return
       if (hostelError) {
         setError(`Could not load hostel information: ${hostelError.message}`)
-        setHostel(null)
+        setHostel({ block: user.hostel_block, room: user.room_number || '', roommates: [] })
         setLoading(false)
         return
       }
       if (!hostelData) {
-        setHostel(null)
+        setHostel({ block: user.hostel_block, room: user.room_number || '', roommates: [] })
+        setAssignmentMessage(`Your profile lists Block ${user.hostel_block}, but its hostel directory details have not been published yet.`)
         setLoading(false)
         return
       }
@@ -74,7 +79,7 @@ export default function HostelPage() {
           .maybeSingle()
         if (roomError) {
           setError(`Could not load room information: ${roomError.message}`)
-          setHostel(null)
+          setHostel({ block: hostelData.block, room: user.room_number || '', warden: hostelData.warden_name, warden_phone: hostelData.warden_phone, roommates: [] })
           setLoading(false)
           return
         }
@@ -114,14 +119,17 @@ export default function HostelPage() {
 
       {loading && <div className="card text-sm text-gray-500">Loading hostel information...</div>}
       {error && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{error}</div>}
-      {!loading && !error && !hostel && <div className="card text-center py-8 text-sm text-gray-500">Hostel information has not been published for your block.</div>}
+      {assignmentMessage && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <span>{assignmentMessage}</span>
+        {!user?.isDemo && <button onClick={() => navigate('/student/profile')} className="font-semibold underline underline-offset-2 self-start sm:self-auto">Update my profile</button>}
+      </div>}
 
-      {!loading && !error && hostel && <>
+      {!loading && hostel && <>
       <div className="grid lg:grid-cols-2 gap-4">
         <div className="card">
           <h2 className="font-semibold text-gray-900 mb-4">Room Information</h2>
           <div className="grid grid-cols-2 gap-3">
-            {[['Hostel Block', `Block ${hostel.block}`], ['Room Number', hostel.room || 'Not assigned'], ['Floor', hostel.floor ? `Floor ${hostel.floor}` : 'Not listed'], ['Capacity', hostel.capacity ? `${hostel.capacity} Students` : 'Not listed']].map(([l, v]) => (
+            {[['Hostel Block', hostel.block ? `Block ${hostel.block}` : 'Not assigned'], ['Room Number', hostel.room || 'Not assigned'], ['Floor', hostel.floor ? `Floor ${hostel.floor}` : 'Not listed'], ['Capacity', hostel.capacity ? `${hostel.capacity} Students` : 'Not listed']].map(([l, v]) => (
               <div key={l} className="bg-gray-50 rounded-xl p-3"><p className="text-xs text-gray-400 mb-0.5">{l}</p><p className="font-semibold text-gray-900">{v}</p></div>
             ))}
           </div>
@@ -131,7 +139,7 @@ export default function HostelPage() {
           <h2 className="font-semibold text-gray-900 mb-4">Warden Information</h2>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center"><User size={22} className="text-blue-600" /></div>
-            <div><p className="font-semibold text-gray-900">{hostel.warden || 'Warden not listed'}</p><p className="text-xs text-gray-500">Block {hostel.block} Warden</p></div>
+            <div><p className="font-semibold text-gray-900">{hostel.warden || 'Warden not listed'}</p><p className="text-xs text-gray-500">{hostel.block ? `Block ${hostel.block} Warden` : 'Hostel contact'}</p></div>
           </div>
           {hostel.warden_phone && <a href={`tel:${hostel.warden_phone}`} className="flex items-center gap-2 text-blue-600 text-sm hover:underline"><Phone size={15} />{hostel.warden_phone}</a>}
         </div>

@@ -18,11 +18,11 @@ flowchart TD
   OUT --> UI
 ```
 
-Attendance uses the configured threshold, and recent `attendance_history` records identify continuously decreasing attendance. Complaint analysis uses keyword classification, location extraction, text similarity, and escalation rules. Rules are the default; setting `AI_PROVIDER=openai` and a server-only `OPENAI_API_KEY` enables structured OpenAI classification and admin copilot answers, with automatic rules fallback if the provider is unavailable. The mess forecast combines room capacity, approved leave, day/date context, and feedback volume, and always returns uncertainty.
+Attendance uses the configured threshold, and recent `attendance_history` records identify continuously decreasing attendance. Complaint analysis uses keyword classification, location extraction, text similarity, and escalation rules. Poe is the default provider for structured complaint classification and admin copilot answers when `AI_PROVIDER=poe` and the server-only `POE_API_KEY` are configured; deterministic rules take over if Poe is unavailable. OpenAI remains an optional alternative for those two features by setting `AI_PROVIDER=openai` and `OPENAI_API_KEY`. The mess forecast combines room capacity, approved leave, day/date context, and feedback volume, and always returns uncertainty.
 
 ## Campus AI (Poe)
 
-The Campus AI chat uses Poe's OpenAI-compatible Chat Completions API. The backend calls `https://api.poe.com/v1/chat/completions` using the existing `httpx` dependency; no OpenAI SDK or additional package is needed. The existing `AI_PROVIDER` setting still controls the older classification/copilot flows; it does not enable or disable this Poe chat endpoint. The Poe key is read only by FastAPI and must never be placed in a `VITE_*` variable or sent from the browser.
+Campus AI chat, complaint classification, and admin copilot answers use Poe's OpenAI-compatible Chat Completions API by default. The backend calls `https://api.poe.com/v1/chat/completions` using the existing `httpx` dependency; no OpenAI SDK or additional package is needed. `AI_PROVIDER=poe` selects Poe for structured classification/copilot responses; the chat endpoint always uses Poe. The Poe key is read only by FastAPI and must never be placed in a `VITE_*` variable or sent from the browser.
 
 Set these backend environment variables locally in `backend/.env` or in the backend hosting provider's secret/environment settings:
 

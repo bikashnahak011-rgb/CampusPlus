@@ -48,6 +48,62 @@ export const DEMO_TIMETABLE = [
   { id: 't12', day: 'Friday', time: '11:00', subject: 'Computer Networks', room: 'CS-103', faculty: 'Prof. Anil Verma' },
 ]
 
+const DEMO_ACADEMICS_BY_STUDENT = {
+  'stu-001': { subjects: DEMO_SUBJECTS, timetable: DEMO_TIMETABLE },
+  'stu-002': {
+    subjects: DEMO_SUBJECTS.map((subject, index) => ({
+      ...subject,
+      id: `stu-002-${subject.id}`,
+      total: [48, 46, 51, 44, 39][index],
+      present: [42, 36, 45, 38, 31][index],
+    })),
+    timetable: DEMO_TIMETABLE.map((entry, index) => ({
+      ...entry,
+      id: `stu-002-${entry.id}`,
+      time: index % 2 === 0 ? '10:00' : '13:00',
+      room: entry.room.replace('CS-', 'CS-B'),
+    })),
+  },
+  'stu-003': {
+    subjects: [
+      { id: 'me-501', name: 'Thermodynamics', code: 'ME501', total: 52, present: 44, faculty: 'Prof. Arvind Rao' },
+      { id: 'me-502', name: 'Fluid Mechanics', code: 'ME502', total: 48, present: 35, faculty: 'Prof. Kavita Singh' },
+      { id: 'me-503', name: 'Manufacturing Processes', code: 'ME503', total: 50, present: 43, faculty: 'Prof. Deepak Joshi' },
+      { id: 'me-504', name: 'Machine Design', code: 'ME504', total: 46, present: 37, faculty: 'Prof. Ramesh Kumar' },
+    ],
+    timetable: [
+      { id: 'me-t1', day: 'Monday', time: '09:00', subject: 'Thermodynamics', room: 'ME-201', faculty: 'Prof. Arvind Rao' },
+      { id: 'me-t2', day: 'Tuesday', time: '11:00', subject: 'Fluid Mechanics', room: 'ME-Lab1', faculty: 'Prof. Kavita Singh' },
+      { id: 'me-t3', day: 'Wednesday', time: '10:00', subject: 'Manufacturing Processes', room: 'ME-105', faculty: 'Prof. Deepak Joshi' },
+      { id: 'me-t4', day: 'Thursday', time: '13:00', subject: 'Machine Design', room: 'ME-202', faculty: 'Prof. Ramesh Kumar' },
+      { id: 'me-t5', day: 'Friday', time: '09:00', subject: 'Fluid Mechanics', room: 'ME-201', faculty: 'Prof. Kavita Singh' },
+    ],
+  },
+  'stu-004': {
+    subjects: [
+      { id: 'ec-501', name: 'Analog Electronics', code: 'EC501', total: 49, present: 46, faculty: 'Prof. Sunita Rao' },
+      { id: 'ec-502', name: 'Signals and Systems', code: 'EC502', total: 47, present: 39, faculty: 'Prof. Anil Verma' },
+      { id: 'ec-503', name: 'Digital Logic Design', code: 'EC503', total: 51, present: 42, faculty: 'Prof. Ramesh Kumar' },
+      { id: 'ec-504', name: 'Communication Systems', code: 'EC504', total: 44, present: 34, faculty: 'Prof. Deepak Joshi' },
+    ],
+    timetable: [
+      { id: 'ec-t1', day: 'Monday', time: '11:00', subject: 'Analog Electronics', room: 'EC-101', faculty: 'Prof. Sunita Rao' },
+      { id: 'ec-t2', day: 'Tuesday', time: '09:00', subject: 'Signals and Systems', room: 'EC-204', faculty: 'Prof. Anil Verma' },
+      { id: 'ec-t3', day: 'Wednesday', time: '13:00', subject: 'Digital Logic Design', room: 'EC-Lab2', faculty: 'Prof. Ramesh Kumar' },
+      { id: 'ec-t4', day: 'Thursday', time: '10:00', subject: 'Communication Systems', room: 'EC-202', faculty: 'Prof. Deepak Joshi' },
+      { id: 'ec-t5', day: 'Friday', time: '11:00', subject: 'Analog Electronics', room: 'EC-Lab1', faculty: 'Prof. Sunita Rao' },
+    ],
+  },
+}
+
+export function getDemoAttendance(user) {
+  return (DEMO_ACADEMICS_BY_STUDENT[user?.id]?.subjects || DEMO_SUBJECTS).map(subject => ({ ...subject }))
+}
+
+export function getDemoTimetable(user) {
+  return (DEMO_ACADEMICS_BY_STUDENT[user?.id]?.timetable || DEMO_TIMETABLE).map(entry => ({ ...entry }))
+}
+
 export const DEMO_MESS_MENU = {
   Monday:    { breakfast: 'Idli + Sambar + Coconut Chutney', lunch: 'Rice + Dal + Paneer Butter Masala + Salad', snacks: 'Tea + Biscuits', dinner: 'Roti + Rice + Dal Tadka + Sabzi' },
   Tuesday:   { breakfast: 'Poha + Jalebi + Tea', lunch: 'Rice + Rajma + Jeera Aloo + Salad', snacks: 'Coffee + Samosa', dinner: 'Roti + Rice + Chole + Raita' },

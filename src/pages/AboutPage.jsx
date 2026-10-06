@@ -82,7 +82,7 @@ const TECH = [
   { name: 'React Router v7', color: 'bg-amber-100 text-amber-700' },
   { name: 'Google OAuth', color: 'bg-red-100 text-red-700' },
   { name: 'PWA', color: 'bg-orange-100 text-orange-700' },
-  { name: 'AI / Gemini', color: 'bg-lime-100 text-lime-700' },
+  { name: 'AI / Poe', color: 'bg-lime-100 text-lime-700' },
   { name: 'Lucide Icons', color: 'bg-yellow-100 text-yellow-700' },
 ]
 

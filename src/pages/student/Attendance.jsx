@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { DEMO_SUBJECTS } from '../../data/demoData'
+import { getDemoAttendance } from '../../data/demoData'
 
 export default function AttendancePage() {
   const { user } = useAuth()
@@ -13,7 +13,7 @@ export default function AttendancePage() {
   useEffect(() => {
     if (!user) return
     if (user.isDemo) {
-      setSubjects(DEMO_SUBJECTS)
+      setSubjects(getDemoAttendance(user))
       setLoading(false)
       setError('')
       return

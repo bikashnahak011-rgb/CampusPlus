@@ -5,7 +5,18 @@ import { askCampusAssistant } from '../lib/aiService'
 
 const QUICK = {
   student: ['How do I submit a complaint?', 'How do I request a document?', "What is today's mess menu?", 'What is my attendance?'],
-  admin: ['Summarize current campus issues', 'Where do I edit bus routes?', 'How do I review requests?', 'How do I update the mess menu?'],
+  admin: ['Summarize current campus issues', 'Where do I review requests?', 'How do I manage attendance?', 'How do I edit bus routes?'],
+  main_administrator: ['Summarize current campus issues', 'How do I review requests?', 'How do I publish a notice?', 'How do I edit bus routes?'],
+  faculty: ['How do I see today’s classes?', 'How do I review attendance?', 'How do I add an assignment?', 'Where do I edit the timetable?'],
+  hostel_management: ['How do I review hostel complaints?', 'How do I allocate a room?', 'Where are hostel students?', 'How do I manage maintenance?'],
+  mess_manager: ['How do I update the mess menu?', 'Where do I review meal feedback?', 'How do I view food complaints?', 'What is today’s menu?'],
+  account_examination: ['How do I review fees?', 'Where are exam results?', 'How do I view payments?', 'Where can I see reports?'],
+}
+
+function greetingFor(role) {
+  return role === 'admin'
+    ? 'Hi! I can guide you around tools available to your administrator role and answer questions about authorized campus information.'
+    : 'Hi! I can guide you around student services and answer questions about your own campus records.'
 }
 
 function CampusRobot({ small = false }) {
@@ -26,21 +37,34 @@ function CampusRobot({ small = false }) {
 export default function AIAssistant() {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState(() => [{
-    id: 1,
-    role: 'assistant',
-    text: user?.role === 'admin'
-      ? 'Hi! I can guide you around admin tools and summarize authorized campus operations data.'
-      : 'Hi! I can guide you around student services and answer questions about your own campus records.',
-  }])
+  const initialMessage = { id: 1, role: 'assistant', text: greetingFor(user?.role) }
+  const [conversation, setConversation] = useState(() => ({ userId: user?.id, messages: [initialMessage] }))
+  const messages = conversation.userId === user?.id
+    ? conversation.messages
+    : [{ ...initialMessage, id: `greeting-${user?.id || 'guest'}` }]
+  const setMessages = update => setConversation(previous => {
+    const currentMessages = previous.userId === user?.id ? previous.messages : messages
+    return {
+      userId: user?.id,
+      messages: typeof update === 'function' ? update(currentMessages) : update,
+    }
+  })
   const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [pendingRequest, setPendingRequest] = useState({ userId: user?.id, loading: false })
+  const loading = pendingRequest.userId === user?.id && pendingRequest.loading
+  const setLoading = value => setPendingRequest({ userId: user?.id, loading: value })
   const bottomRef = useRef(null)
   const requestController = useRef(null)
-  const quickQuestions = QUICK[user?.role === 'admin' ? 'admin' : 'student']
+  const quickQuestions = user?.role === 'admin'
+    ? QUICK[user.admin_role] || QUICK.admin
+    : QUICK.student
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
   useEffect(() => () => requestController.current?.abort(), [])
+  useEffect(() => {
+    requestController.current?.abort()
+    requestController.current = null
+  }, [user?.id, user?.role, user?.admin_role])
 
   const cancel = () => {
     const controller = requestController.current
@@ -123,7 +147,7 @@ export default function AIAssistant() {
 
           <footer className="campus-ai-composer">
             <div className="campus-ai-suggestions" aria-label="Suggested questions">
-              {quickQuestions.slice(0, 3).map((q, index) => (
+              {quickQuestions.map((q, index) => (
                 <button
                   key={q}
                   disabled={loading}

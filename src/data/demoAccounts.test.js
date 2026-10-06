@@ -3,17 +3,11 @@ import assert from 'node:assert/strict'
 import { DEMO_LOGIN_ACCOUNTS } from './demoAccounts.js'
 import { ADMIN_ROLES } from '../lib/adminRoles.js'
 
-test('demo account picker has one account for every portal role', () => {
+test('demo account picker includes multiple students and every administrator role', () => {
+  assert.equal(DEMO_LOGIN_ACCOUNTS.filter(({ role }) => role === 'student').length, 4)
   assert.deepEqual(
-    DEMO_LOGIN_ACCOUNTS.map(({ role, admin_role }) => role === 'student' ? 'student' : admin_role),
-    [
-      'student',
-      ADMIN_ROLES.HOSTEL_MANAGEMENT,
-      ADMIN_ROLES.MESS_MANAGER,
-      ADMIN_ROLES.FACULTY,
-      ADMIN_ROLES.ACCOUNT_EXAMINATION,
-      ADMIN_ROLES.MAIN_ADMINISTRATOR,
-    ],
+    DEMO_LOGIN_ACCOUNTS.filter(({ role }) => role === 'admin').map(({ admin_role }) => admin_role),
+    [ADMIN_ROLES.HOSTEL_MANAGEMENT, ADMIN_ROLES.MESS_MANAGER, ADMIN_ROLES.FACULTY, ADMIN_ROLES.ACCOUNT_EXAMINATION, ADMIN_ROLES.MAIN_ADMINISTRATOR],
   )
 })
 

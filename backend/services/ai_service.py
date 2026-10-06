@@ -42,38 +42,37 @@ def classify_complaint(description: str, category: str | None = None) -> dict[st
     return {"category": selected, "urgency": urgency, "summary": summary}
 
 
-async def _gemini_json(system_prompt: str, user_prompt: str) -> dict | None:
+async def _poe_json(system_prompt: str, user_prompt: str) -> dict | None:
     settings = get_settings()
-    if settings.ai_provider.lower() != "gemini" or not settings.gemini_api_key:
+    if settings.ai_provider.lower() != "poe" or not settings.poe_api_key:
         return None
 
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
+        async with httpx.AsyncClient(timeout=settings.poe_timeout_seconds) as client:
             response = await client.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}",
+                "https://api.poe.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {settings.poe_api_key}"},
                 json={
-                    "contents": [
-                        {
-                            "parts": [{"text": f"{system_prompt}\n\n{user_prompt}"}],
-                        }
+                    "model": settings.poe_model,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
                     ],
-                    "generationConfig": {
-                        "temperature": 0.2,
-                        "responseMimeType": "application/json",
-                    },
+                    "temperature": 0.1,
                 },
             )
             response.raise_for_status()
-            payload = response.json()
-            text = payload["candidates"][0]["content"]["parts"][0]["text"]
-            cleaned = text.strip()
+            content = response.json()["choices"][0]["message"]["content"]
+            if not isinstance(content, str):
+                return None
+            cleaned = content.strip()
             if cleaned.startswith("```"):
                 cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
                 cleaned = re.sub(r"\s*```$", "", cleaned)
             result = json.loads(cleaned)
             return result if isinstance(result, dict) else None
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError):
-        logger.warning("Gemini provider failed; using deterministic rules.")
+        logger.warning("Poe JSON response failed; using deterministic rules.")
         return None
 
 
@@ -108,10 +107,10 @@ async def _openai_json(system_prompt: str, user_prompt: str) -> dict | None:
 
 async def _provider_json(system_prompt: str, user_prompt: str) -> dict | None:
     settings = get_settings()
-    provider = (settings.ai_provider or "rules").lower()
+    provider = (settings.ai_provider or "poe").lower()
 
-    if provider == "gemini":
-        return await _gemini_json(system_prompt, user_prompt)
+    if provider == "poe":
+        return await _poe_json(system_prompt, user_prompt)
     if provider == "openai":
         return await _openai_json(system_prompt, user_prompt)
     return None
@@ -148,7 +147,7 @@ async def analyze_complaint_text(description: str) -> dict[str, str]:
         "summary": rules["summary"],
         "location": model_location.strip()[:120],
         "suggested_action": str(generated.get("suggested_action") or "Send this report to the appropriate campus office for review.")[:300],
-        "source": "openai",
+        "source": (get_settings().ai_provider or "poe").lower(),
     }
 
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CalendarDays, Clock3, MapPin } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { DEMO_TIMETABLE } from '../../data/demoData'
+import { getDemoTimetable } from '../../data/demoData'
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -32,7 +32,7 @@ function normalizeRow(row) {
 }
 
 function demoEntries(user) {
-  return DEMO_TIMETABLE.map(row => ({
+  return getDemoTimetable(user).map(row => ({
     ...row,
     start_time: row.time,
     end_time: `${String(Number(row.time.split(':')[0]) + 1).padStart(2, '0')}:${row.time.split(':')[1]}`,

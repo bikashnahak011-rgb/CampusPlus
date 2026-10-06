@@ -258,7 +258,7 @@ Toggle in **Settings** to enable Lite Mode:
 
 ## 🤖 AI Smart Routing
 
-Real accounts send complaint classification, student assistant questions, and admin insights to the authenticated FastAPI backend. Rules are the default; optional OpenAI classification/admin answers can be enabled with `AI_PROVIDER=openai` and `OPENAI_API_KEY` in `backend/.env`. If the provider is unavailable, backend rules remain available. Demo accounts use local sample data and rules. Never put AI provider secrets in `VITE_*` variables; browser environment values are public.
+Real accounts send complaint classification, student assistant questions, and admin insights to the authenticated FastAPI backend. Poe powers Campus AI and is the default provider for complaint classification and admin copilot answers when `AI_PROVIDER=poe` and the server-only `POE_API_KEY` are configured. If Poe is unavailable, deterministic backend rules remain available. OpenAI can optionally be selected for classification/admin answers with `AI_PROVIDER=openai` and `OPENAI_API_KEY`; it does not power Campus AI chat. Demo accounts use local sample data and rules. Never put AI provider secrets in `VITE_*` variables; browser environment values are public.
 
 ---
 

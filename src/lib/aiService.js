@@ -1,4 +1,4 @@
-import { DEMO_MESS_MENU, DEMO_SUBJECTS } from '../data/demoData.js'
+﻿import { DEMO_MESS_MENU, DEMO_SUBJECTS } from '../data/demoData.js'
 import { requestBackend } from './backendApi.js'
 
 const KEYWORDS = {
@@ -128,15 +128,15 @@ export function getCampusAssistantReply(message, user = {}) {
   const menu = DEMO_MESS_MENU[today]
 
   if (/(bus|route|transport|pickup|stop|timing|driver|shuttle|travel)/.test(lower)) {
-    return 'Campus transport is available through the Bus Routes page.\n\n• Check the route timings and stops\n• View the live route list\n• Contact the transport office if your pickup point is missing\n\nIf you want, I can help you find a route for your hostel or department.'
+    return 'Campus transport is available through the Bus Routes page.\n\nâ€¢ Check the route timings and stops\nâ€¢ View the live route list\nâ€¢ Contact the transport office if your pickup point is missing\n\nIf you want, I can help you find a route for your hostel or department.'
   }
 
   if (/(hostel|room|warden|block|floor|accommodation)/.test(lower)) {
-    return 'Your hostel details can be checked from the Hostel page.\n\n• Block and room assignment\n• Warden contact details\n• Room status and maintenance requests\n\nIf your room is missing, contact the hostel office or submit a complaint.'
+    return 'Your hostel details can be checked from the Hostel page.\n\nâ€¢ Block and room assignment\nâ€¢ Warden contact details\nâ€¢ Room status and maintenance requests\n\nIf your room is missing, contact the hostel office or submit a complaint.'
   }
 
   if (/(timetable|class|lecture|lab|schedule|seminar|exam)/.test(lower)) {
-    return 'Use the Timetable page to view your class schedule and room assignments.\n\n• Check this week’s timetable\n• See subject-wise room details\n• Review the latest exam or schedule updates\n\nYour department and profile must match the published timetable.'
+    return 'Use the Timetable page to view your class schedule and room assignments.\n\nâ€¢ Check this weekâ€™s timetable\nâ€¢ See subject-wise room details\nâ€¢ Review the latest exam or schedule updates\n\nYour department and profile must match the published timetable.'
   }
 
   if (/(faculty|teacher|mentor|professor|staff|department)/.test(lower)) {
@@ -148,76 +148,146 @@ export function getCampusAssistantReply(message, user = {}) {
   }
 
   if (/(mess|menu|food|meal|canteen|breakfast|lunch|dinner|snack)/.test(lower)) {
-    return `Today is ${today}. Here's the menu:\n🌅 Breakfast: ${menu?.breakfast || 'Not available'}\n☀️ Lunch: ${menu?.lunch || 'Not available'}\n🌙 Dinner: ${menu?.dinner || 'Not available'}\n\nView the full weekly menu in the Mess section.`
+    return `Today is ${today}. Here's the menu:\nðŸŒ… Breakfast: ${menu?.breakfast || 'Not available'}\nâ˜€ï¸ Lunch: ${menu?.lunch || 'Not available'}\nðŸŒ™ Dinner: ${menu?.dinner || 'Not available'}\n\nView the full weekly menu in the Mess section.`
   }
 
   if (/(attendance|present|absent|marks|grade|score|percentage)/.test(lower)) {
     const avg = Math.round(DEMO_SUBJECTS.reduce((sum, sub) => sum + (sub.present / sub.total) * 100, 0) / DEMO_SUBJECTS.length)
     const low = DEMO_SUBJECTS.filter(sub => (sub.present / sub.total) * 100 < 80)
-    return `Your overall attendance is ~${avg}%. ${low.length > 0 ? `⚠️ ${low.map(s => s.name).join(', ')} ${low.length > 1 ? 'are' : 'is'} below 80%.` : 'All subjects are above 80%.'}\n\nGo to the Attendance page for details.`
+    return `Your overall attendance is ~${avg}%. ${low.length > 0 ? `âš ï¸ ${low.map(s => s.name).join(', ')} ${low.length > 1 ? 'are' : 'is'} below 80%.` : 'All subjects are above 80%.'}\n\nGo to the Attendance page for details.`
   }
 
   if (/(gate pass|gatepass|pass)/.test(lower)) {
-    return 'To apply for a Gate Pass:\n1. Open Leave & Gate Pass\n2. Click “New Request”\n3. Choose “Gate Pass”\n4. Fill in the destination, date, and time\n5. Submit for approval\n\nYou will receive a notification after approval.'
+    return 'To apply for a Gate Pass:\n1. Open Leave & Gate Pass\n2. Click â€œNew Requestâ€\n3. Choose â€œGate Passâ€\n4. Fill in the destination, date, and time\n5. Submit for approval\n\nYou will receive a notification after approval.'
   }
 
   if (/(leave|outing|absence)/.test(lower)) {
-    return 'To apply for leave:\n1. Go to Leave & Gate Pass\n2. Click “New Request”\n3. Choose “Leave”\n4. Fill in dates and reason\n5. Submit\n\nLeave requests require warden and admin approval.'
+    return 'To apply for leave:\n1. Go to Leave & Gate Pass\n2. Click â€œNew Requestâ€\n3. Choose â€œLeaveâ€\n4. Fill in dates and reason\n5. Submit\n\nLeave requests require warden and admin approval.'
   }
 
   if (/(bonafide|certificate|document|transcript|record|request)/.test(lower)) {
-    return 'To request a document or certificate:\n1. Go to Documents\n2. Click “New Request”\n3. Select the document type\n4. Enter the reason\n5. Submit\n\nThe admin will review it and notify you when ready.'
+    return 'To request a document or certificate:\n1. Go to Documents\n2. Click â€œNew Requestâ€\n3. Select the document type\n4. Enter the reason\n5. Submit\n\nThe admin will review it and notify you when ready.'
   }
 
   if (/(complaint|problem|issue|water|electric|leak|maintenance|cleaning|wifi|network)/.test(lower)) {
-    return 'To report a problem:\n1. Open Complaints\n2. Click “Report a Problem”\n3. Describe the issue and location\n4. Let AI auto-detect the category and priority\n5. Submit\n\nYou will get a complaint ID and status updates.'
+    return 'To report a problem:\n1. Open Complaints\n2. Click â€œReport a Problemâ€\n3. Describe the issue and location\n4. Let AI auto-detect the category and priority\n5. Submit\n\nYou will get a complaint ID and status updates.'
   }
 
   if (/(fee|payment|dues|fine|scholarship|invoice)/.test(lower)) {
-    return 'View your fee details in the Fees section.\nPending amount: ₹15,000\n\nFor payment, use the online portal or visit the accounts office.'
+    return 'View your fee details in the Fees section.\nPending amount: â‚¹15,000\n\nFor payment, use the online portal or visit the accounts office.'
   }
 
   if (/(hello|hi|hey|good morning|good afternoon|good evening)/.test(lower)) {
     return `Hello ${user?.name?.split(' ')[0] || 'there'}! I can help with mess menu, attendance, complaints, gate pass, hostel, bus routes, documents, and fees.\n\nWhat do you need?`
   }
 
-  return 'I can help with campus services like mess menu, attendance, complaints, gate pass, hostel, bus routes, documents, faculty, and fees. Try asking something specific, such as “What is today’s mess menu?” or “How do I request a document?”'
+  return 'I can help with campus services like mess menu, attendance, complaints, gate pass, hostel, bus routes, documents, faculty, and fees. Try asking something specific, such as â€œWhat is todayâ€™s mess menu?â€ or â€œHow do I request a document?â€'
 }
 
 export function getCampusWebsiteHelp(message, user = {}) {
   const text = String(message || '').trim().toLowerCase()
-  const asksHowTo = /\b(how|where|which page|navigate|find|open|use|add|edit|update|submit|apply)\b/.test(text)
+  const asksHowTo = /\b(how\s+(?:do|can|should|to|does\s+(?:this|the portal|the website)|is\s+(?:this|the portal|the website) used)|where\s+(?:do|can|is|are|should)|which\s+(?:page|menu|section)|navigate|find|open|use|add|edit|update|submit|apply|show me|help me|can i|what page|what is the page for)\b/.test(text)
   if (!text) return 'Ask me how to use any student or admin page, or ask about your live campus records.'
-  if (/\b(hello+|h+i+|hey+)\b/.test(text)) {
+  if (/\b(hello+|h+i+|hey+|good morning|good afternoon|good evening)\b/.test(text)) {
     return `Hello ${user?.name?.split(' ')[0] || 'there'}! I can guide you around NexCampus or look up information available to your account.`
   }
-  if (!asksHowTo) return null
+  // Answer short feature keywords locally. Personal-record questions still use
+  // the authenticated backend so replies can use current campus data.
+  const campusFeature = /\b(attendance|attendence|present|absent|class|classes|timetable|time table|schedule|lecture|complaint|complaints|issue|maintenance|request|requests|document|certificate|leave|outing|gate ?pass|hostel|warden|room|mess|menu|meal|food|breakfast|lunch|dinner|fee|fees|payment|dues|scholarship|result|results|exam|grade|marks?|notice|notification|announcement|faculty|teacher|bus|route|transport|syllabus|pyq|assignment|career|internship|job|placement|journal|profile|password|settings|support|help)\b/.test(text)
+  const asksForLiveRecord = /\b(my|mine|today'?s|today|this week|current|latest)\b/.test(text) && campusFeature
+  if (asksForLiveRecord && !asksHowTo) return null
+  const isWebsiteQuestion = asksHowTo || campusFeature || /\b(website|web site|portal|app|screen|page|feature|button|dashboard|sign ?in|log ?in|register|sign ?up|account)\b/.test(text)
+  if (!isWebsiteQuestion) return null
 
   if (user.role === 'admin') {
-    if (/bus|route|gps|transport/.test(text)) return 'Open Admin → Bus Routes. Use Add route to publish a route, Edit route to change its details, or Start GPS sharing on the driver device to transmit its location.'
-    if (/room|classroom|library|lab|availability/.test(text)) return 'Open Admin → Room Directory. Use Add room to publish a campus space, then Update live status to change its availability or visitor note.'
-    if (/faculty|teacher|qualification|subject/.test(text)) return 'Open Admin → Faculty. Add or edit a faculty member’s name, qualification, classes, and subjects there.'
-    if (/mess|menu|meal|feedback|food/.test(text)) return 'Open Admin → Mess. Choose a weekday, select Edit menu, and save the meal details. Student ratings appear under Feedback.'
-    if (/notice|announcement/.test(text)) return 'Open Admin → Notices and choose Publish Notice. Published notices appear to students under Notifications → Notices.'
-    if (/leave|gate pass|gatepass|document|request|approve/.test(text)) return 'Open Admin → Requests. Choose Documents or Leave & Gate Pass, then review and approve or reject a request.'
-    if (/attendance|timetable|class schedule/.test(text)) return 'Open Admin → Attendance to review published attendance. Timetables are filtered by each student’s department; maintain subject and timetable records in Supabase.'
-    if (/student|profile|account/.test(text)) return 'Open Admin → Students to search student profiles. Assign administrator access only to trusted accounts from Supabase.'
-    return 'Use the Admin sidebar to manage students, faculty, transport, campus rooms, notices, requests, mess menus, attendance, and analytics.'
+    const rolePages = {
+      main_administrator: 'Requests, Complaints, Attendance, Students, Faculty, Hostel, Mess, Fees, Results, Timetable, Academic Resources, Notices, Bus Routes, Room Directory, User Management, and Reports',
+      faculty: 'Classes, Student Attendance, Students, Assignments, Academic Resources, Timetable, and Results',
+      hostel_management: 'Hostel Management, Room Allocation, Hostel Students, Hostel Complaints, Maintenance, and Hostel Reports',
+      mess_manager: 'Mess Management, Todayâ€™s Menu, Meal Feedback, Food Complaints, and Mess Reports',
+      account_examination: 'Fees, Payments, Exam Results, and Reports',
+    }
+    const pages = rolePages[user.admin_role] || 'the pages assigned to your administrator role'
+    if (/bus|route|gps|transport/.test(text)) return user.admin_role === 'main_administrator'
+      ? 'Open Admin â†’ Bus Routes. Add or edit a route there. To share a live location, open the route on the driverâ€™s device and start GPS sharing; the device must allow location access.'
+      : `Bus Routes is available to the Main Administrator. Your role can access ${pages}.`
+    if (/room|classroom|library|lab|availability|map/.test(text)) return /main_administrator|hostel_management/.test(user.admin_role || '')
+      ? 'Open Admin â†’ Room Directory to add a room or update its live status and visitor note.'
+      : `Room Directory is not included in your current role. Your role can access ${pages}.`
+    if (/faculty|teacher|qualification/.test(text)) return user.admin_role === 'main_administrator'
+      ? 'Open Admin â†’ Faculty to add or edit faculty names, qualifications, classes, and subjects.'
+      : user.admin_role === 'faculty'
+        ? 'Open Admin â†’ Faculty to review your faculty profile and teaching assignments. The Main Administrator manages the directory.'
+        : `Faculty management is available to the Main Administrator. Your role can access ${pages}.`
+    if (/food complaint/.test(text)) return ['main_administrator', 'mess_manager'].includes(user.admin_role)
+      ? 'Open Admin â†’ Food Complaints to review food-related issues. The Mess Manager sees food complaints; the Main Administrator can review all complaints.'
+      : `Food complaints are available to the Mess Manager and Main Administrator. Your role can access ${pages}.`
+    if (/mess|menu|meal|feedback|food/.test(text)) {
+      if (!asksHowTo && !/edit|update|publish|manage|feedback/.test(text)) return null
+      return ['main_administrator', 'mess_manager'].includes(user.admin_role)
+        ? 'Open Admin â†’ Mess to edit the weekly menu and review feedback. Todayâ€™s Menu opens the menu view; Meal Feedback shows student ratings.'
+        : `Mess management is available to the Mess Manager and Main Administrator. Your role can access ${pages}.`
+    }
+    if (/notice|announcement/.test(text)) return user.admin_role === 'main_administrator'
+      ? 'Open Admin â†’ Notices, choose Publish Notice, set its audience and priority, then publish it. Students see published notices under Notifications â†’ Notices.'
+      : `Notice publishing is available to the Main Administrator. Your role can access ${pages}.`
+    if (/leave|gate pass|gatepass|document|request|approve/.test(text)) return user.admin_role === 'main_administrator'
+      ? 'Open Admin â†’ Leave & Requests. Select Documents or Leave & Gate Pass, open a request, then approve or reject it and add a note if needed.'
+      : `Request review is available to the Main Administrator. Your role can access ${pages}.`
+    if (/fee|payment|dues|accounts/.test(text)) return ['account_examination', 'main_administrator'].includes(user.admin_role)
+      ? 'Open Admin â†’ Fees or Accounts & Fees to review student charges and payment records. Use Reports for summaries.'
+      : `Fees and payment records are available to Account & Examination and the Main Administrator. Your role can access ${pages}.`
+    if (/result|exam|grade|marks?/.test(text)) return ['faculty', 'account_examination', 'main_administrator'].includes(user.admin_role)
+      ? 'Open Admin â†’ Results or Exam Results to view and publish academic results. Faculty access is limited to assigned subjects.'
+      : `Exam results are available to Faculty, Account & Examination, and the Main Administrator. Your role can access ${pages}.`
+    if (/report|analytics|statistics|insight/.test(text)) return ['hostel_management', 'mess_manager', 'account_examination', 'main_administrator'].includes(user.admin_role)
+      ? 'Open Admin â†’ Reports to review role-scoped analytics. The Main Administrator can also open AI Insights for campus-wide summaries.'
+      : `Reports are not included in your current role. Your role can access ${pages}.`
+    if (/attendance|timetable|class|schedule|assignment|syllabus|pyq|material|resource/.test(text)) {
+      if (['faculty', 'main_administrator'].includes(user.admin_role)) {
+        if (/assignment/.test(text)) return 'Open Admin â†’ Assignments to review assignment PDFs. Faculty can upload resources for their assigned subjects under Academic Resource.'
+        if (/timetable|schedule/.test(text)) return 'Open Admin â†’ Academic Resource â†’ Timetable to view or manage the class schedule. Student matches depend on department, semester, and section.'
+        if (/attendance/.test(text)) return 'Open Admin â†’ Student Attendance to review attendance records. Faculty access is limited to assigned subjects.'
+        return 'Open Admin â†’ Classes to see todayâ€™s schedule. Use Academic Resource â†’ Timetable to manage the schedule; faculty edits are limited to assigned subjects.'
+      }
+      return `Academic pages are available to Faculty and the Main Administrator. Your role can access ${pages}.`
+    }
+    if (/complaint|problem|issue|maintenance/.test(text)) return user.admin_role === 'main_administrator'
+      ? 'Open Admin â†’ Complaints to review and update campus issues. Hostel and Mess roles see complaints scoped to their work areas.'
+      : ['hostel_management', 'mess_manager'].includes(user.admin_role)
+        ? 'Open Admin â†’ Complaints to review issues assigned to your area. Hostel staff see maintenance-related issues; Mess staff see food-related issues.'
+        : `Complaint management is not included in your current role. Your role can access ${pages}.`
+    if (/student|profile|account|role|permission/.test(text)) return user.admin_role === 'main_administrator'
+      ? 'Open Admin â†’ Students to find student profiles. Use Admin â†’ User Management to assign administrator roles; role changes are restricted to the Main Administrator.'
+      : `Open Admin â†’ Profile to review your account. Your role can access ${pages}; the Main Administrator manages account roles.`
+    if (/career|internship|job|placement/.test(text)) return user.admin_role === 'main_administrator'
+      ? 'Open Admin â†’ Career Management to publish career paths, opportunities, and workshops for students.'
+      : `Career Management is available to the Main Administrator. Your role can access ${pages}.`
+    if (/dashboard|overview|home/.test(text)) return 'Open Admin â†’ Dashboard to see the summary available to your administrator role.'
+    if (/login|sign in|register|sign up|password/.test(text)) return 'Use the Login page to sign in with your campus account. New students should register with their campus email and verify it. For access or role problems, contact the Main Administrator.'
+    return `Use the Admin sidebar to open your roleâ€™s pages: ${pages}. If you tell me the feature name, I can give the exact steps.`
   }
 
-  if (/complaint|problem|issue/.test(text)) return 'Open Student → Complaints, choose Report a Problem, describe the issue and location, then submit it to receive a tracking ID.'
-  if (/leave|gate pass|gatepass/.test(text)) return 'Open Student → Leave & Gate Pass, choose Leave or Gate Pass, fill in the reason, destination, and dates, then submit for approval.'
-  if (/document|certificate|request/.test(text)) return 'Open Student → Documents, choose New Request, select the document type, add the reason, and submit. Track its status on the same page.'
-  if (/attendance/.test(text)) return 'Open Student → Attendance for subject-wise records and your current attendance percentage. Your profile must be assigned to the correct account.'
-  if (/timetable|class schedule|classes/.test(text)) return 'Open Student → Timetable and select a weekday. Your profile department must match the published timetable.'
-  if (/mess|menu|meal|food/.test(text)) return 'Open Student → Mess to view the published weekly menu and leave a rating for today’s meal.'
-  if (/fee|payment|due/.test(text)) return 'Open Student → Fees & Dues to view posted fee records. Online payment is not connected yet; use your campus’s official payment channel.'
-  if (/hostel|room|warden/.test(text)) return 'Open Student → Hostel for your assigned block, room, and published warden details. Contact the hostel office if your assignment is missing.'
-  if (/notification|notice|announcement/.test(text)) return 'Use the header bell or Student → Notifications. Campus announcements are under the Notices tab.'
-  if (/faculty|teacher|qualification|subject/.test(text)) return 'Open Student → Faculty to search faculty by name, qualification, class, or subject.'
-  if (/bus|route|gps|transport/.test(text)) return 'Open Student → Bus Routes to view published routes and any location shared by campus transport.'
-  if (/profile|account|department/.test(text)) return 'Open Student → Profile to review your details. Keep your department, year, hostel, and room assignment accurate so related pages can show the right records.'
-  return 'Use My Services or the sidebar to open campus features. I can guide you through attendance, timetable, hostel, mess, fees, requests, complaints, notices, faculty, and bus routes.'
+  if (/complaint|problem|issue|report|broken|leak|repair|maintenance|not working/.test(text)) return 'Open Student â†’ Complaints, choose Report a Problem, add the location and a clear description, then submit. Youâ€™ll get a tracking ID and can follow status updates on the same page.'
+  if (/leave|gate ?pass|gatepass|outing|permission to leave|early leave/.test(text)) return 'Open Student â†’ Leave & Gate Pass, choose Leave or Gate Pass, enter the reason, destination, and dates/times, then submit for approval. Check the same page for status.'
+  if (/document|certificate|transcript|bonafide|study certificate|character certificate|request/.test(text)) return 'Open Student â†’ Documents â†’ New Request, select the document type, enter why you need it, and submit. Track its status on the Documents page.'
+  if (/attendance|attendence|present|absent|percentage|shortage|proxy/.test(text)) return 'Open Student â†’ Attendance for subject-wise records. If it says â€œNo data,â€ ask your faculty to publish attendance and check that your student profile is linked to the correct account.'
+  if (/timetable|time table|class|classes|lecture|schedule|period|classroom|room for class/.test(text)) return 'Open Student â†’ Timetable and select a weekday. Classes appear when your profileâ€™s department, semester, and section match the published timetable.'
+  if (/mess|menu|meal|food|breakfast|lunch|dinner/.test(text)) return asksHowTo || /page|section|feature/.test(text) ? 'Open Student â†’ Mess to view the weekly menu and submit meal feedback. Menu details are live campus data, so ask me â€œWhat is todayâ€™s menu?â€ to check the published menu.' : null
+  if (/fee|fees|payment|due|dues|scholarship|tuition|fine|receipt/.test(text)) return 'Open Student â†’ Fees & Dues to view posted charges and payment status. Online payment is not connected in this portal yet; use your campusâ€™s official payment channel.'
+  if (/hostel|room|warden|block|accommodation|dorm|residence/.test(text)) return 'Open Student â†’ Hostel for your assigned block, room, and published warden details. If an assignment is missing, check Student â†’ Profile and contact the hostel office.'
+  if (/notification|notice|announcement|event|circular|alert/.test(text)) return 'Open the bell in the top header or Student â†’ Notifications. Published campus notices are in the Notices tab.'
+  if (/faculty|teacher|qualification|professor|subject/.test(text)) return 'Open Student â†’ Faculty to search faculty by name, qualification, class, or subject.'
+  if (/bus|route|gps|transport|shuttle/.test(text)) return 'Open Student â†’ Bus Routes to see published stops and timings. A live location appears only when the driver is sharing GPS.'
+  if (/syllabus|previous year|\bpyq\b|study material|class material|assignment|homework|notes|question paper|past paper/.test(text)) return 'Open Student â†’ Academic Resources, then choose Syllabus, Timetable, PYQ, Class Material, or Assignments. Only faculty-approved resources appear there.'
+  if (/career|internship|job|placement|workshop/.test(text)) return 'Open Student â†’ Career Hub to browse published opportunities, career paths, and workshops, then follow the application instructions on each item.'
+  if (/journal|publish|article|poem|story/.test(text)) return 'Open Student â†’ Campus Journal to browse campus stories or submit your own writing for review.'
+  if (/faculty|department|profile|account|personal details/.test(text)) return 'Open Student â†’ Profile to review your account and academic details. Correct department, semester, and section values help attendance and timetable records match your account.'
+  if (/login|sign in|register|sign up|password|verify email/.test(text)) return 'Use the Login page with your campus email. New students should register, verify their email, then sign in. Use Forgot Password if you cannot access your account.'
+  if (/service|feature|page|website|portal|app|dashboard|navigate|menu|section/.test(text)) return 'The student portal includes Dashboard, Services, Attendance, Timetable, Complaints, Leave & Gate Pass, Documents, Hostel, Mess, Fees, Results, Notifications, Faculty, Bus Routes, Academic Resources, Career Hub, and Campus Journal. Open Services or the sidebar to navigate.'
+  if (asksHowTo) return 'Use Student â†’ Services or the sidebar to find the feature. I can give steps for Attendance, Timetable, Complaints, Leave & Gate Pass, Documents, Hostel, Mess, Fees, Results, Notices, Faculty, Bus Routes, Academic Resources, Career Hub, or Campus Journal.'
+  if (/not working|not showing|missing|cannot|can't|doesn't work|error|broken|stuck/.test(text)) return 'I can help troubleshoot that. Tell me which page and what you expected to happen. If records are missing, check Student â†’ Profile for the correct department, semester, and section, then ask the relevant office to publish the records.'
+  return null
 }
 
 export async function askCampusAssistant(message, user = {}, { signal, history = [] } = {}) {
@@ -227,6 +297,9 @@ export async function askCampusAssistant(message, user = {}, { signal, history =
   if (user.isDemo) {
     return 'Sign in with your campus account to use Campus AI.'
   }
+
+  const websiteHelp = getCampusWebsiteHelp(prompt, user)
+  if (websiteHelp) return websiteHelp
 
   try {
     const result = await requestBackend('ai/ask', {
@@ -248,7 +321,6 @@ export async function askCampusAssistant(message, user = {}, { signal, history =
       return 'Your campus account does not have an active student or administrator role. Ask the Main Administrator to check your profile.'
     }
 
-    const websiteHelp = getCampusWebsiteHelp(prompt, user)
     if (websiteHelp) return websiteHelp
 
     const fallbackPath = user.role === 'admin'
