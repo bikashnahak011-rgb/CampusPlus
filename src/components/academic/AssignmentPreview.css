@@ -1,0 +1,35 @@
+.assignment-preview-viewport {
+  height: 15rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent);
+}
+
+.assignment-preview-track {
+  animation: assignment-preview-scroll-down 28s linear infinite;
+}
+
+.assignment-preview-viewport:hover .assignment-preview-track,
+.assignment-preview-viewport:focus-within .assignment-preview-track {
+  animation-play-state: paused;
+}
+
+.assignment-preview-group {
+  display: flow-root;
+}
+
+@keyframes assignment-preview-scroll-down {
+  from {
+    transform: translateY(-50%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assignment-preview-track {
+    animation: none;
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Mail,
@@ -38,16 +38,27 @@ export default function LoginPage() {
   const [showDemoAccounts, setShowDemoAccounts] = useState(false)
   const [loginMode, setLoginMode] = useState('student')
   const [adminRoleChoice, setAdminRoleChoice] = useState('')
+  const emailInputRef = useRef(null)
 
   const {
     user,
     signIn,
+    sendStudentSignInLink,
     signInWithGoogle,
     sendPasswordReset,
   } = useAuth()
 
   const navigate = useNavigate()
   const { t } = useApp()
+
+  const validateEmail = () => {
+    const input = emailInputRef.current
+    if (input?.checkValidity()) return true
+
+    setError('Enter a valid email address first.')
+    input?.focus()
+    return false
+  }
 
   /*
   ============================================================
@@ -58,9 +69,6 @@ export default function LoginPage() {
   useEffect(() => {
 
     if (!user) return
-
-    console.log('LOGIN USER:', user)
-    console.log('LOGIN ROLE:', user.role)
 
     if (user.is_active === false || !['student', 'admin'].includes(user.role)) {
       navigate('/unauthorized', { replace: true })
@@ -128,10 +136,10 @@ export default function LoginPage() {
       Validate fields.
     */
 
-    if (!email.trim() || (loginMode === 'admin' && !password)) {
+    if (!email.trim() || !password) {
 
       setError(
-        loginMode === 'admin' ? 'Please enter your email and password.' : 'Please enter your email.'
+        'Please enter your email and password.'
       )
 
       return
@@ -143,18 +151,7 @@ export default function LoginPage() {
 
     try {
 
-      /*
-        Authentication is handled by AuthContext.
-
-        This works for:
-        - Demo users
-        - Supabase email/password users
-      */
-
-      const result = await signIn(
-        email.trim(),
-        loginMode === 'student' ? '' : password
-      )
+      const result = await signIn(email.trim(), password)
 
 
       /*
@@ -175,6 +172,10 @@ export default function LoginPage() {
         return
       }
 
+      if (!result?.isDemo && !result?.data?.session) {
+        setError('Sign-in did not create an active session. Verify your email if required, then try again.')
+        return
+      }
 
       /*
       ----------------------------------------------------------
@@ -187,19 +188,10 @@ export default function LoginPage() {
         result?.data?.user
       ) {
 
-        const loggedUser =
-          result.data.user
-
-        console.log(
-          'DEMO LOGIN SUCCESS:',
-          loggedUser
-        )
-
         // The authentication effect validates the profile role before routing.
         setLoading(false)
         return
       }
-
 
       /*
       ----------------------------------------------------------
@@ -214,10 +206,6 @@ export default function LoginPage() {
       The useEffect above automatically
       redirects to the correct dashboard.
       */
-
-      console.log(
-        'SUPABASE LOGIN SUCCESS'
-      )
 
       /*
         Do not manually navigate here.
@@ -244,13 +232,29 @@ export default function LoginPage() {
     }
   }
 
+  const handleStudentEmailLink = async () => {
+    setError('')
+    setResetNotice('')
+    if (!validateEmail()) return
+    setLoading(true)
+    try {
+      const result = await sendStudentSignInLink(email)
+      if (result?.error) {
+        setError(result.error.message || 'Unable to send a secure sign-in link.')
+      } else {
+        setResetNotice(`A secure sign-in link was requested for ${email.trim()}. Check your inbox and spam folder, then open it to continue.`)
+      }
+    } catch (linkError) {
+      setError(linkError?.message || 'Unable to send a secure sign-in link. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleForgotPassword = async () => {
     setError('')
     setResetNotice('')
-    if (!email.trim()) {
-      setError('Enter your email address above, then choose “Forgot password?”.')
-      return
-    }
+    if (!validateEmail()) return
     setLoading(true)
     try {
       const result = await sendPasswordReset(email)
@@ -298,6 +302,12 @@ export default function LoginPage() {
 
         setLoading(false)
 
+        return
+      }
+
+      if (!result?.data?.url) {
+        setError('Google sign-in could not be started. Please try again or use email and password.')
+        setLoading(false)
         return
       }
 
@@ -364,14 +374,6 @@ export default function LoginPage() {
         result?.isDemo &&
         result?.data?.user
       ) {
-
-        const loggedUser =
-          result.data.user
-
-        console.log(
-          'DEMO USER:',
-          loggedUser
-        )
 
         // The authentication effect validates the profile role before routing.
         setShowDemoAccounts(false)
@@ -455,7 +457,7 @@ export default function LoginPage() {
               <span className="login-form-logo"><AppLogo size={38} /></span>
               <h1 id="login-title">Welcome to NexCampus</h1>
             </div>
-            <span>{loginMode === 'student' ? 'Enter any email to preview the student portal demo' : 'Sign in to continue to your campus'}</span>
+            <span>Sign in to continue to your campus</span>
           </header>
 
             <div className="login-role-switch" role="group" aria-label="Choose sign-in type">
@@ -463,14 +465,24 @@ export default function LoginPage() {
                 type="button"
                 className={loginMode === 'student' ? 'bg-white' : ''}
                 aria-pressed={loginMode === 'student'}
-                onClick={() => setLoginMode('student')}
+                onClick={() => {
+                  setLoginMode('student')
+                  setError('')
+                  setResetNotice('')
+                  setPassword('')
+                }}
                 disabled={loading}
               >Login as Student</button>
               <button
                 type="button"
                 className={loginMode === 'admin' ? 'bg-white' : ''}
                 aria-pressed={loginMode === 'admin'}
-                onClick={() => setLoginMode('admin')}
+                onClick={() => {
+                  setLoginMode('admin')
+                  setError('')
+                  setResetNotice('')
+                  setPassword('')
+                }}
                 disabled={loading}
               >Login as Admin</button>
             </div>
@@ -496,7 +508,7 @@ export default function LoginPage() {
                 <p className="login-role-note">Your actual role and permissions are assigned by the Main Administrator in User Management. This choice does not grant access.</p>
               </div>
             ) : (
-              <p className="login-role-note mb-4 text-sm text-gray-500">Student accounts access classes, attendance, results, and campus services. Your account role is checked after sign in.</p>
+              <p className="login-role-note mb-4 text-sm text-gray-500">Use your campus email and password. New students can request a secure email sign-in link below to verify their address and set up an account.</p>
             )}
 
 
@@ -508,7 +520,7 @@ export default function LoginPage() {
 
               <div className="mb-4">
 
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email
                 </label>
 
@@ -522,11 +534,15 @@ export default function LoginPage() {
 
 
                   <input
+                    id="login-email"
+                    ref={emailInputRef}
                     type="email"
                     value={email}
+                    required
                     onChange={(e) => {
                       setEmail(e.target.value)
                       setError('')
+                      setResetNotice('')
                     }}
                     placeholder="Enter your email"
                     autoComplete="email"
@@ -539,12 +555,10 @@ export default function LoginPage() {
               </div>
 
 
-              {/* Password */}
-
               <div className="mb-4">
 
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">Password {loginMode === 'student' && <span className="font-normal text-gray-400">(optional for demo)</span>}</label>
+                  <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">Password</label>
                   <button type="button" onClick={handleForgotPassword} disabled={loading} className="login-forgot-password text-sm font-semibold text-violet-200 transition-colors hover:text-white disabled:opacity-60">
                     Forgot password?
                   </button>
@@ -561,6 +575,7 @@ export default function LoginPage() {
 
                   <input
                     id="login-password"
+                    required
                     type={
                       showPass
                         ? 'text'
@@ -585,6 +600,7 @@ export default function LoginPage() {
                       setShowPass(!showPass)
                     }
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
                   >
 
                     {showPass
@@ -603,7 +619,7 @@ export default function LoginPage() {
 
               {error && (
 
-                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+                <div role="alert" className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
 
                   {error}
 
@@ -648,6 +664,16 @@ export default function LoginPage() {
 
             </form>
 
+            {loginMode === 'student' && (
+              <button
+                type="button"
+                onClick={handleStudentEmailLink}
+                disabled={loading}
+                className="mt-3 w-full rounded-xl border border-violet-200 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-60"
+              >
+                New student? Email me a secure sign-in link
+              </button>
+            )}
 
             {/* OR */}
 

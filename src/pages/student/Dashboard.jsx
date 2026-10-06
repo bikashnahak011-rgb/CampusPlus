@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -90,6 +90,16 @@ function getDismissedNoticeIds(userId) {
   }
 }
 
+function getNoticePopupSince(userId) {
+  if (!userId || typeof window === 'undefined') return Date.now()
+  try {
+    const lastVisit = Number(window.localStorage.getItem(`campusplus:dashboard-notices-visited:${userId}`))
+    return Number.isFinite(lastVisit) && lastVisit > 0 ? lastVisit : Date.now()
+  } catch {
+    return Date.now()
+  }
+}
+
 export default function StudentDashboard() {
   const { user } = useAuth()
 
@@ -106,12 +116,27 @@ export default function StudentDashboard() {
   } = useApp()
 
   const navigate = useNavigate()
-  const [showSamplePreview, setShowSamplePreview] = useState(false)
+  const [showSamplePreview, setShowSamplePreview] = useState(true)
   const [academicData, setAcademicData] = useState({ subjects: [], classes: [], events: [] })
   const [dismissedNoticeState, setDismissedNoticeState] = useState(() => ({
     userId: user?.id,
     ids: getDismissedNoticeIds(user?.id),
   }))
+  const [noticePopupSince] = useState(() => getNoticePopupSince(user?.id))
+
+  useEffect(() => {
+    if (!user?.id) return undefined
+    return () => {
+      try {
+        window.localStorage.setItem(
+          `campusplus:dashboard-notices-visited:${user.id}`,
+          String(Date.now()),
+        )
+      } catch {
+        // Notices can still be shown during this visit when storage is unavailable.
+      }
+    }
+  }, [user?.id])
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long'
@@ -175,22 +200,29 @@ export default function StudentDashboard() {
     }
   }, [user])
 
-  const todayClasses = academicData.classes.filter(item => item.day === today).slice(0, 4)
+  const samplePreviewActive = !user?.isDemo && showSamplePreview
+  const dashboardSubjects = samplePreviewActive
+    ? getDemoAttendance({ id: 'stu-001' })
+    : academicData.subjects
+  const dashboardClasses = samplePreviewActive
+    ? getDemoTimetable({ id: 'stu-001' })
+    : academicData.classes
+  const todayClasses = dashboardClasses.filter(item => item.day === today).slice(0, 4)
   const menu = user?.isDemo
     ? DEMO_MESS_MENU[today] || DEMO_MESS_MENU.Monday
     : messMenu[today]
 
-  const myComplaints = complaints.filter(
-    c => c.student_id === user?.id
-  )
+  const myComplaints = samplePreviewActive
+    ? INITIAL_COMPLAINTS.filter(complaint => complaint.student_id === 'stu-001')
+    : complaints.filter(c => c.student_id === user?.id)
 
-  const myRequests = requests.filter(
-    r => r.student_id === user?.id
-  )
+  const myRequests = samplePreviewActive
+    ? INITIAL_REQUESTS.filter(request => request.student_id === 'stu-001')
+    : requests.filter(r => r.student_id === user?.id)
 
-  const myLeave = leaveRequests.filter(
-    l => l.student_id === user?.id
-  )
+  const myLeave = samplePreviewActive
+    ? INITIAL_LEAVE.filter(request => request.student_id === 'stu-001')
+    : leaveRequests.filter(l => l.student_id === user?.id)
 
   const openComplaints = myComplaints.filter(
     c => !['Resolved', 'Closed'].includes(c.status)
@@ -205,12 +237,12 @@ export default function StudentDashboard() {
     )
   ].length
 
-  const attendanceTotal = academicData.subjects.reduce((sum, subject) => sum + subject.total, 0)
-  const attendancePresent = academicData.subjects.reduce((sum, subject) => sum + subject.present, 0)
+  const attendanceTotal = dashboardSubjects.reduce((sum, subject) => sum + subject.total, 0)
+  const attendancePresent = dashboardSubjects.reduce((sum, subject) => sum + subject.present, 0)
   const attendanceAbsent = attendanceTotal - attendancePresent
   const avgAtt = attendanceTotal ? Math.round((attendancePresent / attendanceTotal) * 100) : null
   const attendanceGauge = avgAtt ?? 0
-  const hasLowAttendance = academicData.subjects.some(subject => subject.total > 0 && (subject.present / subject.total) * 100 < 80)
+  const hasLowAttendance = dashboardSubjects.some(subject => subject.total > 0 && (subject.present / subject.total) * 100 < 80)
 
   const samplePreview = useMemo(() => {
     const attendanceTotal = DEMO_SUBJECTS.reduce((sum, subject) => sum + subject.total, 0)
@@ -264,9 +296,15 @@ export default function StudentDashboard() {
   const dismissedNoticeIds = dismissedNoticeState.userId === user?.id
     ? dismissedNoticeState.ids
     : getDismissedNoticeIds(user?.id)
-  const activeImportantNotice = importantNotices.find(notice => !dismissedNoticeIds.includes(String(notice.id)))
+  const dashboardPopupNotices = notices.filter(notice => {
+    const publishedAt = new Date(notice.created_at || 0).getTime()
+    return publishedAt > noticePopupSince
+      && matchesNoticeTarget(notice.target, user)
+      && !dismissedNoticeIds.includes(String(notice.id))
+  })
+  const activeDashboardNotice = dashboardPopupNotices[0]
 
-  const dismissImportantNotice = notice => {
+  const dismissDashboardNotice = useCallback(notice => {
     const nextIds = [...new Set([...dismissedNoticeIds, String(notice.id)])]
     setDismissedNoticeState({ userId: user?.id, ids: nextIds })
     try {
@@ -274,82 +312,82 @@ export default function StudentDashboard() {
     } catch {
       // Keep the dismissal active for this page visit if storage is unavailable.
     }
-  }
+  }, [dismissedNoticeIds, user])
 
   useEffect(() => {
-    if (!activeImportantNotice || typeof document === 'undefined') return undefined
+    if (!activeDashboardNotice || typeof document === 'undefined') return undefined
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const onKeyDown = event => {
-      if (event.key === 'Escape') dismissImportantNotice(activeImportantNotice)
+      if (event.key === 'Escape') dismissDashboardNotice(activeDashboardNotice)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', onKeyDown)
     }
-  }, [activeImportantNotice?.id])
+  }, [activeDashboardNotice, dismissDashboardNotice])
 
   return (
     <div className="dashboard-selectable flex gap-6" onClick={selectDashboardCard}>
 
-      {activeImportantNotice && createPortal(
+      {activeDashboardNotice && createPortal(
         <div
           className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
           onMouseDown={event => {
-            if (event.target === event.currentTarget) dismissImportantNotice(activeImportantNotice)
+            if (event.target === event.currentTarget) dismissDashboardNotice(activeDashboardNotice)
           }}
         >
           <section
             role="dialog"
             aria-modal="true"
-            aria-labelledby="important-notice-title"
-            aria-describedby="important-notice-content"
+            aria-labelledby="dashboard-notice-title"
+            aria-describedby="dashboard-notice-content"
             className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/80 bg-white shadow-2xl shadow-slate-950/30"
           >
-            <div className={`h-2 w-full ${String(activeImportantNotice.priority).toLowerCase() === 'critical' ? 'bg-gradient-to-r from-rose-600 to-orange-500' : 'bg-gradient-to-r from-violet-600 to-fuchsia-500'}`} />
+            <div className={`h-2 w-full ${String(activeDashboardNotice.priority).toLowerCase() === 'critical' ? 'bg-gradient-to-r from-rose-600 to-orange-500' : 'bg-gradient-to-r from-violet-600 to-fuchsia-500'}`} />
             <div className="p-5 sm:p-7">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${String(activeImportantNotice.priority).toLowerCase() === 'critical' ? 'bg-rose-100 text-rose-700' : 'bg-violet-100 text-violet-700'}`}>
+                  <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${String(activeDashboardNotice.priority).toLowerCase() === 'critical' ? 'bg-rose-100 text-rose-700' : 'bg-violet-100 text-violet-700'}`}>
                     <Megaphone size={22} />
                   </span>
                   <div className="min-w-0">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${String(activeImportantNotice.priority).toLowerCase() === 'critical' ? 'bg-rose-100 text-rose-700' : 'bg-violet-100 text-violet-700'}`}>
-                      {String(activeImportantNotice.priority || 'important').toLowerCase() === 'critical' ? 'Critical notice' : 'Important notice'}
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${String(activeDashboardNotice.priority).toLowerCase() === 'critical' ? 'bg-rose-100 text-rose-700' : 'bg-violet-100 text-violet-700'}`}>
+                      {String(activeDashboardNotice.priority || (activeDashboardNotice.important ? 'important' : 'normal')).toLowerCase()} notice
                     </span>
-                    <p className="mt-1 text-xs text-slate-500">For {activeImportantNotice.target || 'All Students'}</p>
+                    <p className="mt-1 text-xs text-slate-500">For {activeDashboardNotice.target || 'All Students'}</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   autoFocus
-                  onClick={() => dismissImportantNotice(activeImportantNotice)}
+                  onClick={() => dismissDashboardNotice(activeDashboardNotice)}
                   aria-label="Dismiss important notice"
                   className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
                 ><X size={19} /></button>
               </div>
 
-              <h2 id="important-notice-title" className="mt-5 text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
-                {activeImportantNotice.title}
+              <h2 id="dashboard-notice-title" className="mt-5 text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
+                {activeDashboardNotice.title}
               </h2>
-              <p id="important-notice-content" className="mt-3 max-h-[40vh] overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-slate-700 sm:text-base">
-                {activeImportantNotice.content}
+              <p id="dashboard-notice-content" className="mt-3 max-h-[40vh] overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-slate-700 sm:text-base">
+                {activeDashboardNotice.content}
               </p>
               <p className="mt-4 text-xs text-slate-500">
-                {activeImportantNotice.created_at ? new Date(activeImportantNotice.created_at).toLocaleString() : 'Campus announcement'}
-                {activeImportantNotice.created_by ? ` · ${activeImportantNotice.created_by}` : ''}
+                {activeDashboardNotice.created_at ? new Date(activeDashboardNotice.created_at).toLocaleString() : 'Campus announcement'}
+                {activeDashboardNotice.created_by ? ` · ${activeDashboardNotice.created_by}` : ''}
               </p>
               <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
-                  onClick={() => dismissImportantNotice(activeImportantNotice)}
+                  onClick={() => dismissDashboardNotice(activeDashboardNotice)}
                   className="min-h-11 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >Dismiss</button>
                 <button
                   type="button"
                   onClick={() => {
-                    dismissImportantNotice(activeImportantNotice)
+                    dismissDashboardNotice(activeDashboardNotice)
                     navigate('/student/notifications')
                   }}
                   className="min-h-11 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/20 transition hover:bg-violet-800"
@@ -405,14 +443,14 @@ export default function StudentDashboard() {
         {!user?.isDemo && (
           <div className="flex flex-col gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950 sm:flex-row sm:items-center sm:justify-between">
             <p>{showSamplePreview
-              ? 'Sample preview figures are shown below. They are examples only and are not your campus records.'
-              : 'New here? Preview example dashboard figures while your campus records are being added.'}</p>
+              ? 'Sample preview data is shown below. These examples are not your campus records and will not be saved to your account.'
+              : 'Your live campus records are shown below. You can switch on sample data to preview the dashboard.'}</p>
             <button
               type="button"
               onClick={() => setShowSamplePreview(value => !value)}
               className="shrink-0 rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-100"
             >
-              {showSamplePreview ? 'Show my live figures' : 'Show sample preview'}
+              {showSamplePreview ? 'Show my live data' : 'Show sample preview'}
             </button>
           </div>
         )}
@@ -421,7 +459,7 @@ export default function StudentDashboard() {
           {[
             {
               label: t('attendance'),
-              value: !user?.isDemo && showSamplePreview ? samplePreview.attendance : avgAtt === null ? 'No data' : `${avgAtt}%`,
+              value: samplePreviewActive ? samplePreview.attendance : avgAtt === null ? 'No data' : `${avgAtt}%`,
               icon: ClipboardList,
               color: 'text-emerald-700',
               bg: 'bg-emerald-50',
@@ -429,7 +467,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('pendingRequests'),
-              value: !user?.isDemo && showSamplePreview ? samplePreview.requests : pendingReqs,
+              value: samplePreviewActive ? samplePreview.requests : pendingReqs,
               icon: FileText,
               color: 'text-amber-700',
               bg: 'bg-amber-50',
@@ -437,7 +475,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('openComplaints'),
-              value: !user?.isDemo && showSamplePreview ? samplePreview.complaints : openComplaints,
+              value: samplePreviewActive ? samplePreview.complaints : openComplaints,
               icon: MessageSquareWarning,
               color: 'text-red-600',
               bg: 'bg-red-50',
@@ -445,7 +483,7 @@ export default function StudentDashboard() {
             },
             {
               label: t('todaysClasses'),
-              value: !user?.isDemo && showSamplePreview ? samplePreview.classes : todayClasses.length,
+              value: samplePreviewActive ? samplePreview.classes : todayClasses.length,
               icon: BookOpen,
               color: 'text-teal-700',
               bg: 'bg-teal-50',
@@ -500,6 +538,7 @@ export default function StudentDashboard() {
               <h2 className="font-semibold text-gray-900">
                 {t('attendance')}
               </h2>
+              {samplePreviewActive && <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-semibold text-violet-800">Sample</span>}
 
               <div className="flex items-center gap-2">
                 <button
@@ -588,6 +627,22 @@ export default function StudentDashboard() {
 
             </div>
 
+            {samplePreviewActive && (
+              <ul className="mt-4 space-y-2" aria-label="Sample attendance by subject">
+                {dashboardSubjects.map(subject => {
+                  const percentage = subject.total
+                    ? Math.round((subject.present / subject.total) * 100)
+                    : 0
+                  return (
+                    <li key={subject.id} className="flex items-center justify-between gap-3 text-xs">
+                      <span className="min-w-0 truncate text-gray-600">{subject.name}</span>
+                      <span className="shrink-0 font-medium text-gray-700">{subject.present}/{subject.total} · {percentage}%</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+
             {hasLowAttendance && (
               <div className="mt-3 flex items-center gap-2 text-orange-600 text-xs bg-orange-50 rounded-xl p-2">
 
@@ -609,6 +664,7 @@ export default function StudentDashboard() {
               <h2 className="font-semibold text-gray-900">
                 {t('todaysClasses')}
               </h2>
+              {samplePreviewActive && <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-semibold text-violet-800">Sample</span>}
 
               <div className="flex items-center gap-2">
                 <button
@@ -811,6 +867,7 @@ export default function StudentDashboard() {
             <h2 className="font-semibold text-gray-900">
               {t('recentRequestsComplaints')}
             </h2>
+            {samplePreviewActive && <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-semibold text-violet-800">Sample</span>}
 
             <div className="flex items-center gap-2">
               <button

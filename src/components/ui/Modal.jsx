@@ -4,7 +4,12 @@ import { createPortal } from 'react-dom'
 
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
   const dialogRef = useRef(null)
+  const onCloseRef = useRef(onClose)
   const titleId = useId()
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -14,7 +19,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     document.body.style.overflow = 'hidden'
     dialogRef.current?.focus()
     const handleKeyDown = event => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => {
@@ -22,7 +27,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
       document.removeEventListener('keydown', handleKeyDown)
       if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   if (!isOpen) return null
   const sizes = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' }

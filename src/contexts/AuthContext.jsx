@@ -303,10 +303,13 @@ export function AuthProvider({ children }) {
       */
 
       if (supabase) {
-        try {
-          await supabase.auth.signOut()
-        } catch {
-          // Ignore Supabase sign-out errors
+        const { error } = await supabase.auth.signOut()
+        if (error) {
+          return {
+            error: {
+              message: `Could not safely start the demo session: ${error.message}`,
+            },
+          }
         }
       }
 
@@ -330,45 +333,6 @@ export function AuthProvider({ children }) {
         error: null,
         isDemo: true,
       }
-    }
-
-    // Email-only student preview for hackathon demos. This creates a local,
-    // read-only demo identity and never grants an admin role.
-    if (!password && normalizedEmail.includes('@')) {
-      if (supabase) {
-        try {
-          await supabase.auth.signOut()
-        } catch {
-          // Ignore Supabase sign-out errors
-        }
-      }
-
-      const displayName = normalizedEmail.split('@')[0]
-        .split(/[._+-]+/)
-        .filter(Boolean)
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ') || 'Demo Student'
-      const demoUser = {
-        id: `demo-${normalizedEmail.replace(/[^a-z0-9]/g, '-')}`,
-        email: normalizedEmail,
-        role: 'student',
-        admin_role: null,
-        is_active: true,
-        name: displayName,
-        roll_no: 'DEMO001',
-        department: 'Computer Science',
-        branch: 'B.Tech CSE',
-        year: 3,
-        hostel_block: 'A',
-        profileComplete: true,
-        isDemo: true,
-        isEmailDemo: true,
-      }
-
-      localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(demoUser))
-      setUser(demoUser)
-      setLoading(false)
-      return { data: { user: demoUser, session: null }, error: null, isDemo: true }
     }
 
     /*
@@ -400,6 +364,31 @@ export function AuthProvider({ children }) {
     return result
   }
 
+  async function sendStudentSignInLink(email) {
+    if (!supabase) {
+      return {
+        error: {
+          message: 'Student sign-in is unavailable because Supabase is not configured.',
+        },
+      }
+    }
+
+    const normalizedEmail = String(email || '').trim().toLowerCase()
+    if (!normalizedEmail) {
+      return { error: { message: 'Enter your email address first.' } }
+    }
+
+    localStorage.removeItem(DEMO_STORAGE_KEY)
+
+    return supabase.auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: true,
+      },
+    })
+  }
+
   /*
     ============================
     GOOGLE LOGIN
@@ -419,15 +408,8 @@ export function AuthProvider({ children }) {
   // Remove demo session
   localStorage.removeItem(DEMO_STORAGE_KEY)
 
-  console.log('STARTING GOOGLE LOGIN')
-
   const redirectTo =
     `${window.location.origin}/auth/callback`
-
-  console.log(
-    'GOOGLE REDIRECT:',
-    redirectTo
-  )
 
   const { data, error } =
     await supabase.auth.signInWithOAuth({
@@ -452,11 +434,6 @@ export function AuthProvider({ children }) {
       error,
     }
   }
-
-  console.log(
-    'GOOGLE OAUTH STARTED:',
-    data
-  )
 
   return {
     data,
@@ -522,6 +499,7 @@ export function AuthProvider({ children }) {
         user,
         loading,
         signIn,
+        sendStudentSignInLink,
         signInWithGoogle,
         sendPasswordReset,
         signOut,

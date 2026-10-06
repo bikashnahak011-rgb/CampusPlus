@@ -20,7 +20,7 @@ export default function AuthCallback() {
     // Authentication finished but no user
     if (!user) {
       console.error('No authenticated user found')
-      setError('Google authentication failed. No user session was found.')
+      setError('Authentication failed. No verified user session was found.')
       return
     }
 
@@ -31,11 +31,11 @@ export default function AuthCallback() {
 
     if (user.role !== 'admin' && user.role !== 'student') {
       console.error('Authenticated user has no valid profile role')
-      setError('Your Google account is authenticated, but it has no campus role yet. Ask an administrator to set your profile role to admin or student.')
+      setError('Your email is verified, but the account has no campus role yet. Ask an administrator to assign the correct role.')
       return
     }
 
-    console.log('GOOGLE LOGIN SUCCESS')
+    console.log('AUTHENTICATION SUCCESS')
     console.log('User:', user.email)
     console.log('Role:', user.role)
 
@@ -69,7 +69,7 @@ export default function AuthCallback() {
           </div>
 
           <h1 className="text-xl font-bold text-gray-900 mb-3">
-            Google Sign-In Failed
+            Sign-In Failed
           </h1>
 
           <p className="text-sm text-gray-600 mb-6">
@@ -100,7 +100,7 @@ export default function AuthCallback() {
         </h1>
 
         <p className="text-blue-200 text-sm mt-2">
-          Completing Google authentication
+          Completing secure email authentication
         </p>
 
       </div>

@@ -4,6 +4,7 @@ import { ClipboardList, Download, FileText } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { DEMO_ACADEMIC_RESOURCES } from '../../data/demoData'
+import './AssignmentPreview.css'
 
 const BUCKET = 'academic-resources'
 
@@ -74,9 +75,11 @@ export default function AssignmentPreview() {
     }
   }
 
+  const sampleAssignments = DEMO_ACADEMIC_RESOURCES
+    .filter(item => item.resource_type === 'assignment')
   const visibleItems = isDemo
-    ? DEMO_ACADEMIC_RESOURCES.filter(item => item.resource_type === 'assignment').slice(0, 3)
-    : items
+    ? sampleAssignments
+    : [...items, ...sampleAssignments]
 
   return (
     <section className="card space-y-3" aria-labelledby="dashboard-assignments-heading">
@@ -97,23 +100,39 @@ export default function AssignmentPreview() {
       {loading ? <p className="py-3 text-sm text-gray-500">Loading assignments…</p> : visibleItems.length === 0 ? (
         <p className="py-3 text-sm text-gray-500">No approved assignment PDFs are available yet.</p>
       ) : (
-        <div className="divide-y divide-gray-100">
-          {visibleItems.map(item => (
-            <article key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-1 last:pb-1">
-              <div className="flex min-w-0 items-center gap-3">
-                <FileText size={18} className="shrink-0 text-violet-600" />
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-medium text-gray-900">{item.title}</h3>
-                  <p className="mt-0.5 truncate text-xs text-gray-500">{[item.subject, item.course, item.semester ? `Semester ${item.semester}` : null].filter(Boolean).join(' · ')}</p>
-                  {item.demo_sample && <span className="mt-1 inline-block text-xs text-violet-700">Demo sample · no file attached</span>}
+        <>
+          {!isDemo && sampleAssignments.length > 0 && (
+            <p className="text-xs text-gray-500">Published assignments and clearly marked sample previews</p>
+          )}
+          <div className="assignment-preview-viewport" aria-label="Scrolling assignment previews">
+            <div className="assignment-preview-track">
+              {[0, 1].map(copy => (
+                <div
+                  key={copy}
+                  className="assignment-preview-group divide-y divide-gray-100"
+                  aria-hidden={copy === 1}
+                  inert={copy === 1}
+                >
+                  {visibleItems.map(item => (
+                    <article key={`${copy}-${item.id}`} className="flex min-h-[76px] flex-wrap items-center justify-between gap-3 py-3 first:pt-1 last:pb-1">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <FileText size={18} className="shrink-0 text-violet-600" />
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-medium text-gray-900">{item.title}</h3>
+                          <p className="mt-0.5 truncate text-xs text-gray-500">{[item.subject, item.course, item.semester ? `Semester ${item.semester}` : null].filter(Boolean).join(' · ')}</p>
+                          {item.demo_sample && <span className="mt-1 inline-block text-xs text-violet-700">Sample preview · no PDF attached</span>}
+                        </div>
+                      </div>
+                      {item.file_url && <button type="button" onClick={() => download(item)} disabled={Boolean(downloading)} className="secondary-button shrink-0 justify-center">
+                        <Download size={14} /> {downloading === item.id ? 'Downloading…' : 'Download PDF'}
+                      </button>}
+                    </article>
+                  ))}
                 </div>
-              </div>
-              {item.file_url && <button type="button" onClick={() => download(item)} disabled={Boolean(downloading)} className="secondary-button shrink-0 justify-center">
-                <Download size={14} /> {downloading === item.id ? 'Downloading…' : 'Download PDF'}
-              </button>}
-            </article>
-          ))}
-        </div>
+              ))}
+            </div>
+          </div>
+        </>
       )}
     </section>
   )

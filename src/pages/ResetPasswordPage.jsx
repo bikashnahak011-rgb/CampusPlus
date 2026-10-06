@@ -24,11 +24,17 @@ export default function ResetPasswordPage() {
         }
         return
       }
-      const { data, error: sessionError } = await supabase.auth.getSession()
-      if (!active) return
-      setHasRecoverySession(Boolean(data?.session) && !sessionError)
-      if (sessionError) setError('This password reset link is invalid or has expired. Request a new one from the login page.')
-      setChecking(false)
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession()
+        if (!active) return
+        setHasRecoverySession(Boolean(data?.session) && !sessionError)
+        if (sessionError) setError('This password reset link is invalid or has expired. Request a new one from the login page.')
+      } catch {
+        if (!active) return
+        setError('Unable to verify this password reset link. Check your connection or request a new link from the login page.')
+      } finally {
+        if (active) setChecking(false)
+      }
     }
     checkRecoverySession()
     return () => { active = false }
@@ -46,14 +52,23 @@ export default function ResetPasswordPage() {
       setError('The passwords do not match.')
       return
     }
-    setSaving(true)
-    const { error: updateError } = await supabase.auth.updateUser({ password })
-    setSaving(false)
-    if (updateError) {
-      setError(updateError.message || 'Unable to update your password. Request a new reset link and try again.')
+    if (!supabase) {
+      setError('Password reset is unavailable because Supabase is not configured.')
       return
     }
-    setSuccess('Your password has been updated. You can now sign in with your new password.')
+    setSaving(true)
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) {
+        setError(updateError.message || 'Unable to update your password. Request a new reset link and try again.')
+        return
+      }
+      setSuccess('Your password has been updated. You can now sign in with your new password.')
+    } catch (updateError) {
+      setError(updateError?.message || 'Unable to update your password. Check your connection and try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

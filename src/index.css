@@ -1467,9 +1467,11 @@ body.lite-mode * { animation: none !important; transition: none !important; }
 .login-panel .login-demo-box {
   position: relative;
   z-index: 4;
-  border: 1px solid rgba(255,255,255,.38) !important;
-  background: linear-gradient(135deg, #f5efff, #e6d8f6) !important;
-  box-shadow: 0 10px 24px rgba(13, 4, 25, .2), inset 0 1px rgba(255,255,255,.9);
+  overflow: hidden;
+  border: 1px solid #d8c4ed !important;
+  border-radius: .95rem;
+  background: linear-gradient(135deg, #faf7ff, #eee4fa) !important;
+  box-shadow: 0 8px 20px rgba(13, 4, 25, .14), inset 0 1px rgba(255,255,255,.9);
 }
 .login-demo-toggle {
   display: flex;
@@ -1477,6 +1479,7 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   align-items: center;
   justify-content: center;
   gap: .55rem;
+  border: 1px solid transparent;
   border-radius: .7rem;
   padding: .55rem .75rem;
   color: #5b2d88;
@@ -1485,6 +1488,7 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   transition: background .2s ease, transform .2s ease;
 }
 .login-demo-toggle:hover { background: rgba(255,255,255,.65); }
+.login-demo-toggle:focus-visible { outline: 2px solid #7c3aed; outline-offset: -3px; }
 .login-demo-toggle:active { transform: scale(.99); }
 .login-demo-backdrop {
   position: fixed;

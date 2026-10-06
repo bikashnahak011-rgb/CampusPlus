@@ -66,7 +66,7 @@ export default function AcademicResources({ resourceType }) {
   const [facultyProfiles, setFacultyProfiles] = useState([])
   const [assignmentError, setAssignmentError] = useState('')
   const [loading, setLoading] = useState(Boolean(supabase) && !user?.isDemo)
-  const [forceSamplePreview, setForceSamplePreview] = useState(false)
+  const [forceSamplePreview, setForceSamplePreview] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({ department: '', course: '', semester: '', subject: '', year: '', examination_type: '', faculty: '' })
@@ -79,12 +79,14 @@ export default function AcademicResources({ resourceType }) {
   const [preview, setPreview] = useState(null)
   const [permissionForm, setPermissionForm] = useState({ faculty_id: '', department: '', course: '', semester: '', subject: '' })
   const [permissionBusy, setPermissionBusy] = useState(false)
-  const resourceTypesWithLiveData = new Set(loadedResources.map(resource => resource.resource_type))
-  const sampleResources = DEMO_ACADEMIC_RESOURCES.filter(resource =>
+  const sampleResources = useMemo(() => DEMO_ACADEMIC_RESOURCES.filter(resource =>
     (!resourceType || resource.resource_type === resourceType)
-    && (user?.isDemo || (canViewSamplePreview && (forceSamplePreview || !resourceTypesWithLiveData.has(resource.resource_type)))),
+    && (user?.isDemo || (canViewSamplePreview && forceSamplePreview)),
+  ), [resourceType, user?.isDemo, canViewSamplePreview, forceSamplePreview])
+  const resources = useMemo(
+    () => user?.isDemo ? sampleResources : [...loadedResources, ...sampleResources],
+    [user?.isDemo, loadedResources, sampleResources],
   )
-  const resources = user?.isDemo ? sampleResources : [...loadedResources, ...sampleResources]
 
   const load = useCallback(async () => {
     if (user?.isDemo) return
@@ -406,12 +408,17 @@ export default function AcademicResources({ resourceType }) {
             <Upload size={16} /> Add {category.title}
           </button>
         )}
+        {user?.role === 'student' && (
+          <button type="button" onClick={() => navigate('/student/timetable')} className="secondary-button">
+            <CalendarDays size={16} /> View timetable
+          </button>
+        )}
       </div>
       {user?.isDemo && <p className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">Demo mode · showing sample academic resources. Sample entries do not include downloadable PDFs.</p>}
       {canViewSamplePreview && <div className="flex flex-wrap items-start justify-between gap-3">
-        {resources.some(resource => resource.demo_sample) && <SamplePreviewNotice>Sample syllabi, assignments, PYQs, and class materials are examples only. Sample PDFs are not downloadable.</SamplePreviewNotice>}
+        {forceSamplePreview && resources.some(resource => resource.demo_sample) && <SamplePreviewNotice>Examples are shown alongside published campus resources. Sample PDF entries are illustrative only and do not have downloadable files; sample class notes can be previewed and downloaded.</SamplePreviewNotice>}
         <button type="button" onClick={() => setForceSamplePreview(value => !value)} className="shrink-0 rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800">
-          {forceSamplePreview ? 'Show published resources' : 'Show all sample resources'}
+          {forceSamplePreview ? 'Hide sample resources' : 'Show sample resources'}
         </button>
       </div>}
 
@@ -524,7 +531,10 @@ export default function AcademicResources({ resourceType }) {
                 <article key={resource.id} className="card flex h-full flex-col">
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <span className="rounded-xl bg-violet-100 p-3 text-violet-700"><ResourceIcon size={20} /></span>
-                    {canManage && <span className={`rounded-full px-2.5 py-1 text-xs ${resource.status === 'approved' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>{resource.status}</span>}
+                    <div className="flex items-center gap-2">
+                      {resource.demo_sample && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs text-amber-800">Sample</span>}
+                      {canManage && <span className={`rounded-full px-2.5 py-1 text-xs ${resource.status === 'approved' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>{resource.status}</span>}
+                    </div>
                   </div>
                   <h2 className="line-clamp-2 font-semibold text-gray-900">{resource.title}</h2>
                   <p className="mt-1 line-clamp-2 min-h-10 text-sm text-gray-500">{resource.description || resource.file_name || 'Academic resource'}{resource.demo_sample ? ' · Sample record; no real file attached.' : ''}</p>

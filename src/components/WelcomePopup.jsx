@@ -20,14 +20,31 @@ export default function WelcomePopup() {
     if (checkedUserKey.current === userKey) return
     checkedUserKey.current = userKey
 
-    if (localStorage.getItem(userKey)) {
+    let welcomeSeen = false
+    try {
+      welcomeSeen = localStorage.getItem(userKey) === '1'
+    } catch {
+      try {
+        welcomeSeen = sessionStorage.getItem(userKey) === '1'
+      } catch {
+        welcomeSeen = false
+      }
+    }
+
+    if (welcomeSeen) {
       setVisible(false)
       return
     }
 
-    // Mark it immediately so remounts, refreshes, or auth state updates do not
-    // show the welcome card again for this account.
-    localStorage.setItem(userKey, '1')
+    try {
+      localStorage.setItem(userKey, '1')
+    } catch {
+      try {
+        sessionStorage.setItem(userKey, '1')
+      } catch {
+        // checkedUserKey still prevents repeats while this layout remains mounted.
+      }
+    }
     setVisible(true)
   }, [user])
 
