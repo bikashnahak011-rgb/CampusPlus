@@ -38,6 +38,15 @@ def _rows(query: Any) -> list[dict[str, Any]]:
     return query.execute().data or []
 
 
+def _optional_rows(query: Any) -> list[dict[str, Any]]:
+    """Keep an optional campus module from taking down answers for other modules."""
+    try:
+        return _rows(query)
+    except (APIError, httpx.HTTPError) as exc:
+        logger.info("Optional Campus AI context unavailable (%s).", type(exc).__name__)
+        return []
+
+
 def _contains(question: str, *terms: str) -> bool:
     return any(term in question for term in terms)
 
@@ -81,7 +90,7 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
     sources: list[str] = []
 
     if _contains(question, "attendance", "absent", "present"):
-        rows = _rows(
+        rows = _optional_rows(
             db_helpers.filtered_query(
                 "attendance",
                 "total_classes, present_classes",
@@ -98,7 +107,7 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
         sources.append("your attendance records")
 
     if _contains(question, "complaint", "maintenance issue"):
-        rows = _rows(
+        rows = _optional_rows(
             db_helpers.filtered_query("complaints", "category, status, created_at")
             .eq("student_id", user.id)
             .order("created_at", desc=True)
@@ -108,7 +117,7 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
         sources.append("your complaint statuses")
 
     if _contains(question, "leave", "gate pass", "gatepass"):
-        rows = _rows(
+        rows = _optional_rows(
             db_helpers.filtered_query(
                 "leave_requests",
                 "type, from_date, to_date, status, created_at",
@@ -121,7 +130,7 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
         sources.append("your leave and gate-pass requests")
 
     if _contains(question, "document", "certificate", "request"):
-        rows = _rows(
+        rows = _optional_rows(
             db_helpers.filtered_query("requests", "type, status, created_at")
             .eq("student_id", user.id)
             .order("created_at", desc=True)
@@ -131,11 +140,25 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
         sources.append("your document request statuses")
 
     if _contains(question, "mess", "menu", "food", "breakfast", "lunch", "dinner"):
-        context["mess_menu"] = _menu_for_student(question)
+        context["mess_menu"] = _optional_rows(
+            db_helpers.filtered_query("mess_menu", "day, breakfast, lunch, snacks, dinner, week_start")
+            .order("week_start", desc=True).limit(7)
+        )
+        latest_week = max((str(row["week_start"]) for row in context["mess_menu"] if row.get("week_start")), default=None)
+        if latest_week:
+            context["mess_menu"] = [row for row in context["mess_menu"] if str(row.get("week_start")) == latest_week]
+        weekdays = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+        requested_day = next((day for day in weekdays if day in question), None)
+        if "tomorrow" in question:
+            requested_day = (date.today() + timedelta(days=1)).strftime("%A").lower()
+        elif requested_day is None and not _contains(question, "week", "weekly"):
+            requested_day = date.today().strftime("%A").lower()
+        if requested_day:
+            context["mess_menu"] = [row for row in context["mess_menu"] if str(row.get("day", "")).lower() == requested_day]
         sources.append("the published mess menu")
 
     if _contains(question, "result", "grade", "sgpa", "cgpa", "exam marks"):
-        rows = _rows(
+        rows = _optional_rows(
             db_helpers.filtered_query(
                 "exam_results",
                 "result_type, result_value, academic_year, semester",
@@ -149,7 +172,7 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
         sources.append("your published exam results")
 
     if _contains(question, "fee", "payment", "dues", "scholarship", "invoice"):
-        rows = _rows(
+        rows = _optional_rows(
             db_helpers.filtered_query("fees", "description, amount, status, due_date, paid_date")
             .eq("student_id", user.id)
             .limit(10)
@@ -158,7 +181,7 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
         sources.append("your fee records")
 
     if _contains(question, "hostel", "my room", "my block", "warden"):
-        profile = _rows(
+        profile = _optional_rows(
             db_helpers.filtered_query(
                 "profiles",
                 "department, year, semester, hostel_block, room_number",
@@ -167,8 +190,8 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
         context["your_profile_details"] = profile[:1]
         sources.append("your campus profile")
 
-    if _contains(question, "timetable", "class schedule", "lecture schedule"):
-        profile = _rows(
+    if _contains(question, "timetable", "class schedule", "lecture schedule", "which class", "classes today", "class today", "what class", "teacher have class", "faculty today", "who teaches me today"):
+        profile = _optional_rows(
             db_helpers.filtered_query(
                 "profiles",
                 "department, semester, section",
@@ -186,8 +209,45 @@ def _student_context(question: str, user: CurrentUser) -> tuple[dict[str, Any], 
             )
             if student_profile.get("section"):
                 timetable_query = timetable_query.eq("section", student_profile["section"])
-            context["your_timetable"] = _rows(timetable_query.limit(30))
+            schedule = _optional_rows(timetable_query.limit(30))
+            requested_day = next((day for day in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday") if day in question), None)
+            if "today" in question or "class today" in question or "classes today" in question:
+                requested_day = date.today().strftime("%A").lower()
+            if requested_day:
+                schedule = [row for row in schedule if str(row.get("day_of_week") or "").lower() == requested_day]
+            context["your_timetable"] = schedule
             sources.append("your published timetable")
+
+    if _contains(question, "notice", "announcement", "event", "campus news"):
+        context["published_notices"] = _optional_rows(db_helpers.filtered_query("notices", "title, content, target, priority, created_at").order("created_at", desc=True).limit(10))
+        context["upcoming_events"] = _optional_rows(db_helpers.filtered_query("events", "title, event_date, type").order("event_date").limit(10))
+        sources.append("published notices and events")
+
+    if _contains(question, "faculty", "teacher", "professor", "who teaches"):
+        context["faculty_directory"] = _optional_rows(db_helpers.filtered_query("faculty", "name, qualification, classes_taught, subjects").limit(30))
+        sources.append("faculty directory")
+
+    if _contains(question, "assignment", "study material", "class material", "syllabus", "previous year", "pyq", "resource"):
+        context["academic_resources"] = _optional_rows(db_helpers.filtered_query("academic_resources", "title, description, resource_type, department, course, semester, subject, academic_year, faculty_name, file_url, link_url, question_year, examination_type").eq("status", "approved").limit(20))
+        sources.append("approved academic resources")
+
+    if _contains(question, "bus", "transport", "route", "stop", "shuttle"):
+        context["bus_routes"] = _optional_rows(db_helpers.filtered_query("bus_routes", "number, name, stops, departure, arrival, frequency, status, notice").limit(20))
+        sources.append("campus bus routes")
+
+    if _contains(question, "room", "classroom", "lab", "library", "campus map", "where is"):
+        context["campus_rooms"] = _optional_rows(db_helpers.filtered_query("campus_rooms", "code, name, building, floor, type, status, note").limit(40))
+        sources.append("campus room directory")
+
+    if _contains(question, "career", "internship", "job", "opportunity", "workshop", "placement", "career path"):
+        context["career_paths"] = _optional_rows(db_helpers.filtered_query("career_paths", "title, category, summary, roadmap").eq("is_active", True).limit(20))
+        context["career_opportunities"] = _optional_rows(db_helpers.filtered_query("career_opportunities", "title, role, opportunity_type, description, required_skills, eligibility, location, mode, deadline, application_method, application_url").eq("status", "published").limit(20))
+        context["workshops"] = _optional_rows(db_helpers.filtered_query("workshops", "title, organizer, description, topics, starts_at, location, registration_deadline").eq("status", "published").limit(20))
+        sources.append("published career paths and opportunities")
+
+    if _contains(question, "my order", "food order", "meal order", "reservation"):
+        context["your_mess_orders"] = _optional_rows(db_helpers.filtered_query("mess_orders", "service_date, meal_slot, meal_description, quantity, status, notes").eq("student_id", user.id).order("service_date", desc=True).limit(10))
+        sources.append("your mess orders")
 
     return context, sources
 
@@ -197,7 +257,7 @@ def _admin_context(question: str) -> tuple[dict[str, Any], list[str]]:
     sources: list[str] = []
 
     if _contains(question, "complaint", "issue", "incident", "maintenance"):
-        rows = _rows(db_helpers.filtered_query("complaints", "category, priority, status"))
+        rows = _optional_rows(db_helpers.filtered_query("complaints", "category, priority, status"))
         context["complaint_summary"] = {
             "total": len(rows),
             "by_status": dict(Counter(row.get("status") or "Unknown" for row in rows)),
@@ -207,7 +267,7 @@ def _admin_context(question: str) -> tuple[dict[str, Any], list[str]]:
         sources.append("aggregate complaint statistics")
 
     if _contains(question, "attendance", "absent", "present"):
-        rows = _rows(db_helpers.filtered_query("attendance", "total_classes, present_classes"))
+        rows = _optional_rows(db_helpers.filtered_query("attendance", "total_classes, present_classes"))
         total = sum(int(row.get("total_classes") or 0) for row in rows)
         present = sum(int(row.get("present_classes") or 0) for row in rows)
         required = get_settings().attendance_required
@@ -226,8 +286,8 @@ def _admin_context(question: str) -> tuple[dict[str, Any], list[str]]:
         sources.append("aggregate attendance statistics")
 
     if _contains(question, "request", "approval", "leave", "gate pass", "gatepass", "document"):
-        document_rows = _rows(db_helpers.filtered_query("requests", "type, status"))
-        leave_rows = _rows(db_helpers.filtered_query("leave_requests", "type, status"))
+        document_rows = _optional_rows(db_helpers.filtered_query("requests", "type, status"))
+        leave_rows = _optional_rows(db_helpers.filtered_query("leave_requests", "type, status"))
         context["request_summary"] = {
             "document_requests": {
                 "total": len(document_rows),
@@ -241,13 +301,40 @@ def _admin_context(question: str) -> tuple[dict[str, Any], list[str]]:
         sources.append("aggregate request statistics")
 
     if _contains(question, "mess", "menu", "food", "breakfast", "lunch", "dinner"):
-        context["mess_menu"] = _rows(
+        context["mess_menu"] = _optional_rows(
             db_helpers.filtered_query(
                 "mess_menu",
                 "day, breakfast, lunch, snacks, dinner, week_start",
             ).order("week_start", desc=True).limit(7)
         )
         sources.append("the published mess menu")
+
+    if _contains(question, "notice", "announcement", "event", "campus news"):
+        context["published_notices"] = _optional_rows(db_helpers.filtered_query("notices", "title, content, target, priority, created_at").order("created_at", desc=True).limit(10))
+        context["upcoming_events"] = _optional_rows(db_helpers.filtered_query("events", "title, event_date, type").order("event_date").limit(10))
+        sources.append("published notices and events")
+
+    if _contains(question, "faculty", "teacher", "professor", "who teaches"):
+        context["faculty_directory"] = _optional_rows(db_helpers.filtered_query("faculty", "name, qualification, classes_taught, subjects").limit(30))
+        sources.append("faculty directory")
+
+    if _contains(question, "assignment", "study material", "class material", "syllabus", "previous year", "pyq", "resource"):
+        context["academic_resources"] = _optional_rows(db_helpers.filtered_query("academic_resources", "title, description, resource_type, department, course, semester, subject, academic_year, faculty_name, file_url, link_url, question_year, examination_type").eq("status", "approved").limit(20))
+        sources.append("approved academic resources")
+
+    if _contains(question, "bus", "transport", "route", "stop", "shuttle"):
+        context["bus_routes"] = _optional_rows(db_helpers.filtered_query("bus_routes", "number, name, stops, departure, arrival, frequency, status, notice").limit(20))
+        sources.append("campus bus routes")
+
+    if _contains(question, "room", "classroom", "lab", "library", "campus map", "where is"):
+        context["campus_rooms"] = _optional_rows(db_helpers.filtered_query("campus_rooms", "code, name, building, floor, type, status, note").limit(40))
+        sources.append("campus room directory")
+
+    if _contains(question, "career", "internship", "job", "opportunity", "workshop", "placement", "career path"):
+        context["career_paths"] = _optional_rows(db_helpers.filtered_query("career_paths", "title, category, summary, roadmap").eq("is_active", True).limit(20))
+        context["career_opportunities"] = _optional_rows(db_helpers.filtered_query("career_opportunities", "title, role, opportunity_type, description, required_skills, eligibility, location, mode, deadline, application_method, application_url").eq("status", "published").limit(20))
+        context["workshops"] = _optional_rows(db_helpers.filtered_query("workshops", "title, organizer, description, topics, starts_at, location, registration_deadline").eq("status", "published").limit(20))
+        sources.append("published career paths and opportunities")
 
     return context, sources
 
@@ -257,6 +344,87 @@ def build_campus_context(question: str, user: CurrentUser) -> tuple[dict[str, An
     if user.role == "student":
         return _student_context(normalized_question, user)
     return _admin_context(normalized_question)
+
+
+def answer_from_campus_context(question: str, user: CurrentUser) -> tuple[str, list[str]]:
+    """Useful no-provider fallback: report matching live data without making anything up."""
+    context, sources = build_campus_context(question, user)
+    if not sources:
+        return (
+            "I can help with your attendance, timetable, mess menu and orders, fees, results, complaints, notices, events, faculty, assignments, bus routes, campus rooms, and how to use portal pages. What would you like to check?",
+            [],
+        )
+
+    lines: list[str] = []
+    if "attendance" in context:
+        item = context["attendance"]
+        lines.append(f"Your attendance is {item['percentage']}% ({item['present_classes']} of {item['total_classes']} classes)." if item["percentage"] is not None else "No attendance records are available yet.")
+    elif "your_timetable" in context:
+        entries = context["your_timetable"]
+        if entries:
+            lines.append("Your published classes: " + "; ".join(f"{r.get('start_time') or 'time not set'}–{r.get('end_time') or ''} {r.get('subject') or 'Class'} with {r.get('faculty_name') or 'faculty not listed'} in {r.get('room') or 'room not listed'}" for r in entries[:10]))
+        else:
+            lines.append("I couldn't find a published timetable entry for that day. Check the Timetable page or ask your department.")
+    elif "your_mess_orders" in context:
+        rows = context["your_mess_orders"]
+        lines.append("Your recent mess orders: " + "; ".join(f"{r.get('service_date')} {r.get('meal_slot')}: {r.get('meal_description')} ({r.get('status')})" for r in rows) if rows else "No mess orders are available on your account.")
+    elif "mess_menu" in context:
+        entries = context["mess_menu"]
+        if entries:
+            lines.append("Published mess menu: " + "; ".join(f"{r.get('day')}: " + ", ".join(f"{label} {r[key]}" for key, label in (("breakfast", "Breakfast"), ("lunch", "Lunch"), ("snacks", "Snacks"), ("dinner", "Dinner")) if r.get(key)) for r in entries))
+        else:
+            lines.append("There is no mess menu published for the requested day/week.")
+    elif "your_complaints" in context:
+        rows = context["your_complaints"]
+        lines.append("Your complaints: " + "; ".join(f"{r.get('category')}: {r.get('status')}" for r in rows) if rows else "You have no complaints on record.")
+    elif "your_leave_requests" in context:
+        rows = context["your_leave_requests"]
+        lines.append("Your leave/gate-pass requests: " + "; ".join(f"{r.get('type')}: {r.get('status')} ({r.get('from_date')} to {r.get('to_date')})" for r in rows) if rows else "You have no leave or gate-pass requests on record.")
+    elif "your_document_requests" in context:
+        rows = context["your_document_requests"]
+        lines.append("Your document requests: " + "; ".join(f"{r.get('type')}: {r.get('status')}" for r in rows) if rows else "You have no document requests on record.")
+    elif "your_published_results" in context:
+        rows = context["your_published_results"]
+        lines.append("Published results: " + "; ".join(f"{r.get('result_type')}: {r.get('result_value')} (semester {r.get('semester')})" for r in rows) if rows else "No published exam results are available yet.")
+    elif "your_fee_records" in context:
+        rows = context["your_fee_records"]
+        lines.append("Your fee records: " + "; ".join(f"{r.get('description')}: {r.get('amount')} ({r.get('status')}, due {r.get('due_date')})" for r in rows) if rows else "No fee records are available on your account.")
+    elif "complaint_summary" in context:
+        item = context["complaint_summary"]
+        lines.append(f"There are {item['total']} complaints. By status: " + ", ".join(f"{k}: {v}" for k, v in item["by_status"].items()))
+    elif "attendance_summary" in context:
+        item = context["attendance_summary"]
+        lines.append(f"Across {item['attendance_records']} attendance records, overall attendance is {item['overall_percentage']}%. {item['records_below_required_percentage']} records are below the {item['required_percentage']:g}% requirement." if item["overall_percentage"] is not None else "No attendance records are available.")
+    elif "request_summary" in context:
+        lines.append("Request totals: " + "; ".join(f"{name}: {details['total']} ({', '.join(f'{k}: {v}' for k, v in details['by_status'].items()) or 'no status counts'})" for name, details in context["request_summary"].items()))
+    else:
+        if "mess_menu" in context:
+            entries = context["mess_menu"]
+            lines.append("Published mess menu: " + "; ".join(f"{r.get('day')}: " + ", ".join(f"{label} {r[key]}" for key, label in (("breakfast", "Breakfast"), ("lunch", "Lunch"), ("snacks", "Snacks"), ("dinner", "Dinner")) if r.get(key)) for r in entries) if entries else "There is no published mess menu for the requested day/week.")
+        labels = {"published_notices": "Notices", "upcoming_events": "Events", "faculty_directory": "Faculty", "academic_resources": "Approved academic resources", "bus_routes": "Bus routes", "campus_rooms": "Campus rooms"}
+        if "career_paths" in context:
+            paths = context["career_paths"]
+            lines.append("Career paths: " + "; ".join(f"{r.get('title')}: {r.get('summary')}" for r in paths) if paths else "No active career paths are listed.")
+            opportunities = context.get("career_opportunities", [])
+            lines.append("Published opportunities: " + "; ".join(f"{r.get('title')} ({r.get('opportunity_type')}), deadline {r.get('deadline') or 'not listed'}: {r.get('application_method') or r.get('application_url') or 'see Career Hub'}" for r in opportunities) if opportunities else "No published career opportunities are listed.")
+            workshops = context.get("workshops", [])
+            lines.append("Workshops: " + "; ".join(f"{r.get('title')} at {r.get('location')} ({r.get('starts_at')})" for r in workshops) if workshops else "No published workshops are listed.")
+        for key, label in labels.items():
+            rows = context.get(key)
+            if rows is not None:
+                if key == "faculty_directory":
+                    lines.append(label + ": " + "; ".join(f"{r.get('name')} teaches {', '.join(r.get('subjects') or [])}" for r in rows) if rows else "No faculty listings are available.")
+                elif key == "published_notices":
+                    lines.append(label + ": " + "; ".join(f"{r.get('title')} — {r.get('content')}" for r in rows) if rows else "No published notices are available.")
+                elif key == "upcoming_events":
+                    lines.append(label + ": " + "; ".join(f"{r.get('title')} ({r.get('event_date')})" for r in rows) if rows else "No upcoming events are listed.")
+                elif key == "academic_resources":
+                    lines.append(label + ": " + "; ".join(f"{r.get('title')} [{r.get('resource_type')}, {r.get('subject') or r.get('department')}]" for r in rows) if rows else "No approved resources are listed.")
+                elif key == "bus_routes":
+                    lines.append(label + ": " + "; ".join(f"{r.get('number')} {r.get('name')}: {', '.join(r.get('stops') or [])}; {r.get('departure')} to {r.get('arrival')} ({r.get('status')})" for r in rows) if rows else "No bus routes are listed.")
+                else:
+                    lines.append(label + ": " + "; ".join(f"{r.get('name')} ({r.get('code')}), {r.get('building')} {r.get('floor')} — {r.get('type')}, {r.get('status')}" for r in rows) if rows else "No campus rooms are listed.")
+    return " ".join(lines), sources
 
 
 async def answer_with_poe(

@@ -284,8 +284,8 @@ class PoeAssistantTests(unittest.IsolatedAsyncioTestCase):
                     ),
                     patch.object(
                         ai_routes,
-                        "student_assistant",
-                        new=AsyncMock(return_value={"answer": "Your attendance is 88% (44 of 50 classes)."}),
+                        "answer_from_campus_context",
+                        return_value=("Your attendance is 88% (44 of 50 classes).", ["your attendance records"]),
                     ) as fallback,
                 ):
                     response = await client.post(
@@ -294,12 +294,39 @@ class PoeAssistantTests(unittest.IsolatedAsyncioTestCase):
                     )
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.json()["answer"], "Your attendance is 88% (44 of 50 classes).")
-            fallback.assert_awaited_once()
+            self.assertEqual(response.json()["context_sources"], ["your attendance records"])
+            fallback.assert_called_once()
         finally:
             if previous_override is None:
                 app.dependency_overrides.pop(ai_routes.get_current_user, None)
             else:
                 app.dependency_overrides[ai_routes.get_current_user] = previous_override
+
+    async def test_student_campus_context_supports_published_campus_sections(self):
+        user = CurrentUser(id="student-9", role="student", email=None, name=None)
+        table_rows = {
+            "notices": [{"title": "Holiday", "content": "Campus closed Friday"}],
+            "events": [{"title": "Tech Fest", "event_date": "2026-10-12"}],
+            "faculty": [{"name": "Dr Rao", "subjects": ["Physics"]}],
+            "academic_resources": [{"title": "Unit 1 notes", "resource_type": "class_material"}],
+            "bus_routes": [{"number": "R1", "stops": ["Main Gate"]}],
+            "campus_rooms": [{"code": "L101", "name": "Lab 1"}],
+        }
+        def fake_query(table, *_args):
+            return FakeQuery(table_rows.get(table, []))
+        with patch.object(poe_assistant.db_helpers, "filtered_query", side_effect=fake_query):
+            context, sources = await asyncio.to_thread(
+                poe_assistant.build_campus_context,
+                "Show notices, campus events, faculty, assignments, buses and rooms",
+                user,
+            )
+        self.assertIn("published_notices", context)
+        self.assertIn("upcoming_events", context)
+        self.assertIn("faculty_directory", context)
+        self.assertIn("academic_resources", context)
+        self.assertIn("bus_routes", context)
+        self.assertIn("campus_rooms", context)
+        self.assertGreaterEqual(len(sources), 5)
 
 
 if __name__ == "__main__":

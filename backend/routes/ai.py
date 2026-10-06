@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Literal
 
@@ -6,12 +7,11 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ..auth import CurrentUser, get_current_user
 from ..limiting import limiter
-from .assistant import Question as RulesQuestion, admin_copilot, student_assistant
-from ..services.poe_assistant import PoeAssistantUnavailable, answer_with_poe
+from ..services.poe_assistant import PoeAssistantUnavailable, answer_from_campus_context, answer_with_poe
 
 router = APIRouter(prefix="/ai", tags=["campus-ai"])
 logger = logging.getLogger(__name__)
-RULES_FALLBACK_MESSAGE = "Campus AI's language model is unavailable. I can still help with attendance, complaints, requests, today's menu, and campus navigation when that information is available."
+RULES_FALLBACK_MESSAGE = "I couldn't load that campus information just now. Please try again or open the matching portal section."
 
 
 class ConversationMessage(BaseModel):
@@ -70,16 +70,14 @@ async def ask_campus_ai(
             }
 
         try:
-            rules_question = RulesQuestion(question=payload.question[:500])
-            if user.role == "student":
-                fallback = await student_assistant(rules_question, user)
-            elif user.role == "admin":
-                fallback = await admin_copilot(rules_question, user)
-            else:
-                fallback = {"answer": RULES_FALLBACK_MESSAGE}
+            answer, sources = await asyncio.to_thread(
+                answer_from_campus_context,
+                payload.question[:500],
+                user,
+            )
             return {
-                "answer": str(fallback.get("answer") or RULES_FALLBACK_MESSAGE),
-                "context_sources": ["role-authorized campus rules and records"],
+                "answer": answer or RULES_FALLBACK_MESSAGE,
+                "context_sources": sources,
             }
         except Exception as exc:
             logger.warning("Campus AI rules fallback failed (%s).", type(exc).__name__)
