@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { isHostelManagementEmail } from '../lib/adminRoles'
+import { ADMIN_ROLES, isHostelManagementEmail, isMainAdministratorEmail } from '../lib/adminRoles'
 import { DEMO_LOGIN_ACCOUNTS } from '../data/demoAccounts'
 
 const AuthContext = createContext(null)
@@ -206,8 +206,14 @@ export function AuthProvider({ children }) {
         return
       }
 
-      const role = data?.role === 'admin' ? 'admin' : data?.role === 'student' ? 'student' : null
-      let admin_role = role === 'admin' ? data?.admin_role || null : null
+      const verifiedMainAdministrator = isMainAdministratorEmail(authUser.email)
+        && Boolean(authUser.email_confirmed_at || authUser.confirmed_at)
+      const role = verifiedMainAdministrator
+        ? 'admin'
+        : data?.role === 'admin' ? 'admin' : data?.role === 'student' ? 'student' : null
+      let admin_role = role === 'admin'
+        ? verifiedMainAdministrator ? ADMIN_ROLES.MAIN_ADMINISTRATOR : data?.admin_role || null
+        : null
       if (
         admin_role === ADMIN_ROLES.HOSTEL_MANAGEMENT &&
         (!isHostelManagementEmail(authUser.email) || !isHostelManagementEmail(data?.email))

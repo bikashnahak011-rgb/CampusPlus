@@ -234,10 +234,10 @@ export default function AdminBusRoutes() {
               </div>
 
               <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="min-w-0 rounded-xl bg-gray-50 p-3"><MapPin size={16} className="text-orange-600 mb-2" /><p className="text-xs text-gray-400">Stops</p><p className="break-words text-sm font-semibold text-gray-900">{route.stops.join(' -> ')}</p></div>
-                <div className="rounded-xl bg-gray-50 p-3"><Clock3 size={16} className="text-orange-600 mb-2" /><p className="text-xs text-gray-400">Departure</p><p className="text-sm font-semibold text-gray-900">{route.departure}</p></div>
-                <div className="rounded-xl bg-gray-50 p-3"><Clock3 size={16} className="text-orange-600 mb-2" /><p className="text-xs text-gray-400">Arrival</p><p className="text-sm font-semibold text-gray-900">{route.arrival}</p></div>
-                <div className="rounded-xl bg-gray-50 p-3"><BusFront size={16} className="text-orange-600 mb-2" /><p className="text-xs text-gray-400">Frequency</p><p className="text-sm font-semibold text-gray-900">{route.frequency}</p></div>
+                <div className="bus-route-summary bus-route-summary--stops min-w-0"><MapPin size={16} /><p className="text-xs text-gray-400">Stops</p><p className="break-words text-sm font-semibold text-gray-900">{route.stops.join(' -> ')}</p></div>
+                <div className="bus-route-summary bus-route-summary--departure"><Clock3 size={16} /><p className="text-xs text-gray-400">Departure</p><p className="text-sm font-semibold text-gray-900">{route.departure}</p></div>
+                <div className="bus-route-summary bus-route-summary--arrival"><Clock3 size={16} /><p className="text-xs text-gray-400">Arrival</p><p className="text-sm font-semibold text-gray-900">{route.arrival}</p></div>
+                <div className="bus-route-summary bus-route-summary--frequency"><BusFront size={16} /><p className="text-xs text-gray-400">Frequency</p><p className="text-sm font-semibold text-gray-900">{route.frequency}</p></div>
               </div>
 
               <div className="mt-5 grid grid-cols-1 gap-2 sm:mt-6 sm:flex sm:flex-wrap">

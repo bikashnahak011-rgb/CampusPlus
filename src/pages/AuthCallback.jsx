@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { ADMIN_ROLE_LABELS, getAdminHomePath } from '../lib/adminRoles'
+import { getAdminHomePath } from '../lib/adminRoles'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
-  const { user, loading, signOut } = useAuth()
+  const { user, loading } = useAuth()
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -29,28 +29,9 @@ export default function AuthCallback() {
       return
     }
 
-    const requestedRole = localStorage.getItem('campusplus_oauth_role')
-    const requestedAdminRole = localStorage.getItem('campusplus_oauth_admin_role')
-    localStorage.removeItem('campusplus_oauth_role')
-    localStorage.removeItem('campusplus_oauth_admin_role')
-
     if (user.role !== 'admin' && user.role !== 'student') {
       console.error('Authenticated user has no valid profile role')
       setError('Your Google account is authenticated, but it has no campus role yet. Ask an administrator to set your profile role to admin or student.')
-      return
-    }
-
-    if (requestedRole && requestedRole !== user.role) {
-      console.error('Google account does not match the selected portal', user.email, requestedRole)
-      setError(`This Google account is assigned to the ${user.role} portal, not the selected ${requestedRole} portal. Choose the matching sign-in type and try again.`)
-      void signOut()
-      return
-    }
-
-    if (requestedRole === 'admin' && requestedAdminRole && user.admin_role !== requestedAdminRole) {
-      console.error('Google account does not match the selected admin role', user.email, requestedAdminRole)
-      setError(`This Google account is not assigned the ${ADMIN_ROLE_LABELS[requestedAdminRole] || 'selected admin'} role. Select the role assigned to your account and try again.`)
-      void signOut()
       return
     }
 
@@ -75,7 +56,7 @@ export default function AuthCallback() {
       navigate('/student/dashboard', { replace: true })
     }
 
-  }, [loading, user, navigate, signOut])
+  }, [loading, user, navigate])
 
   // Error
   if (error) {

@@ -12,39 +12,39 @@ const FLOOR_ROOMS = Array.from({ length: 3 }, (_, floorIndex) => {
 })
 
 const ROOM_STYLES = {
-  Classroom: { Icon: GraduationCap, color: 'border-cyan-200 bg-cyan-50 text-cyan-800' },
+  Classroom: { Icon: GraduationCap, color: 'border-sky-200 bg-sky-50 text-sky-800' },
   Lab: { Icon: FlaskConical, color: 'border-violet-200 bg-violet-50 text-violet-800' },
-  'Faculty Chamber': { Icon: UsersRound, color: 'border-amber-200 bg-amber-50 text-amber-800' },
-  Library: { Icon: Library, color: 'border-emerald-200 bg-emerald-50 text-emerald-800' },
+  'Faculty Chamber': { Icon: UsersRound, color: 'border-rose-200 bg-rose-50 text-rose-800' },
+  Library: { Icon: Library, color: 'border-teal-200 bg-teal-50 text-teal-800' },
 }
 
 export default function CampusMap() {
   const [selectedFloor, setSelectedFloor] = useState(0)
 
   return (
-    <section className="card border border-cyan-100 overflow-hidden">
+    <section className="card border border-violet-100 overflow-hidden">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div><h2 className="font-semibold text-gray-900">Campus direction map</h2><p className="text-xs text-gray-500 mt-1">North is up. Select a building to find its rooms.</p></div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-700"><ArrowUp size={15} /> North</div>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-violet-700"><ArrowUp size={15} /> North</div>
       </div>
-      <div className="relative min-h-[740px] overflow-hidden rounded-2xl border border-cyan-100 bg-cyan-50/70 sm:min-h-[420px]" style={{ backgroundImage: 'linear-gradient(rgba(8,145,178,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(8,145,178,0.08) 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
-        <div className="absolute left-[5%] right-[5%] top-[51%] h-3 rounded-full bg-amber-200/80 rotate-[-4deg]" />
-        <div className="absolute left-[17%] top-[30%] h-[45%] w-2 rounded-full bg-amber-200/80 rotate-[18deg]" />
+      <div className="relative min-h-[740px] overflow-hidden rounded-2xl border border-violet-100 bg-violet-50/70 sm:min-h-[420px]" style={{ backgroundImage: 'linear-gradient(rgba(121,100,197,0.075) 1px, transparent 1px), linear-gradient(90deg, rgba(121,100,197,0.075) 1px, transparent 1px)', backgroundSize: '32px 32px' }}>
+        <div className="absolute left-[5%] right-[5%] top-[51%] h-3 rounded-full bg-indigo-200/90 rotate-[-4deg]" />
+        <div className="absolute left-[17%] top-[30%] h-[45%] w-2 rounded-full bg-indigo-200/90 rotate-[18deg]" />
         <div className="absolute left-[4%] bottom-[4%] z-10 flex items-center gap-1 rounded-lg bg-white px-2 py-1.5 text-[10px] font-bold text-gray-600 shadow-sm"><MapPin size={13} className="text-red-500" /> Main Gate</div>
         <div className="absolute right-[4%] bottom-[4%] z-10 flex items-center gap-1 rounded-lg bg-white px-2 py-1.5 text-[10px] font-bold text-gray-600 shadow-sm"><MapPin size={13} className="text-green-600" /> Hostel</div>
         <div className="relative z-10 grid gap-3 p-3 pb-14 sm:p-4 sm:pb-14 xl:grid-cols-[minmax(180px,0.65fr)_minmax(0,2fr)] xl:items-start">
           <div className="rounded-xl border border-gray-200 bg-white/95 p-3 shadow-lg">
             <h3 className="font-semibold text-gray-900">Campus overview</h3>
             <p className="mt-1 text-xs text-gray-500">Computer Science Block location</p>
-            <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-lg border border-cyan-100 bg-cyan-50/70" style={{ backgroundImage: 'linear-gradient(rgba(8,145,178,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(8,145,178,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-              <div className="absolute left-[8%] right-[8%] top-[52%] h-2 rounded-full bg-amber-200/90 rotate-[-5deg]" />
-              <div className="absolute left-[30%] top-[22%] h-[57%] w-1.5 rounded-full bg-amber-200/90 rotate-[18deg]" />
-              <div className="absolute left-1/2 top-[24%] -translate-x-1/2 rounded-md border border-cyan-200 bg-white px-2 py-1.5 text-center text-[10px] font-bold text-cyan-800 shadow-sm">
-                <Building2 size={14} className="mx-auto mb-0.5 text-cyan-700" />CS Block
+            <div className="relative mt-3 aspect-[4/3] overflow-hidden rounded-lg border border-violet-100 bg-violet-50/70" style={{ backgroundImage: 'linear-gradient(rgba(121,100,197,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(121,100,197,0.09) 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+              <div className="absolute left-[8%] right-[8%] top-[52%] h-2 rounded-full bg-indigo-200/90 rotate-[-5deg]" />
+              <div className="absolute left-[30%] top-[22%] h-[57%] w-1.5 rounded-full bg-indigo-200/90 rotate-[18deg]" />
+              <div className="absolute left-1/2 top-[24%] -translate-x-1/2 rounded-md border border-violet-200 bg-white px-2 py-1.5 text-center text-[10px] font-bold text-violet-800 shadow-sm">
+                <Building2 size={14} className="mx-auto mb-0.5 text-violet-700" />CS Block
               </div>
               <div className="absolute left-[4%] bottom-[5%] flex items-center gap-1 rounded bg-white px-1.5 py-1 text-[9px] font-bold text-gray-600 shadow-sm"><MapPin size={11} className="text-red-500" /> Gate</div>
               <div className="absolute right-[4%] bottom-[5%] flex items-center gap-1 rounded bg-white px-1.5 py-1 text-[9px] font-bold text-gray-600 shadow-sm"><MapPin size={11} className="text-green-600" /> Hostel</div>
-              <span className="absolute left-[43%] top-[54%] -translate-y-1/2 rounded bg-cyan-50/90 px-1 text-[8px] font-bold uppercase tracking-wide text-cyan-800">Walkway</span>
+              <span className="absolute left-[43%] top-[54%] -translate-y-1/2 rounded bg-white/90 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-violet-800 shadow-sm">Walkway</span>
             </div>
           </div>
           <div className="rounded-xl border border-white bg-white/95 p-3 shadow-lg sm:p-4">
@@ -59,7 +59,7 @@ export default function CampusMap() {
               type="button"
               onClick={() => setSelectedFloor(floorIndex)}
               aria-pressed={selectedFloor === floorIndex}
-              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${selectedFloor === floorIndex ? 'bg-cyan-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${selectedFloor === floorIndex ? 'bg-violet-700 text-white' : 'text-gray-600 hover:bg-violet-50'}`}
             >Floor {floorIndex + 1}</button>)}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Mail,
@@ -7,7 +7,6 @@ import {
   EyeOff,
   ArrowLeft,
   Loader2,
-  Shield,
   GraduationCap,
   Sparkles,
   X,
@@ -16,22 +15,12 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { useApp } from '../contexts/AppContext'
 import AppLogo from '../components/AppLogo'
-import { ADMIN_ROLES, ADMIN_ROLE_LABELS, getAdminHomePath } from '../lib/adminRoles'
+import { getAdminHomePath } from '../lib/adminRoles'
 import { DEMO_LOGIN_ACCOUNTS } from '../data/demoAccounts'
 import loginStudentArtwork from '../assets/login-student-3d-transparent.png'
 
-const ADMIN_LOGIN_ROLES = [
-  { value: ADMIN_ROLES.HOSTEL_MANAGEMENT, label: 'Hostel Management' },
-  { value: ADMIN_ROLES.MESS_MANAGER, label: 'Mess Management' },
-  { value: ADMIN_ROLES.FACULTY, label: 'Faculty' },
-  { value: ADMIN_ROLES.ACCOUNT_EXAMINATION, label: 'Accounts & Examination' },
-  { value: ADMIN_ROLES.MAIN_ADMINISTRATOR, label: 'Main Administrator' },
-]
-
 export default function LoginPage() {
 
-  const [role, setRole] = useState('student')
-  const [selectedAdminRole, setSelectedAdminRole] = useState(ADMIN_ROLES.MAIN_ADMINISTRATOR)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -43,12 +32,10 @@ export default function LoginPage() {
     user,
     signIn,
     signInWithGoogle,
-    signOut,
   } = useAuth()
 
   const navigate = useNavigate()
   const { t } = useApp()
-  const pendingLoginSelection = useRef(null)
 
   /*
   ============================================================
@@ -66,20 +53,6 @@ export default function LoginPage() {
     if (user.is_active === false || !['student', 'admin'].includes(user.role)) {
       navigate('/unauthorized', { replace: true })
       return
-    }
-
-    const requested = pendingLoginSelection.current
-    if (requested) {
-      pendingLoginSelection.current = null
-      const roleMatches = user.role === requested.role
-      const adminRoleMatches = user.role !== 'admin' || user.admin_role === requested.adminRole
-      if (!roleMatches || !adminRoleMatches) {
-        setError(user.role !== requested.role
-          ? `This account is assigned to the ${user.role} portal. Choose the matching sign-in type.`
-          : `This account is assigned the ${ADMIN_ROLE_LABELS[user.admin_role] || 'admin'} role. Select that role to continue.`)
-        void signOut()
-        return
-      }
     }
 
     const isAdmin = user.role === 'admin'
@@ -119,7 +92,7 @@ export default function LoginPage() {
       })
     }
 
-  }, [user, navigate, role, selectedAdminRole, signOut])
+  }, [user, navigate])
 
 
   /*
@@ -131,7 +104,6 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
 
     e.preventDefault()
-    pendingLoginSelection.current = null
 
     /*
       Clear previous error.
@@ -156,7 +128,6 @@ export default function LoginPage() {
 
     setLoading(true)
 
-    pendingLoginSelection.current = { role, adminRole: selectedAdminRole }
 
     try {
 
@@ -182,7 +153,6 @@ export default function LoginPage() {
 
       if (result?.error) {
 
-        pendingLoginSelection.current = null
         setError(
           result.error.message ||
           'Invalid email or password.'
@@ -245,7 +215,6 @@ export default function LoginPage() {
 
     } catch (err) {
 
-      pendingLoginSelection.current = null
       console.error(
         'Login error:',
         err
@@ -275,13 +244,6 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    localStorage.setItem('campusplus_oauth_role', role)
-    if (role === 'admin') {
-      localStorage.setItem('campusplus_oauth_admin_role', selectedAdminRole)
-    } else {
-      localStorage.removeItem('campusplus_oauth_admin_role')
-    }
-
     try {
 
       /*
@@ -295,9 +257,6 @@ export default function LoginPage() {
 
       if (result?.error) {
 
-        localStorage.removeItem('campusplus_oauth_role')
-        localStorage.removeItem('campusplus_oauth_admin_role')
-        pendingLoginSelection.current = null
         setError(
           result.error.message ||
           'Google login failed.'
@@ -319,9 +278,6 @@ export default function LoginPage() {
 
     } catch (err) {
 
-      localStorage.removeItem('campusplus_oauth_role')
-      localStorage.removeItem('campusplus_oauth_admin_role')
-      pendingLoginSelection.current = null
       console.error(
         'Google login error:',
         err
@@ -348,20 +304,6 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    /*
-      Update visible role selector.
-    */
-
-    setRole(account.role)
-    if (account.role === 'admin') {
-      setSelectedAdminRole(account.admin_role)
-    }
-    pendingLoginSelection.current = {
-      role: account.role,
-      adminRole: account.admin_role,
-    }
-
-
     try {
 
       const result = await signIn(
@@ -372,7 +314,6 @@ export default function LoginPage() {
 
       if (result?.error) {
 
-        pendingLoginSelection.current = null
         setError(
           result.error.message
         )
@@ -405,7 +346,6 @@ export default function LoginPage() {
 
     } catch (err) {
 
-      pendingLoginSelection.current = null
       console.error(
         'Demo login error:',
         err
@@ -482,76 +422,7 @@ export default function LoginPage() {
             <span>Sign in to continue to your campus</span>
           </header>
 
-            <div className="login-role-switch flex bg-gray-100 rounded-2xl p-1 mb-5 sm:mb-6">
-
-              {/* Student */}
-
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => {
-                  setRole('student')
-                  setError('')
-                }}
-                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 ${
-                  role === 'student'
-                    ? 'bg-white text-violet-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-
-                <GraduationCap size={17} />
-
-                {t('student')}
-
-              </button>
-
-
-              {/* Admin */}
-
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => {
-                  setRole('admin')
-                  setError('')
-                }}
-                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 ${
-                  role === 'admin'
-                    ? 'bg-white text-fuchsia-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-
-                <Shield size={17} />
-
-                {t('admin')}
-
-              </button>
-
-            </div>
-
-            {role === 'admin' && (
-              <div className="login-admin-role-field">
-                <label htmlFor="admin-dashboard-role">Admin role</label>
-                <select
-                  id="admin-dashboard-role"
-                  value={selectedAdminRole}
-                  onChange={(event) => {
-                    setSelectedAdminRole(event.target.value)
-                    setError('')
-                  }}
-                  disabled={loading}
-                >
-                  {ADMIN_LOGIN_ROLES.map(({ value, label }) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                <p>Select the dashboard role assigned to your account.</p>
-              </div>
-            )}
+            <p className="mb-4 text-sm text-gray-500">Your account’s assigned campus role determines your access after sign in.</p>
 
 
             {/* Login form */}

@@ -6,6 +6,7 @@ import { ADMIN_ROLES, ADMIN_ROLE_LABELS, isHostelManagementEmail } from '../../l
 import { DEMO_ADMIN_USERS } from '../../data/demoData'
 
 const ROLE_OPTIONS = Object.entries(ADMIN_ROLE_LABELS)
+const ASSIGNABLE_ROLE_OPTIONS = ROLE_OPTIONS.filter(([value]) => value !== ADMIN_ROLES.MAIN_ADMINISTRATOR)
 
 async function fetchUsers() {
   if (!supabase) throw new Error('Supabase is not configured. Check the project environment settings.')
@@ -27,7 +28,7 @@ export default function AdminUsers() {
   const [notice, setNotice] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [adminRole, setAdminRole] = useState(ADMIN_ROLES.HOSTEL_MANAGEMENT)
+  const [adminRole, setAdminRole] = useState(ADMIN_ROLES.FACULTY)
   const [roleDrafts, setRoleDrafts] = useState({})
 
   const loadUsers = useCallback(async (showLoading = false) => {
@@ -126,11 +127,17 @@ export default function AdminUsers() {
     }, `Role updated for ${target.email}.`)
   }
 
-  const assignHostelManagement = (target) => {
-    invokeAdminAction({
-      action: 'assign_hostel_management',
+  const assignAdminRole = async (target) => {
+    const nextRole = roleDrafts[target.id]
+    if (!nextRole || nextRole === ADMIN_ROLES.MAIN_ADMINISTRATOR) return
+    const succeeded = await invokeAdminAction({
+      action: 'assign_admin_role',
       user_id: target.id,
-    }, `Hostel Management access granted to ${target.email}.`)
+      admin_role: nextRole,
+    }, `${ADMIN_ROLE_LABELS[nextRole]} access granted to ${target.email}.`)
+    if (succeeded) {
+      setRoleDrafts(current => ({ ...current, [target.id]: '' }))
+    }
   }
 
   const toggleAdminStatus = (target) => {
@@ -172,7 +179,7 @@ export default function AdminUsers() {
         <label className="text-sm text-gray-600">
           Admin role
           <select disabled={user?.isDemo} value={adminRole} onChange={(event) => setAdminRole(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-900 disabled:opacity-60">
-            {ROLE_OPTIONS.map(([value, label]) => (
+            {ASSIGNABLE_ROLE_OPTIONS.map(([value, label]) => (
               <option
                 key={value}
                 value={value}
@@ -232,7 +239,7 @@ export default function AdminUsers() {
                               disabled={isSelf || saving || user?.isDemo}
                               className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 disabled:opacity-60"
                             >
-                              {ROLE_OPTIONS.map(([value, label]) => (
+                              {ROLE_OPTIONS.filter(([value]) => value !== ADMIN_ROLES.MAIN_ADMINISTRATOR || target.admin_role === ADMIN_ROLES.MAIN_ADMINISTRATOR).map(([value, label]) => (
                                 <option
                                   key={value}
                                   value={value}
@@ -246,15 +253,35 @@ export default function AdminUsers() {
                               Save
                             </button>
                           </div>
-                        ) : isHostelManagementEmail(target.email) ? (
-                          <button
-                            onClick={() => assignHostelManagement(target)}
-                            disabled={saving || user?.isDemo}
-                            className="text-xs font-semibold text-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            Grant Hostel Management
-                          </button>
-                        ) : <span className="text-gray-400">Student</span>}
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <select
+                              aria-label={`Assign administrator role to ${target.email}`}
+                              value={roleDrafts[target.id] || ''}
+                              onChange={(event) => setRoleDrafts(current => ({ ...current, [target.id]: event.target.value }))}
+                              disabled={saving || user?.isDemo}
+                              className="max-w-40 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 disabled:opacity-60"
+                            >
+                              <option value="">Student</option>
+                              {ASSIGNABLE_ROLE_OPTIONS.map(([value, label]) => (
+                                <option
+                                  key={value}
+                                  value={value}
+                                  disabled={value === ADMIN_ROLES.HOSTEL_MANAGEMENT && !isHostelManagementEmail(target.email)}
+                                >
+                                  {label}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() => assignAdminRole(target)}
+                              disabled={saving || user?.isDemo || !roleDrafts[target.id]}
+                              className="text-xs font-semibold text-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              Assign
+                            </button>
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${target.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>

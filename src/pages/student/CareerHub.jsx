@@ -775,7 +775,7 @@ export default function CareerHub() {
 
   function renderCareerCards(paths) {
     if (!paths.length) return <EmptyNotice title="No paths match that search" detail="Try a different career, skill, or category." />
-    return <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+    return <div className="career-path-grid">
       {paths.map((path, index) => (
         <article key={path.id} className={`career-path-card career-color-${path.color || 'teal'}`} style={{ animationDelay: `${Math.min(index, 7) * 35}ms` }}>
           <div className="flex items-start justify-between gap-3"><span className="career-chip">{path.category}</span><button type="button" className={`career-icon-button ${isBookmarked('career_path_id', path.id) ? 'is-saved' : ''}`} onClick={() => toggleBookmark('career_path_id', path.id)} title={isBookmarked('career_path_id', path.id) ? 'Remove bookmark' : 'Bookmark career path'} aria-label={isBookmarked('career_path_id', path.id) ? 'Remove bookmark' : 'Bookmark career path'}><Bookmark size={17} fill={isBookmarked('career_path_id', path.id) ? 'currentColor' : 'none'} /></button></div>
@@ -925,7 +925,7 @@ export default function CareerHub() {
       {activeTab === 'projects' && <section className="career-section">
         <div className="career-section-heading"><div><p className="career-eyebrow">Project-based learning</p><h2 className="career-display text-2xl">Build something you can show</h2></div><div className="flex flex-wrap gap-2"><label className="career-filter"><span className="sr-only">Filter projects by career path</span><select value={selectedPathId} onChange={event => setSelectedPathId(event.target.value)}><option value="">All paths</option>{data.paths.map(path => <option value={path.id} key={path.id}>{path.title}</option>)}</select></label><label className="career-filter"><span className="sr-only">Filter project difficulty</span><select value={projectDifficulty} onChange={event => setProjectDifficulty(event.target.value)}><option>All</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label></div></div>
         <div className="career-search-secondary mb-3"><Search size={16} /><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search projects, skills, or requirements" aria-label="Search projects" /></div>
-        <div className="grid gap-3 lg:grid-cols-2">{visibleProjects.map(({ path, project }) => {
+        <div className="career-project-grid">{visibleProjects.map(({ path, project }) => {
           const progress = data.projectProgress[project.id] || { status: 'not_started' }
           const expanded = details?.kind === 'project' && details.item.id === project.id
           return <article className="career-project-card" key={project.id}>

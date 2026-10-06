@@ -1,20 +1,46 @@
 -- Run after schema.sql and the existing Supabase hardening/feature migrations.
--- Existing admins become main administrators so their current access is preserved.
+-- Only the designated account is Main Administrator; preserve existing specialist roles.
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS admin_role TEXT,
   ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
 
+-- Establish the designated active Main Administrator before removing old broad admin grants.
+INSERT INTO public.profiles (id, email, name, role, admin_role, is_active, avatar_url)
+SELECT
+  u.id,
+  u.email,
+  COALESCE(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)),
+  'admin',
+  'main_administrator',
+  TRUE,
+  u.raw_user_meta_data->>'avatar_url'
+FROM auth.users AS u
+WHERE lower(btrim(u.email)) = 'bikashnahak023@gmail.com'
+  AND u.email_confirmed_at IS NOT NULL
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  name = COALESCE(NULLIF(public.profiles.name, ''), EXCLUDED.name),
+  role = 'admin',
+  admin_role = 'main_administrator',
+  is_active = TRUE,
+  avatar_url = COALESCE(public.profiles.avatar_url, EXCLUDED.avatar_url);
+
 UPDATE public.profiles
-SET admin_role = CASE
+SET role = CASE
+    WHEN role = 'admin' AND lower(btrim(email)) = 'bikashnahak023@gmail.com' THEN 'admin'
+    WHEN role = 'admin' AND admin_role IN ('hostel_management', 'mess_manager', 'faculty', 'account_examination') THEN 'admin'
+    WHEN role = 'admin' THEN 'student'
+    ELSE role
+  END,
+admin_role = CASE
+  WHEN role = 'admin' AND lower(btrim(email)) = 'bikashnahak023@gmail.com' THEN 'main_administrator'
   WHEN role = 'admin' AND admin_role IN (
     'hostel_management',
     'mess_manager',
     'faculty',
-    'account_examination',
-    'main_administrator'
+    'account_examination'
   ) THEN admin_role
-  WHEN role = 'admin' THEN 'main_administrator'
   ELSE NULL
 END,
 is_active = COALESCE(is_active, TRUE);
@@ -28,9 +54,9 @@ ALTER TABLE public.profiles
       'hostel_management',
       'mess_manager',
       'faculty',
-      'account_examination',
-      'main_administrator'
+      'account_examination'
     ))
+    OR (role = 'admin' AND admin_role = 'main_administrator' AND lower(btrim(email)) = 'bikashnahak023@gmail.com')
   );
 
 CREATE INDEX IF NOT EXISTS profiles_admin_role_active_idx
@@ -98,6 +124,20 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
+  IF NEW.role = 'admin'
+    AND NEW.admin_role = 'main_administrator'
+    AND lower(btrim(NEW.email)) <> 'bikashnahak023@gmail.com'
+  THEN
+    RAISE EXCEPTION 'Only the designated Main Administrator account may have the Main Administrator role';
+  END IF;
+
+  IF NEW.role = 'admin'
+    AND lower(btrim(NEW.email)) = 'bikashnahak023@gmail.com'
+    AND NEW.admin_role <> 'main_administrator'
+  THEN
+    RAISE EXCEPTION 'The designated Main Administrator account cannot be assigned a specialist role';
+  END IF;
+
   IF NEW.role = 'admin'
     AND NEW.admin_role = 'hostel_management'
     AND (
@@ -425,3 +465,47 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.subjects, public.timetable,
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.exam_results, public.fees TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.notices, public.events TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.bus_routes, public.campus_rooms TO authenticated;
+
+-- Promote the verified Google identity designated as the Main Administrator.
+-- This repairs an existing profile and handles both new Google signups and later email confirmation.
+CREATE OR REPLACE FUNCTION public.assign_designated_main_administrator()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF lower(btrim(NEW.email)) = 'bikashnahak023@gmail.com'
+    AND NEW.email_confirmed_at IS NOT NULL
+  THEN
+    INSERT INTO public.profiles (id, email, name, role, admin_role, is_active, avatar_url)
+    VALUES (
+      NEW.id,
+      NEW.email,
+      COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+      'admin',
+      'main_administrator',
+      TRUE,
+      NEW.raw_user_meta_data->>'avatar_url'
+    )
+  ON CONFLICT (id) DO UPDATE SET
+      email = EXCLUDED.email,
+      name = COALESCE(NULLIF(public.profiles.name, ''), EXCLUDED.name),
+      role = 'admin',
+      admin_role = 'main_administrator',
+      is_active = TRUE,
+      avatar_url = COALESCE(public.profiles.avatar_url, EXCLUDED.avatar_url);
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.assign_designated_main_administrator() FROM PUBLIC;
+DROP TRIGGER IF EXISTS assign_designated_main_administrator ON auth.users;
+DROP TRIGGER IF EXISTS assign_designated_main_administrator_after_update ON auth.users;
+CREATE TRIGGER assign_designated_main_administrator
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.assign_designated_main_administrator();
+CREATE TRIGGER assign_designated_main_administrator_after_update
+  AFTER UPDATE OF email, email_confirmed_at ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.assign_designated_main_administrator();

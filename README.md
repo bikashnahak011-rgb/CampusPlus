@@ -49,8 +49,9 @@ Open **http://localhost:5173**
 8. Run `supabase/faculty.sql` to enable the shared faculty directory and admin-only editing
 9. Run `supabase/exam_results.sql` to enable SGPA/CGPA result publishing and student notifications
 10. Run `supabase/email_notifications.sql` to queue student email notifications for new in-app updates and journal reviews
-11. Run or re-run `supabase/admin_roles.sql` and deploy `supabase/functions/manage-admin-users/index.ts`; it defines the five admin roles, restricts Hostel Management to `dragonfire0222@gmail.com`, and applies the role access helpers. The Main Administrator can invite this address or grant the role to its existing student account from User Management.
+11. Run or re-run `supabase/admin_roles.sql` and deploy `supabase/functions/manage-admin-users/index.ts`; it limits Main Administrator to the verified `bikashnahak023@gmail.com` account, restricts Hostel Management to `dragonfire0222@gmail.com`, and applies role-scoped access. All other users receive student profiles by default. The Main Administrator can invite administrators or assign specialist roles to existing student accounts from User Management.
 12. Run or re-run `supabase/academic_resources.sql` to add Academic Resources (including faculty assignment PDFs), faculty subject permissions, timetable management, the private storage bucket, and RLS policies
+13. Run `supabase/mess_orders.sql` after `admin_roles.sql` to enable student meal reservations and live order tracking for Mess Management.
 13. Deploy the FastAPI backend as a separate HTTPS service. Set its `SUPABASE_URL`, server-only `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS`, and `POE_API_KEY` (plus optional `POE_MODEL` and `POE_TIMEOUT_SECONDS`) in the backend service settings. Keep the Poe key on the backend only. Add the Resend email settings described in `backend/README.md` if email delivery is enabled.
 14. Set these frontend environment variables in Vercel Project Settings → Environment Variables:
 
@@ -78,7 +79,7 @@ Bus GPS sharing is started by an authenticated admin from Admin → Bus Routes u
 
 The feature adds `/student/syllabus`, `/student/timetable`, `/student/pyq`, `/student/class-material`, and `/student/assignments`, plus `/admin/assignments` and the faculty/main-administrator resource management routes under `/admin`. Assignment uploads are PDF-only and remain private until approved; students can browse approved PDFs from their assignments page and dashboard. It uses the existing `profiles`, authentication provider, layouts, toast system, and Supabase client. The migration extends the current timetable table in place and does not delete existing rows.
 
-**Apply the SQL in this order:** `schema.sql` → `production_hardening.sql` → `document_requests.sql` → `admin_roles.sql` → `academic_resources.sql`. The `document_requests.sql` script creates the private `document-requests` bucket for approved student documents; `academic_resources.sql` creates a separate private `academic-resources` bucket. Keep both buckets private.
+**Apply the SQL in this order:** `schema.sql` → `production_hardening.sql` → `document_requests.sql` → `admin_roles.sql` → `academic_resources.sql` → `mess_orders.sql`. The `document_requests.sql` script creates the private `document-requests` bucket for approved student documents; `academic_resources.sql` creates a separate private `academic-resources` bucket. Keep both buckets private.
 
 From the Supabase Dashboard:
 

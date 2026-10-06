@@ -192,18 +192,18 @@ export default function BusRoutesPage() {
           {route.notice && <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-3 py-3 text-sm text-red-700 sm:mb-6 sm:px-4">{route.notice}</div>}
 
           <div className="mb-6 grid grid-cols-1 gap-3 sm:mb-7 sm:grid-cols-3">
-            <div className="rounded-xl bg-gray-50 p-3">
-              <Clock3 size={17} className="text-orange-600 mb-2" />
+            <div className="bus-route-summary bus-route-summary--departure">
+              <Clock3 size={17} />
               <p className="text-xs text-gray-400">First departure</p>
               <p className="font-semibold text-gray-900 mt-0.5">{route.departure}</p>
             </div>
-            <div className="rounded-xl bg-gray-50 p-3">
-              <MapPin size={17} className="text-orange-600 mb-2" />
+            <div className="bus-route-summary bus-route-summary--arrival">
+              <MapPin size={17} />
               <p className="text-xs text-gray-400">Campus arrival</p>
               <p className="font-semibold text-gray-900 mt-0.5">{route.arrival}</p>
             </div>
-            <div className="rounded-xl bg-gray-50 p-3">
-              <Route size={17} className="text-orange-600 mb-2" />
+            <div className="bus-route-summary bus-route-summary--frequency">
+              <Route size={17} />
               <p className="text-xs text-gray-400">Service frequency</p>
               <p className="font-semibold text-gray-900 mt-0.5">{route.frequency}</p>
             </div>

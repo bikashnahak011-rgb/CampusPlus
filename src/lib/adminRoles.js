@@ -7,6 +7,11 @@ export const ADMIN_ROLES = {
 }
 
 export const HOSTEL_MANAGEMENT_EMAIL = 'dragonfire0222@gmail.com'
+export const MAIN_ADMINISTRATOR_EMAIL = 'bikashnahak023@gmail.com'
+
+export function isMainAdministratorEmail(email) {
+  return typeof email === 'string' && email.trim().toLowerCase() === MAIN_ADMINISTRATOR_EMAIL
+}
 
 export function isHostelManagementEmail(email) {
   return typeof email === 'string' && email.trim().toLowerCase() === HOSTEL_MANAGEMENT_EMAIL

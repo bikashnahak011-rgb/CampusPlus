@@ -11,7 +11,6 @@ const allowedAdminRoles = new Set([
   'mess_manager',
   'faculty',
   'account_examination',
-  'main_administrator',
 ])
 const hostelManagementEmail = 'dragonfire0222@gmail.com'
 
@@ -146,6 +145,38 @@ Deno.serve(async (request) => {
     if (updateError) {
       return jsonResponse({ error: updateError.message }, 400)
     }
+    return jsonResponse({ success: true })
+  }
+
+  if (action === 'assign_admin_role') {
+    if (target.role !== 'student') {
+      return jsonResponse({ error: 'Only a student account can be assigned a specialist administrator role.' }, 400)
+    }
+    const adminRole = payload.admin_role
+    if (typeof adminRole !== 'string' || !allowedAdminRoles.has(adminRole)) {
+      return jsonResponse({ error: 'Choose a valid specialist administrator role.' }, 400)
+    }
+    if (adminRole === 'hostel_management' && target.email.trim().toLowerCase() !== hostelManagementEmail) {
+      return jsonResponse({ error: `Only ${hostelManagementEmail} can be assigned the Hostel Management role.` }, 400)
+    }
+
+    const { data: { user: targetAuthUser }, error: targetAuthError } = await adminClient.auth.admin.getUserById(targetId)
+    if (targetAuthError || !targetAuthUser) {
+      console.error('Unable to verify target account email:', targetAuthError?.message || 'Auth user not found.')
+      return jsonResponse({ error: 'Unable to verify the target account email.' }, 500)
+    }
+    if (targetAuthUser.email?.trim().toLowerCase() !== target.email.trim().toLowerCase()) {
+      return jsonResponse({ error: 'The profile email does not match its authenticated account.' }, 400)
+    }
+    if (adminRole === 'hostel_management' && targetAuthUser.email?.trim().toLowerCase() !== hostelManagementEmail) {
+      return jsonResponse({ error: `Only ${hostelManagementEmail} can be assigned the Hostel Management role.` }, 400)
+    }
+
+    const { error: updateError } = await adminClient
+      .from('profiles')
+      .update({ role: 'admin', admin_role: adminRole, is_active: true })
+      .eq('id', targetId)
+    if (updateError) return jsonResponse({ error: updateError.message }, 400)
     return jsonResponse({ success: true })
   }
 
