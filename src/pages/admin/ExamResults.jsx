@@ -5,6 +5,8 @@ import { useApp } from '../../contexts/AppContext'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { EmptyState } from '../../components/ui/States'
+import { useAuth } from '../../contexts/AuthContext'
+import DemoDataBanner from '../../components/DemoDataBanner'
 
 const EMPTY_FORM = {
   student_id: '',
@@ -15,6 +17,7 @@ const EMPTY_FORM = {
 }
 
 export default function AdminExamResults() {
+  const { user } = useAuth()
   const { pathname } = useLocation()
   const { examResults, students, publishExamResult } = useApp()
   const toast = useToast()
@@ -55,6 +58,8 @@ export default function AdminExamResults() {
         </div>
         <button type="button" onClick={() => setShowForm(true)} className="btn-primary sm:w-auto!"><Plus size={16} /> Publish result</button>
       </div>
+
+      <DemoDataBanner user={user} examResults={examResults.length} students={students.length} />
 
       <div className="card">
         <div className="relative max-w-lg">

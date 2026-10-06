@@ -17,7 +17,7 @@ import { useApp } from '../contexts/AppContext'
 import AppLogo from '../components/AppLogo'
 import { ADMIN_ROLES, ADMIN_ROLE_LABELS, getAdminHomePath } from '../lib/adminRoles'
 import { DEMO_LOGIN_ACCOUNTS } from '../data/demoAccounts'
-import loginStudentArtwork from '../assets/login-student-3d-transparent.png'
+import loginStudentArtwork from '../assets/man-at-computer.png'
 
 const ADMIN_ROLE_OPTIONS = [
   { value: ADMIN_ROLES.HOSTEL_MANAGEMENT, description: 'Hostel rooms, allocations, student housing, and maintenance.' },
@@ -81,7 +81,7 @@ export default function LoginPage() {
           replace: true
         })
       } else {
-        navigate('/student/dashboard', {
+        navigate('/student/profile', {
           replace: true
         })
       }
@@ -128,10 +128,10 @@ export default function LoginPage() {
       Validate fields.
     */
 
-    if (!email.trim() || !password) {
+    if (!email.trim() || (loginMode === 'admin' && !password)) {
 
       setError(
-        'Please enter your email and password.'
+        loginMode === 'admin' ? 'Please enter your email and password.' : 'Please enter your email.'
       )
 
       return
@@ -153,7 +153,7 @@ export default function LoginPage() {
 
       const result = await signIn(
         email.trim(),
-        password
+        loginMode === 'student' ? '' : password
       )
 
 
@@ -455,7 +455,7 @@ export default function LoginPage() {
               <span className="login-form-logo"><AppLogo size={38} /></span>
               <h1 id="login-title">Welcome to NexCampus</h1>
             </div>
-            <span>Sign in to continue to your campus</span>
+            <span>{loginMode === 'student' ? 'Enter any email to preview the student portal demo' : 'Sign in to continue to your campus'}</span>
           </header>
 
             <div className="login-role-switch" role="group" aria-label="Choose sign-in type">
@@ -544,7 +544,7 @@ export default function LoginPage() {
               <div className="mb-4">
 
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">Password</label>
+                  <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">Password {loginMode === 'student' && <span className="font-normal text-gray-400">(optional for demo)</span>}</label>
                   <button type="button" onClick={handleForgotPassword} disabled={loading} className="login-forgot-password text-sm font-semibold text-violet-200 transition-colors hover:text-white disabled:opacity-60">
                     Forgot password?
                   </button>

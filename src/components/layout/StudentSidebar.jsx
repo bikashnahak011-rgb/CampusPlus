@@ -5,6 +5,7 @@ import { useApp } from '../../contexts/AppContext'
 import AppLogo from '../AppLogo'
 import Sidebar3DArtwork from './Sidebar3DArtwork'
 import SidebarUserProfile from './SidebarUserProfile'
+import demoGraduateAvatar from '../../assets/demo-graduate.png'
 import { useState } from 'react'
 
 export default function StudentSidebar({ open, onClose, collapsed = false, onToggleCollapse }) {
@@ -87,7 +88,13 @@ export default function StudentSidebar({ open, onClose, collapsed = false, onTog
           })}
         </nav>
         <Sidebar3DArtwork />
-        <div className="p-3 border-t border-white/10 space-y-1">
+        <div className="student-sidebar-footer relative isolate overflow-hidden p-3 border-t border-white/10 space-y-1">
+          <img
+            src={demoGraduateAvatar}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute -right-2 bottom-0 z-[-1] h-24 w-24 object-contain opacity-20"
+          />
           {liteMode && <div title="Lite Mode Active" className={`flex items-center gap-2 py-1.5 text-yellow-300 text-xs ${collapsed ? 'lg:justify-center lg:px-2' : 'px-4'}`}><Zap size={13} /><span className={collapsed ? 'lg:hidden' : ''}>Lite Mode Active</span></div>}
           <SidebarUserProfile
             name={user?.name}

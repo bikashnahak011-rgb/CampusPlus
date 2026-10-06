@@ -332,6 +332,45 @@ export function AuthProvider({ children }) {
       }
     }
 
+    // Email-only student preview for hackathon demos. This creates a local,
+    // read-only demo identity and never grants an admin role.
+    if (!password && normalizedEmail.includes('@')) {
+      if (supabase) {
+        try {
+          await supabase.auth.signOut()
+        } catch {
+          // Ignore Supabase sign-out errors
+        }
+      }
+
+      const displayName = normalizedEmail.split('@')[0]
+        .split(/[._+-]+/)
+        .filter(Boolean)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ') || 'Demo Student'
+      const demoUser = {
+        id: `demo-${normalizedEmail.replace(/[^a-z0-9]/g, '-')}`,
+        email: normalizedEmail,
+        role: 'student',
+        admin_role: null,
+        is_active: true,
+        name: displayName,
+        roll_no: 'DEMO001',
+        department: 'Computer Science',
+        branch: 'B.Tech CSE',
+        year: 3,
+        hostel_block: 'A',
+        profileComplete: true,
+        isDemo: true,
+        isEmailDemo: true,
+      }
+
+      localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(demoUser))
+      setUser(demoUser)
+      setLoading(false)
+      return { data: { user: demoUser, session: null }, error: null, isDemo: true }
+    }
+
     /*
       NORMAL SUPABASE LOGIN
     */
@@ -437,6 +476,13 @@ export function AuthProvider({ children }) {
       redirectTo: `${window.location.origin}/reset-password`,
     })
   }
+
+  function updateDemoProfile(profileUpdates) {
+    if (!user?.isDemo) return
+    const updatedUser = { ...user, ...profileUpdates }
+    localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(updatedUser))
+    setUser(updatedUser)
+  }
   /*
     ============================
     SIGN OUT
@@ -480,6 +526,7 @@ export function AuthProvider({ children }) {
         sendPasswordReset,
         signOut,
         fetchProfile,
+        updateDemoProfile,
       }}
     >
       {children}

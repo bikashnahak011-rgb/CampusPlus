@@ -52,8 +52,8 @@ export default function AuthCallback() {
       console.log('Redirecting to ADMIN dashboard')
       navigate(getAdminHomePath(user.admin_role, user.email), { replace: true })
     } else {
-      console.log('Redirecting to STUDENT dashboard')
-      navigate('/student/dashboard', { replace: true })
+      console.log('Redirecting to STUDENT profile')
+      navigate('/student/profile', { replace: true })
     }
 
   }, [loading, user, navigate])

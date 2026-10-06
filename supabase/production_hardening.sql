@@ -3,6 +3,11 @@
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS phone TEXT,
+  ADD COLUMN IF NOT EXISTS father_name TEXT,
+  ADD COLUMN IF NOT EXISTS father_mobile TEXT,
+  ADD COLUMN IF NOT EXISTS blood_group TEXT,
+  ADD COLUMN IF NOT EXISTS tenth_result TEXT,
+  ADD COLUMN IF NOT EXISTS twelfth_result TEXT,
   ADD COLUMN IF NOT EXISTS avatar_url TEXT,
   ADD COLUMN IF NOT EXISTS roll_no TEXT,
   ADD COLUMN IF NOT EXISTS department TEXT,
@@ -126,7 +131,7 @@ CREATE POLICY "admins_manage_timetable" ON public.timetable FOR ALL TO authentic
 
 REVOKE UPDATE ON TABLE public.profiles FROM authenticated;
 REVOKE UPDATE (role) ON TABLE public.profiles FROM authenticated;
-GRANT UPDATE (name, phone, avatar_url, roll_no, department, branch, section, gender, year, semester, hostel_block, room_number, designation, employee_id, office)
+GRANT UPDATE (name, phone, father_name, father_mobile, blood_group, tenth_result, twelfth_result, avatar_url, roll_no, department, branch, section, gender, year, semester, hostel_block, room_number, designation, employee_id, office)
   ON TABLE public.profiles TO authenticated;
 GRANT SELECT ON TABLE public.profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.subjects, public.timetable, public.attendance, public.fees TO authenticated;

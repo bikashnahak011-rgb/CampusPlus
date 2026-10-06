@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { StatusBadge, EmptyState } from '../../components/ui/States'
+import DemoDataBanner from '../../components/DemoDataBanner'
 
 const FILTERS = ['All', 'High Priority', 'Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed']
 const STATUSES = ['Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed']
@@ -81,6 +82,7 @@ export default function AdminComplaints({ maintenanceOnly = false }) {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1><p className="text-gray-500 text-sm mt-1">{scopedComplaints.length} {maintenanceOnly ? 'maintenance requests' : 'complaints'}</p></div>
+      <DemoDataBanner user={user} complaints={scopedComplaints.length} />
 
       <div className="card">
         <div className="flex flex-col sm:flex-row gap-3">

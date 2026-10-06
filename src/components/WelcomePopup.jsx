@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import rolandLogo from '../assets/roland-logo.png'
 
@@ -8,17 +8,32 @@ export default function WelcomePopup() {
   const { user } = useAuth()
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
+  const checkedUserKey = useRef('')
 
   useEffect(() => {
-    if (!user || user.role !== 'student') return
-    const seen = sessionStorage.getItem(STORAGE_KEY)
-    if (!seen) setVisible(true)
+    if (!user || user.role !== 'student') {
+      setVisible(false)
+      return
+    }
+
+    const userKey = `${STORAGE_KEY}:${user.id || user.email}`
+    if (checkedUserKey.current === userKey) return
+    checkedUserKey.current = userKey
+
+    if (localStorage.getItem(userKey)) {
+      setVisible(false)
+      return
+    }
+
+    // Mark it immediately so remounts, refreshes, or auth state updates do not
+    // show the welcome card again for this account.
+    localStorage.setItem(userKey, '1')
+    setVisible(true)
   }, [user])
 
   const handleContinue = () => {
     setClosing(true)
     setTimeout(() => {
-      sessionStorage.setItem(STORAGE_KEY, '1')
       setVisible(false)
       setClosing(false)
       window.dispatchEvent(new Event('campusplus-welcome-dismissed'))

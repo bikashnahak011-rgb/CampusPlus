@@ -1218,12 +1218,11 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   bottom: 0;
   left: 50%;
   width: auto;
-  height: min(100%, 310px);
+  height: min(90%, 270px);
   min-height: 0;
-  max-width: 48%;
+  max-width: 66%;
   translate: -50% 0;
-  filter: drop-shadow(0 28px 22px rgba(57, 35, 84, .23)) drop-shadow(0 1px 1px rgba(255,255,255,.8));
-  animation: loginStudentFloat 5s ease-in-out infinite;
+  filter: drop-shadow(0 14px 16px rgba(57, 35, 84, .18));
 }
 
 .login-art-student img { display: block; width: auto; height: 100%; max-width: 100%; object-fit: contain; }
@@ -1590,8 +1589,8 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   .login-art-halo--outer { width: 108px; }
   .login-art-halo--inner { width: 78px; }
   .login-art-student {
-    height: 96px;
-    max-width: 50%;
+    height: 104px;
+    max-width: 76%;
     margin: 0;
   }
   .login-art-orbit--one { top: 12%; right: 6%; width: 1.7rem; height: 1.7rem; }
@@ -1688,7 +1687,7 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   .login-illustration { height: 88px; }
   .login-page { background: linear-gradient(to bottom, #fff 0 88px, var(--login-panel) 88px); }
   .login-art-scene { height: 88px; }
-  .login-art-student { height: 84px; max-width: 50%; }
+  .login-art-student { height: 78px; max-width: 76%; }
   .login-panel { padding-top: 98px; }
   .login-back-link { top: -2rem; }
   .login-form-heading { margin-bottom: .45rem; }

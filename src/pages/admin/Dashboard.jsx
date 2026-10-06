@@ -8,6 +8,7 @@ import DashboardVideoShowcase from '../../components/DashboardVideoShowcase'
 import CampusJournalPreview from '../../components/CampusJournalPreview'
 import { StatusBadge } from '../../components/ui/States'
 import DashboardHero from '../../components/DashboardHero'
+import DemoDataBanner from '../../components/DemoDataBanner'
 import { ADMIN_ROLE_LABELS } from '../../lib/adminRoles'
 import studentsArt from '../../assets/3d-academic/people.png'
 import requestsArt from '../../assets/3d-academic/requests.png'
@@ -18,7 +19,7 @@ import pencilArt from '../../assets/3d-academic/pencil.png'
 import calendarArt from '../../assets/3d-academic/calendar.png'
 
 export default function AdminDashboard() {
-  const { complaints, requests, leaveRequests, students, dashboardVideos, campusJournalItems } = useApp()
+  const { complaints, requests, leaveRequests, students, examResults, dashboardVideos, campusJournalItems } = useApp()
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -59,6 +60,8 @@ export default function AdminDashboard() {
         title={`Welcome back, ${ADMIN_ROLE_LABELS[user?.admin_role] || 'Administrator'} 👋`}
         subtitle={dashboardSubtitle}
       />
+
+      <DemoDataBanner user={user} complaints={complaints.length} students={students.length} examResults={examResults.length} />
 
       <div className="internal-stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map(({ label, value, icon: Icon, art, color, bg, change }) => (

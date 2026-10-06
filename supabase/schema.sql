@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS profiles (
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   phone TEXT,
+  father_name TEXT,
+  father_mobile TEXT,
+  blood_group TEXT,
+  tenth_result TEXT,
+  twelfth_result TEXT,
   avatar_url TEXT,
   roll_no TEXT,
   department TEXT,
@@ -320,7 +325,7 @@ ALTER TABLE hostels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
 
 REVOKE UPDATE ON TABLE profiles FROM authenticated;
-GRANT UPDATE (name, phone, avatar_url, roll_no, department, branch, section, gender, year, semester, hostel_block, room_number, designation, employee_id, office)
+GRANT UPDATE (name, phone, father_name, father_mobile, blood_group, tenth_result, twelfth_result, avatar_url, roll_no, department, branch, section, gender, year, semester, hostel_block, room_number, designation, employee_id, office)
   ON TABLE profiles TO authenticated;
 GRANT SELECT ON TABLE profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE subjects, timetable, attendance, fees TO authenticated;

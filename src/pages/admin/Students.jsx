@@ -5,6 +5,8 @@ import { useApp } from '../../contexts/AppContext'
 import { StatusBadge } from '../../components/ui/States'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
+import { useAuth } from '../../contexts/AuthContext'
+import DemoDataBanner from '../../components/DemoDataBanner'
 
 const TONE_PALETTE = [
   'lavender',
@@ -16,6 +18,7 @@ const TONE_PALETTE = [
 ]
 
 export default function AdminStudents() {
+  const { user } = useAuth()
   const { students, sendStudentMessage } = useApp()
   const { pathname } = useLocation()
   const isHostelStudents = pathname.endsWith('/hostel-students')
@@ -67,6 +70,7 @@ export default function AdminStudents() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-gray-900">{isHostelStudents ? 'Hostel Students' : 'Students'}</h1><p className="text-gray-500 text-sm mt-1">{isHostelStudents ? `${directoryStudents.length} hostel residents` : `${directoryStudents.length} registered students`}</p></div>
+      <DemoDataBanner user={user} students={directoryStudents.length} />
 
       <div className="card admin-student-filter-panel">
         <div className="admin-student-filter-toolbar flex flex-col sm:flex-row gap-3">
