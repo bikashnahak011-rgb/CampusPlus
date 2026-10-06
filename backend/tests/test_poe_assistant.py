@@ -328,6 +328,24 @@ class PoeAssistantTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("campus_rooms", context)
         self.assertGreaterEqual(len(sources), 5)
 
+    async def test_one_word_admin_fees_question_returns_aggregate_without_student_data(self):
+        query = FakeQuery([
+            {"amount": 1200, "status": "Pending", "student_id": "must-not-be-selected"},
+            {"amount": 800, "status": "Paid", "student_id": "must-not-be-selected"},
+        ])
+        admin = CurrentUser(id="admin-1", role="admin", email=None, name=None)
+        with patch.object(poe_assistant.db_helpers, "filtered_query", return_value=query):
+            answer, sources = await asyncio.to_thread(
+                poe_assistant.answer_from_campus_context,
+                "fees",
+                admin,
+            )
+        self.assertIn("2 records", answer)
+        self.assertIn("Pending: 1 records totaling 1,200.00", answer)
+        self.assertIn("Paid: 1 records totaling 800.00", answer)
+        self.assertNotIn("student_id", answer)
+        self.assertIn("aggregate fee statistics", sources)
+
 
 if __name__ == "__main__":
     unittest.main()

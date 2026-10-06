@@ -285,6 +285,21 @@ def _admin_context(question: str) -> tuple[dict[str, Any], list[str]]:
         }
         sources.append("aggregate attendance statistics")
 
+    if _contains(question, "fee", "fees", "payment", "dues", "invoice", "accounts"):
+        rows = _optional_rows(db_helpers.filtered_query("fees", "amount, status"))
+        totals: dict[str, float] = {}
+        counts: Counter = Counter()
+        for row in rows:
+            label = str(row.get("status") or "Unknown")
+            counts[label] += 1
+            totals[label] = totals.get(label, 0.0) + float(row.get("amount") or 0)
+        context["fee_summary"] = {
+            "total_records": len(rows),
+            "by_status": dict(counts),
+            "amount_by_status": {key: round(value, 2) for key, value in totals.items()},
+        }
+        sources.append("aggregate fee statistics")
+
     if _contains(question, "request", "approval", "leave", "gate pass", "gatepass", "document"):
         document_rows = _optional_rows(db_helpers.filtered_query("requests", "type, status"))
         leave_rows = _optional_rows(db_helpers.filtered_query("leave_requests", "type, status"))
@@ -397,6 +412,10 @@ def answer_from_campus_context(question: str, user: CurrentUser) -> tuple[str, l
         lines.append(f"Across {item['attendance_records']} attendance records, overall attendance is {item['overall_percentage']}%. {item['records_below_required_percentage']} records are below the {item['required_percentage']:g}% requirement." if item["overall_percentage"] is not None else "No attendance records are available.")
     elif "request_summary" in context:
         lines.append("Request totals: " + "; ".join(f"{name}: {details['total']} ({', '.join(f'{k}: {v}' for k, v in details['by_status'].items()) or 'no status counts'})" for name, details in context["request_summary"].items()))
+    elif "fee_summary" in context:
+        item = context["fee_summary"]
+        breakdown = "; ".join(f"{status}: {count} records totaling {item['amount_by_status'].get(status, 0):,.2f}" for status, count in item["by_status"].items())
+        lines.append(f"Campus fee summary: {item['total_records']} records. " + (breakdown or "No fee records are available."))
     else:
         if "mess_menu" in context:
             entries = context["mess_menu"]
