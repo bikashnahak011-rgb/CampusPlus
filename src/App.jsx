@@ -21,6 +21,7 @@ import AppLogo from './components/AppLogo'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const MobileOnboarding = lazy(() => import('./pages/MobileOnboarding'))
 const AuthCallback = lazy(() => import('./pages/AuthCallback'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
@@ -372,6 +373,11 @@ export default function App() {
               <Route
                 path="/login"
                 element={<LoginRoute />}
+              />
+
+              <Route
+                path="/reset-password"
+                element={<ResetPasswordPage />}
               />
 
               <Route

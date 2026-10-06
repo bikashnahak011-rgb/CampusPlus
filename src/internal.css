@@ -4356,3 +4356,90 @@
   box-shadow: 0 28px 80px rgba(20, 10, 34, 0.42), inset 0 1px 0 #fff;
   transform: translate(-50%, -50%) !important;
 }
+
+/* Mobile login uses a light, scrollable surface so form copy stays readable. */
+@media (max-width: 700px) {
+  .login-page {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: visible;
+    flex-direction: column;
+    background: linear-gradient(180deg, #e8e0f2 0, #f5f2f9 7rem, #f7f5fa 100%);
+    color: #302442;
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  }
+
+  .login-page .login-illustration {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 6rem;
+    padding: .65rem 1rem;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(255,255,255,.45), transparent 48%),
+      linear-gradient(110deg, #e5d8f2, #dbe8f3 58%, #e9dff0);
+  }
+
+  .login-page .login-panel {
+    display: block;
+    flex: 1 0 auto;
+    min-height: 100svh;
+    padding: 7.2rem 1rem calc(2rem + env(safe-area-inset-bottom));
+    background: transparent;
+    color: #302442;
+  }
+
+  .login-page .login-form-column {
+    width: min(100%, 30rem);
+    max-height: none;
+    margin-inline: auto;
+    padding: 1rem;
+    border: 1px solid rgba(255,255,255,.88);
+    border-radius: 1.35rem;
+    background: rgba(255,255,255,.76);
+    box-shadow: 0 16px 40px rgba(69,48,100,.12), inset 0 1px 0 #fff;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .login-page .login-panel,
+  .login-page .login-panel :is(button, input, label, p, a, h1, select, span) {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  }
+
+  .login-page .login-back-link {
+    position: static;
+    display: flex;
+    width: fit-content;
+    margin: 0 0 .85rem auto;
+    color: #654b86;
+    font-size: .85rem;
+    font-weight: 650;
+  }
+
+  .login-page .login-form-heading { margin-bottom: 1rem; }
+  .login-page .login-form-heading h1 { color: #302442; }
+  .login-page .login-form-heading > span:last-child { color: #716681; }
+  .login-page .login-panel .text-gray-700 { color: #493d59 !important; }
+  .login-page .login-panel .text-gray-500 { color: #706681 !important; }
+  .login-page .login-panel .text-gray-400 { color: #80748f !important; }
+  .login-page .login-panel .login-role-note,
+  .login-page .login-admin-role-field label,
+  .login-page .login-admin-role-field p { color: #665a78; }
+  .login-page .login-role-switch {
+    border-color: #e2d9ec;
+    background: #eee9f5 !important;
+  }
+  .login-page .login-role-switch button:not(.bg-white) { color: #625573 !important; }
+  .login-page .login-role-switch button:not(.bg-white):hover { color: #432763 !important; }
+  .login-page .login-form-surface > p { color: #706681; }
+  .login-page .login-panel .login-contact-link { color: #693cb1; }
+  .login-page .login-forgot-password { color: #693cb1 !important; }
+  .login-page .login-panel .login-demo-box { border-color: #e4d8f1 !important; }
+  .login-page .login-panel form label { color: #493d59 !important; }
+  .login-page .login-panel input { min-height: 3rem; }
+  .login-page .login-panel form button[type="submit"],
+  .login-page .login-panel .google-btn { min-height: 3rem; }
+}

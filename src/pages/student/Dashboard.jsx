@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
   ClipboardList,
@@ -10,6 +11,7 @@ import {
   Calendar,
   AlertCircle,
   Megaphone,
+  X,
 } from 'lucide-react'
 
 import { useAuth } from '../../contexts/AuthContext'
@@ -72,6 +74,17 @@ function classStatus(time, t) {
   }
 }
 
+function getDismissedNoticeIds(userId) {
+  if (!userId || typeof window === 'undefined') return []
+  try {
+    const stored = window.localStorage.getItem(`campusplus:dismissed-notices:${userId}`)
+    const parsed = stored ? JSON.parse(stored) : []
+    return Array.isArray(parsed) ? parsed.map(String) : []
+  } catch {
+    return []
+  }
+}
+
 export default function StudentDashboard() {
   const { user } = useAuth()
 
@@ -89,6 +102,10 @@ export default function StudentDashboard() {
 
   const navigate = useNavigate()
   const [academicData, setAcademicData] = useState({ subjects: [], classes: [], events: [] })
+  const [dismissedNoticeState, setDismissedNoticeState] = useState(() => ({
+    userId: user?.id,
+    ids: getDismissedNoticeIds(user?.id),
+  }))
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long'
@@ -205,11 +222,108 @@ export default function StudentDashboard() {
     .slice(0, 4)
 
   const importantNotices = notices.filter(notice =>
-    notice.important && matchesNoticeTarget(notice.target, user)
+    (notice.important || ['important', 'critical'].includes(String(notice.priority || '').toLowerCase()))
+    && matchesNoticeTarget(notice.target, user)
   )
+  const dismissedNoticeIds = dismissedNoticeState.userId === user?.id
+    ? dismissedNoticeState.ids
+    : getDismissedNoticeIds(user?.id)
+  const activeImportantNotice = importantNotices.find(notice => !dismissedNoticeIds.includes(String(notice.id)))
+
+  const dismissImportantNotice = notice => {
+    const nextIds = [...new Set([...dismissedNoticeIds, String(notice.id)])]
+    setDismissedNoticeState({ userId: user?.id, ids: nextIds })
+    try {
+      window.localStorage.setItem(`campusplus:dismissed-notices:${user?.id}`, JSON.stringify(nextIds))
+    } catch {
+      // Keep the dismissal active for this page visit if storage is unavailable.
+    }
+  }
+
+  useEffect(() => {
+    if (!activeImportantNotice || typeof document === 'undefined') return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const onKeyDown = event => {
+      if (event.key === 'Escape') dismissImportantNotice(activeImportantNotice)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [activeImportantNotice?.id])
 
   return (
     <div className="dashboard-selectable flex gap-6" onClick={selectDashboardCard}>
+
+      {activeImportantNotice && createPortal(
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) dismissImportantNotice(activeImportantNotice)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="important-notice-title"
+            aria-describedby="important-notice-content"
+            className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/80 bg-white shadow-2xl shadow-slate-950/30"
+          >
+            <div className={`h-2 w-full ${String(activeImportantNotice.priority).toLowerCase() === 'critical' ? 'bg-gradient-to-r from-rose-600 to-orange-500' : 'bg-gradient-to-r from-violet-600 to-fuchsia-500'}`} />
+            <div className="p-5 sm:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl ${String(activeImportantNotice.priority).toLowerCase() === 'critical' ? 'bg-rose-100 text-rose-700' : 'bg-violet-100 text-violet-700'}`}>
+                    <Megaphone size={22} />
+                  </span>
+                  <div className="min-w-0">
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${String(activeImportantNotice.priority).toLowerCase() === 'critical' ? 'bg-rose-100 text-rose-700' : 'bg-violet-100 text-violet-700'}`}>
+                      {String(activeImportantNotice.priority || 'important').toLowerCase() === 'critical' ? 'Critical notice' : 'Important notice'}
+                    </span>
+                    <p className="mt-1 text-xs text-slate-500">For {activeImportantNotice.target || 'All Students'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={() => dismissImportantNotice(activeImportantNotice)}
+                  aria-label="Dismiss important notice"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                ><X size={19} /></button>
+              </div>
+
+              <h2 id="important-notice-title" className="mt-5 text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
+                {activeImportantNotice.title}
+              </h2>
+              <p id="important-notice-content" className="mt-3 max-h-[40vh] overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-slate-700 sm:text-base">
+                {activeImportantNotice.content}
+              </p>
+              <p className="mt-4 text-xs text-slate-500">
+                {activeImportantNotice.created_at ? new Date(activeImportantNotice.created_at).toLocaleString() : 'Campus announcement'}
+                {activeImportantNotice.created_by ? ` · ${activeImportantNotice.created_by}` : ''}
+              </p>
+              <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => dismissImportantNotice(activeImportantNotice)}
+                  className="min-h-11 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >Dismiss</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    dismissImportantNotice(activeImportantNotice)
+                    navigate('/student/notifications')
+                  }}
+                  className="min-h-11 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-900/20 transition hover:bg-violet-800"
+                >View all notices</button>
+              </div>
+            </div>
+          </section>
+        </div>,
+        document.body,
+      )}
 
       {/* MAIN CONTENT */}
       <div className="flex-1 min-w-0 space-y-6">

@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetNotice, setResetNotice] = useState('')
   const [showDemoAccounts, setShowDemoAccounts] = useState(false)
   const [loginMode, setLoginMode] = useState('student')
   const [adminRoleChoice, setAdminRoleChoice] = useState('')
@@ -42,6 +43,7 @@ export default function LoginPage() {
     user,
     signIn,
     signInWithGoogle,
+    sendPasswordReset,
   } = useAuth()
 
   const navigate = useNavigate()
@@ -239,6 +241,28 @@ export default function LoginPage() {
 
       setLoading(false)
 
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    setError('')
+    setResetNotice('')
+    if (!email.trim()) {
+      setError('Enter your email address above, then choose “Forgot password?”.')
+      return
+    }
+    setLoading(true)
+    try {
+      const result = await sendPasswordReset(email)
+      if (result?.error) {
+        setError(result.error.message || 'Unable to send a password reset email.')
+      } else {
+        setResetNotice('If an account exists for this email, a password reset link has been sent. Check your inbox and spam folder.')
+      }
+    } catch (resetError) {
+      setError(resetError?.message || 'Unable to send a password reset email. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -519,9 +543,12 @@ export default function LoginPage() {
 
               <div className="mb-4">
 
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">Password</label>
+                  <button type="button" onClick={handleForgotPassword} disabled={loading} className="login-forgot-password text-sm font-semibold text-violet-200 transition-colors hover:text-white disabled:opacity-60">
+                    Forgot password?
+                  </button>
+                </div>
 
 
                 <div className="relative">
@@ -533,6 +560,7 @@ export default function LoginPage() {
 
 
                   <input
+                    id="login-password"
                     type={
                       showPass
                         ? 'text'
@@ -581,6 +609,12 @@ export default function LoginPage() {
 
                 </div>
 
+              )}
+
+              {resetNotice && (
+                <div role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                  {resetNotice}
+                </div>
               )}
 
 

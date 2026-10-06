@@ -107,7 +107,7 @@ export default function AdminNotices() {
             <select id="notice-priority" value={form.priority} onChange={e => setForm(f=>({...f,priority:e.target.value}))} className="input">
               {PRIORITIES.map(priority => <option key={priority.value} value={priority.value}>{priority.label}</option>)}
             </select>
-            <p className="mt-1.5 text-xs text-gray-500">All notices appear in the student bell and send browser push alerts to students who enabled them. No SMS service is used.</p>
+            <p className="mt-1.5 text-xs text-gray-500">All notices appear in the student bell. Critical and Important notices also open a dashboard popup for matching students. Browser push alerts go to students who enabled them; no SMS service is used.</p>
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1 justify-center">Cancel</button>

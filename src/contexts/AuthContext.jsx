@@ -367,7 +367,7 @@ export function AuthProvider({ children }) {
     ============================
   */
 
-async function signInWithGoogle() {
+  async function signInWithGoogle() {
   if (!supabase) {
     return {
       error: {
@@ -424,6 +424,19 @@ async function signInWithGoogle() {
     error: null,
   }
 }
+
+  async function sendPasswordReset(email) {
+    if (!supabase) {
+      return { error: { message: 'Password reset is unavailable because Supabase is not configured.' } }
+    }
+    const normalizedEmail = String(email || '').trim().toLowerCase()
+    if (!normalizedEmail) {
+      return { error: { message: 'Enter your email address first.' } }
+    }
+    return supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+  }
   /*
     ============================
     SIGN OUT
@@ -464,6 +477,7 @@ async function signInWithGoogle() {
         loading,
         signIn,
         signInWithGoogle,
+        sendPasswordReset,
         signOut,
         fetchProfile,
       }}
