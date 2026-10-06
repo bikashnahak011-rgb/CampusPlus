@@ -779,10 +779,10 @@ export default function CareerHub() {
       {paths.map((path, index) => (
         <article key={path.id} className={`career-path-card career-color-${path.color || 'teal'}`} style={{ animationDelay: `${Math.min(index, 7) * 35}ms` }}>
           <div className="flex items-start justify-between gap-3"><span className="career-chip">{path.category}</span><button type="button" className={`career-icon-button ${isBookmarked('career_path_id', path.id) ? 'is-saved' : ''}`} onClick={() => toggleBookmark('career_path_id', path.id)} title={isBookmarked('career_path_id', path.id) ? 'Remove bookmark' : 'Bookmark career path'} aria-label={isBookmarked('career_path_id', path.id) ? 'Remove bookmark' : 'Bookmark career path'}><Bookmark size={17} fill={isBookmarked('career_path_id', path.id) ? 'currentColor' : 'none'} /></button></div>
-          <h3 className="career-display mt-5 text-xl">{path.title}</h3>
+          <h3 className="career-display mt-5 text-xl"><button type="button" className="career-path-title-button" onClick={() => { setSelectedPathId(path.id); setSelectedSkill(null); setSelectedStage(''); setShowPathDetail(true); setActiveTab('explore') }}>{path.title}</button></h3>
           <p className="mt-2 min-h-12 text-sm leading-6 text-gray-600">{path.summary}</p>
           <div className="mt-4 flex min-h-14 flex-wrap content-start gap-1.5">{path.skills.slice(0, 6).map(skill => <button type="button" key={skill.id} className="career-skill-chip" onClick={() => { setSelectedPathId(path.id); setSelectedSkill(skill); setShowPathDetail(true); setActiveTab('explore') }}>{skill.name}</button>)}</div>
-          <div className="mt-5 flex items-center justify-between border-t border-gray-200 pt-3"><span className="text-xs text-gray-500">{path.roadmap.length} roadmap stages · {path.projects.length} projects</span><button type="button" className="career-text-button" onClick={() => { setSelectedPathId(path.id); setSelectedSkill(null); setShowPathDetail(true); setActiveTab('explore') }}>Explore path <ArrowRight size={14} /></button></div>
+          <div className="mt-5 flex items-center justify-between border-t border-gray-200 pt-3"><span className="text-xs text-gray-500">{path.roadmap.length} roadmap stages · {path.projects.length} projects</span><button type="button" className="career-text-button" onClick={() => { setSelectedPathId(path.id); setSelectedSkill(null); setSelectedStage(''); setShowPathDetail(true); setActiveTab('explore') }}>View roadmap <ArrowRight size={14} /></button></div>
         </article>
       ))}
     </div>
@@ -813,6 +813,9 @@ export default function CareerHub() {
   const selectedInterviewPractice = data.interviewPractice.find(item => item.question === interviewQuestion.question)
   const selectedOpportunity = details?.kind === 'opportunity' ? details.item : null
   const selectedCompany = details?.kind === 'company' ? details.item : null
+  const roadmapBranchCount = selectedPath?.roadmap?.length
+    ? Math.min(3, Math.ceil(selectedPath.roadmap.length / Math.ceil(selectedPath.roadmap.length / 3)))
+    : 0
 
   return (
     <div className="career-shell">
@@ -874,11 +877,42 @@ export default function CareerHub() {
         {showPathDetail && selectedPath ? <div className="career-path-detail">
           <div className="career-path-detail-head"><button type="button" className="career-back-button" onClick={() => { setShowPathDetail(false); setSelectedSkill(null); setSelectedStage('') }}><ArrowRight size={14} />All career paths</button><button type="button" className={`career-icon-button ${isBookmarked('career_path_id', selectedPath.id) ? 'is-saved' : ''}`} onClick={() => toggleBookmark('career_path_id', selectedPath.id)} aria-label="Bookmark career path"><Bookmark size={17} fill={isBookmarked('career_path_id', selectedPath.id) ? 'currentColor' : 'none'} /></button></div>
           <p className="career-eyebrow mt-5">{selectedPath.category} · Career guide</p><h2 className="career-display mt-1 text-3xl">{selectedPath.title}</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">{selectedPath.description}</p>
-          <div className="career-roadmap-block"><div className="career-section-heading"><div><p className="career-eyebrow">Progressive roadmap</p><h3 className="career-display text-xl">Build one layer at a time</h3></div><span className="career-chip">{selectedPath.roadmap.length} levels</span></div><div className="career-roadmap">{selectedPath.roadmap.map((stage, index) => {
-            const matchedSkill = selectedPath.skills.find(skill => stage.toLowerCase().includes(skill.name.toLowerCase()) || skill.name.toLowerCase().includes(stage.toLowerCase().split(' + ')[0]))
-            const stageProgress = matchedSkill ? progressFor(matchedSkill) : null
-            return <button type="button" className={`career-roadmap-step ${selectedStage === stage ? 'selected' : ''}`} key={`${stage}-${index}`} onClick={() => { setSelectedStage(stage); setSelectedSkill(matchedSkill || null) }}><span className="career-step-number">{stageProgress?.status === 'completed' ? <Check size={14} /> : String(index + 1).padStart(2, '0')}</span><span><small>LEVEL {index + 1}</small><strong>{stage}</strong></span><ChevronRight size={15} /></button>
-          })}</div>{selectedStage && <div className="career-stage-note"><strong>{selectedStage}</strong><p>{selectedSkill ? `Open the ${selectedSkill.name} guide below to learn, practice, and track this stage.` : 'This roadmap stage is a learning milestone. Use the skill list to open a related skill guide and record your progress.'}</p></div>}</div>
+          <div className="career-roadmap-block">
+            <div className="career-section-heading">
+              <div><p className="career-eyebrow">Progressive roadmap</p><h3 className="career-display text-xl">Your path at a glance</h3></div>
+              <span className="career-chip">{selectedPath.roadmap.length} stages</span>
+            </div>
+            <div className="career-mindmap" role="group" aria-label={`${selectedPath.title} career roadmap`}>
+              <div className="career-mindmap-root"><Target size={18} /><span><small>CAREER GOAL</small><strong>{selectedPath.title}</strong></span></div>
+              <div className="career-mindmap-branches" style={{ '--roadmap-branch-count': Math.max(1, roadmapBranchCount) }}>
+                {['Start with the foundations', 'Build your core skills', 'Apply and grow'].map((branchTitle, branchIndex) => {
+                  const stagesPerBranch = Math.ceil(selectedPath.roadmap.length / 3)
+                  const branchStages = selectedPath.roadmap.slice(branchIndex * stagesPerBranch, (branchIndex + 1) * stagesPerBranch)
+                  if (!branchStages.length) return null
+                  return (
+                    <section className={`career-mindmap-branch career-mindmap-branch-${branchIndex + 1}`} key={branchTitle}>
+                      <h4>{branchTitle}</h4>
+                      <div className="career-mindmap-stage-list">
+                        {branchStages.map((stage, stageIndex) => {
+                          const index = branchIndex * stagesPerBranch + stageIndex
+                          const matchedSkill = selectedPath.skills.find(skill => stage.toLowerCase().includes(skill.name.toLowerCase()) || skill.name.toLowerCase().includes(stage.toLowerCase().split(' + ')[0]))
+                          const stageProgress = matchedSkill ? progressFor(matchedSkill) : null
+                          return (
+                            <button type="button" className={`career-mindmap-stage ${selectedStage === stage ? 'selected' : ''}`} key={`${stage}-${index}`} onClick={() => { setSelectedStage(stage); setSelectedSkill(matchedSkill || null) }}>
+                              <span className="career-step-number">{stageProgress?.status === 'completed' ? <Check size={14} /> : String(index + 1).padStart(2, '0')}</span>
+                              <span><small>STAGE {index + 1}</small><strong>{stage}</strong></span>
+                              {matchedSkill && <ChevronRight size={15} />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </section>
+                  )
+                })}
+              </div>
+            </div>
+            {selectedStage && <div className="career-stage-note"><strong>{selectedStage}</strong><p>{selectedSkill ? `Open the ${selectedSkill.name} guide below to learn, practice, and track this stage.` : 'This roadmap stage is a learning milestone. Use the skill list to open a related skill guide and record your progress.'}</p></div>}
+          </div>
           <div className="career-section-heading mt-7"><div><p className="career-eyebrow">Skill library</p><h3 className="career-display text-xl">Skills in this path</h3></div><span className="career-chip">{selectedPath.skills.filter(skill => progressFor(skill).status === 'completed').length}/{selectedPath.skills.length} complete</span></div>
           <div className="career-skill-grid">{selectedPath.skills.map(skill => { const progress = progressFor(skill); return <button type="button" key={skill.id} className={`career-skill-row ${selectedSkill?.id === skill.id ? 'selected' : ''}`} onClick={() => setSelectedSkill(skill)}><span className="career-skill-check">{progress.status === 'completed' ? <Check size={14} /> : <BookOpen size={14} />}</span><span className="min-w-0 flex-1"><strong>{skill.name}</strong><span>{progress.status === 'completed' ? 'Completed' : progress.status === 'in_progress' ? 'In progress' : 'Ready to start'}</span></span><span className="text-xs font-semibold text-gray-600">{progress.progress || 0}%</span></button> })}</div>
           {renderSkillDetail(selectedSkill)}

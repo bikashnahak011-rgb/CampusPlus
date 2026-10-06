@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +23,9 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.0-flash"
+    poe_api_key: str | None = None
+    poe_model: str = "assistant"
+    poe_timeout_seconds: float = Field(default=30.0, ge=1.0, le=120.0)
 
     vapid_public_key: str | None = None
     vapid_private_key: str | None = None

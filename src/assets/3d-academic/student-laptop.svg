@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 250" fill="none">
+  <defs>
+    <linearGradient id="skin" x1="85" y1="47" x2="156" y2="148" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE0C4"/>
+      <stop offset=".58" stop-color="#F3B88F"/>
+      <stop offset="1" stop-color="#D78D70"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="77" y1="24" x2="175" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#805B4C"/>
+      <stop offset=".58" stop-color="#4B342F"/>
+      <stop offset="1" stop-color="#2D2527"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="61" y1="142" x2="196" y2="226" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#83D8CC"/>
+      <stop offset=".55" stop-color="#48B9AE"/>
+      <stop offset="1" stop-color="#268B91"/>
+    </linearGradient>
+    <linearGradient id="laptop" x1="63" y1="133" x2="192" y2="218" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C9ABF5"/>
+      <stop offset=".52" stop-color="#9B75DE"/>
+      <stop offset="1" stop-color="#7049B8"/>
+    </linearGradient>
+    <linearGradient id="laptop-edge" x1="71" y1="203" x2="198" y2="217" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7652BE"/>
+      <stop offset=".52" stop-color="#D3BDF5"/>
+      <stop offset="1" stop-color="#815FC2"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="20" y="7" width="220" height="237" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#5B4384" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <ellipse cx="132" cy="229" rx="85" ry="12" fill="#7559A5" fill-opacity=".18"/>
+  <g filter="url(#soft-shadow)">
+    <path d="m93 193-9 25c-2 7 2 13 9 15l30 5c8 1 15-4 16-12l3-26-49-7Z" fill="#4D3A6E"/>
+    <path d="m144 191 8 24c2 7 9 11 16 9l23-7c7-2 10-10 6-16l-12-20-41 10Z" fill="#5C447D"/>
+    <path d="M78 136c10-11 25-18 43-20l39 5c21 5 35 19 39 41l-7 39c-17 16-47 23-75 18-19-3-34-11-45-23l6-38Z" fill="url(#shirt)"/>
+    <path d="M98 84c0-31 17-49 42-49 28 0 45 20 45 54v24c0 29-18 47-44 47-27 0-43-19-43-47V84Z" fill="url(#skin)"/>
+    <path d="M96 91c-10-7-14-19-9-29 3-7 9-11 17-12 3-24 20-39 43-39 26 0 45 17 47 43 9 3 14 11 13 20-1 8-6 14-14 17-4-11-10-18-19-23-12 7-28 10-42 7-11-2-20-6-27-13-2 10-5 19-9 29Z" fill="url(#hair)"/>
+    <path d="M109 72c7-17 20-26 37-27 14 0 26 6 34 17-5-20-19-32-38-32-20 0-34 14-37 34l4 8Z" fill="#A1735C" fill-opacity=".55"/>
+    <path d="M116 94c4-4 9-6 14-5m21 0c5-1 10 1 14 5" stroke="#5A4037" stroke-width="3.5" stroke-linecap="round"/>
+    <ellipse cx="128" cy="106" rx="4.3" ry="5.5" fill="#302A30"/>
+    <ellipse cx="158" cy="106" rx="4.3" ry="5.5" fill="#302A30"/>
+    <circle cx="129.5" cy="104.5" r="1.3" fill="#fff"/>
+    <circle cx="159.5" cy="104.5" r="1.3" fill="#fff"/>
+    <path d="M137 126c5 5 12 5 17 0" stroke="#A64F53" stroke-width="2.8" stroke-linecap="round"/>
+    <path d="M102 158c-9 2-17 8-22 16l-13 23c-3 6-1 13 5 16 6 3 13 1 16-5l15-21 14-8-15-21Z" fill="url(#skin)"/>
+    <path d="M179 158c9 1 18 8 23 16l12 20c4 6 2 13-4 17-6 3-13 1-16-5l-14-20-14-8 13-20Z" fill="url(#skin)"/>
+    <path d="m75 137 113-17c5-1 9 3 10 8l10 70-125 18-16-68c-1-5 2-10 8-11Z" fill="url(#laptop)" stroke="#7857BD" stroke-width="2"/>
+    <path d="m83 215 126-18 14 8c3 2 2 6-2 7l-133 20c-4 1-8-1-10-4l-2-4 7-9Z" fill="url(#laptop-edge)"/>
+    <path d="m123 171 20-3 3 21-20 3-3-21Z" fill="#E9DFFF" fill-opacity=".76"/>
+    <path d="m132 177 5-1 1 7-5 1-1-7Z" fill="#8B67CC" fill-opacity=".75"/>
+    <path d="M68 194c8-7 17-8 25-4m91-6c-7-7-15-8-23-5" stroke="#F6D0AF" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

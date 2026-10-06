@@ -13,6 +13,7 @@ const allowedAdminRoles = new Set([
   'account_examination',
   'main_administrator',
 ])
+const hostelManagementEmail = 'dragonfire0222@gmail.com'
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) => new Response(
   JSON.stringify(body),
@@ -80,6 +81,9 @@ Deno.serve(async (request) => {
     if (typeof adminRole !== 'string' || !allowedAdminRoles.has(adminRole)) {
       return jsonResponse({ error: 'Choose a valid administrator role.' }, 400)
     }
+    if (adminRole === 'hostel_management' && email !== hostelManagementEmail) {
+      return jsonResponse({ error: `Only ${hostelManagementEmail} can be assigned the Hostel Management role.` }, 400)
+    }
 
     const { data: invitation, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: { full_name: name },
@@ -111,17 +115,60 @@ Deno.serve(async (request) => {
 
   const { data: target, error: targetError } = await adminClient
     .from('profiles')
-    .select('id,role,admin_role,is_active')
+    .select('id,role,admin_role,is_active,email')
     .eq('id', targetId)
     .single()
 
   if (targetError || !target) return jsonResponse({ error: 'User not found.' }, 404)
+
+  if (action === 'assign_hostel_management') {
+    if (target.role !== 'student') {
+      return jsonResponse({ error: 'Only an existing student account can be assigned this role.' }, 400)
+    }
+    if (target.email.trim().toLowerCase() !== hostelManagementEmail) {
+      return jsonResponse({ error: `Only ${hostelManagementEmail} can be assigned the Hostel Management role.` }, 400)
+    }
+
+    const { data: { user: targetAuthUser }, error: targetAuthError } = await adminClient.auth.admin.getUserById(targetId)
+    if (targetAuthError || !targetAuthUser) {
+      console.error('Unable to verify target account email:', targetAuthError?.message || 'Auth user not found.')
+      return jsonResponse({ error: 'Unable to verify the target account email.' }, 500)
+    }
+    if (targetAuthUser.email?.trim().toLowerCase() !== hostelManagementEmail) {
+      return jsonResponse({ error: `Only ${hostelManagementEmail} can be assigned the Hostel Management role.` }, 400)
+    }
+
+    const { error: updateError } = await adminClient
+      .from('profiles')
+      .update({ role: 'admin', admin_role: 'hostel_management', is_active: true })
+      .eq('id', targetId)
+
+    if (updateError) {
+      return jsonResponse({ error: updateError.message }, 400)
+    }
+    return jsonResponse({ success: true })
+  }
+
   if (target.role !== 'admin') return jsonResponse({ error: 'Only administrator accounts can be changed here.' }, 400)
 
   if (action === 'change_role') {
     const adminRole = payload.admin_role
     if (typeof adminRole !== 'string' || !allowedAdminRoles.has(adminRole)) {
       return jsonResponse({ error: 'Choose a valid administrator role.' }, 400)
+    }
+    if (adminRole === 'hostel_management') {
+      if (target.email.trim().toLowerCase() !== hostelManagementEmail) {
+        return jsonResponse({ error: `Only ${hostelManagementEmail} can be assigned the Hostel Management role.` }, 400)
+      }
+
+      const { data: { user: targetAuthUser }, error: targetAuthError } = await adminClient.auth.admin.getUserById(targetId)
+      if (targetAuthError || !targetAuthUser) {
+        console.error('Unable to verify target administrator email:', targetAuthError?.message || 'Auth user not found.')
+        return jsonResponse({ error: 'Unable to verify the target account email.' }, 500)
+      }
+      if (targetAuthUser.email?.trim().toLowerCase() !== hostelManagementEmail) {
+        return jsonResponse({ error: `Only ${hostelManagementEmail} can be assigned the Hostel Management role.` }, 400)
+      }
     }
 
     const { error: updateError } = await adminClient

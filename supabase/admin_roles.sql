@@ -48,6 +48,18 @@ AS $$
   WHERE p.id = auth.uid()
     AND p.role = 'admin'
     AND p.is_active = TRUE
+    AND (
+      p.admin_role <> 'hostel_management'
+      OR (
+        lower(btrim(p.email)) = 'dragonfire0222@gmail.com'
+        AND EXISTS (
+          SELECT 1
+          FROM auth.users AS u
+          WHERE u.id = p.id
+            AND lower(btrim(u.email)) = 'dragonfire0222@gmail.com'
+        )
+      )
+    )
   LIMIT 1;
 $$;
 
@@ -78,6 +90,38 @@ REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.current_admin_role() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.has_admin_role(TEXT[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.enforce_hostel_management_account()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF NEW.role = 'admin'
+    AND NEW.admin_role = 'hostel_management'
+    AND (
+      lower(btrim(NEW.email)) <> 'dragonfire0222@gmail.com'
+      OR NOT EXISTS (
+        SELECT 1
+        FROM auth.users AS u
+        WHERE u.id = NEW.id
+          AND lower(btrim(u.email)) = 'dragonfire0222@gmail.com'
+      )
+    )
+  THEN
+    RAISE EXCEPTION 'Only the verified dragonfire0222@gmail.com account may be assigned the Hostel Management role';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS enforce_hostel_management_account ON public.profiles;
+CREATE TRIGGER enforce_hostel_management_account
+  BEFORE INSERT OR UPDATE OF email, role, admin_role ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.enforce_hostel_management_account();
+
+REVOKE ALL ON FUNCTION public.enforce_hostel_management_account() FROM PUBLIC;
 
 -- Serialize changes to the last active main administrator.
 CREATE OR REPLACE FUNCTION public.protect_last_main_administrator()

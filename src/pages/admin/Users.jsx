@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { ShieldCheck, UserPlus, RefreshCw } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { ADMIN_ROLES, ADMIN_ROLE_LABELS } from '../../lib/adminRoles'
+import { ADMIN_ROLES, ADMIN_ROLE_LABELS, isHostelManagementEmail } from '../../lib/adminRoles'
+import { DEMO_ADMIN_USERS } from '../../data/demoData'
 
 const ROLE_OPTIONS = Object.entries(ADMIN_ROLE_LABELS)
 
@@ -19,12 +20,10 @@ async function fetchUsers() {
 
 export default function AdminUsers() {
   const { user } = useAuth()
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState(() => user?.isDemo ? DEMO_ADMIN_USERS : [])
   const [loading, setLoading] = useState(Boolean(supabase) && !user?.isDemo)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(user?.isDemo
-    ? 'User management is unavailable in demo mode.'
-    : supabase ? '' : 'Supabase is not configured. Check the project environment settings.')
+  const [error, setError] = useState(user?.isDemo || supabase ? '' : 'Supabase is not configured. Check the project environment settings.')
   const [notice, setNotice] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -32,7 +31,13 @@ export default function AdminUsers() {
   const [roleDrafts, setRoleDrafts] = useState({})
 
   const loadUsers = useCallback(async (showLoading = false) => {
-    if (user?.isDemo || !supabase) return
+    if (user?.isDemo) {
+      setUsers(DEMO_ADMIN_USERS)
+      setLoading(false)
+      setError('')
+      return
+    }
+    if (!supabase) return
 
     if (showLoading) setLoading(true)
     try {
@@ -95,6 +100,10 @@ export default function AdminUsers() {
 
   const inviteAdmin = async (event) => {
     event.preventDefault()
+    if (adminRole === ADMIN_ROLES.HOSTEL_MANAGEMENT && !isHostelManagementEmail(email)) {
+      setError(`Only ${email.trim() || 'the designated hostel account'} can be assigned the Hostel Management role.`)
+      return
+    }
     const succeeded = await invokeAdminAction({
       action: 'create_admin',
       name: name.trim(),
@@ -115,6 +124,13 @@ export default function AdminUsers() {
       user_id: target.id,
       admin_role: nextRole,
     }, `Role updated for ${target.email}.`)
+  }
+
+  const assignHostelManagement = (target) => {
+    invokeAdminAction({
+      action: 'assign_hostel_management',
+      user_id: target.id,
+    }, `Hostel Management access granted to ${target.email}.`)
   }
 
   const toggleAdminStatus = (target) => {
@@ -143,23 +159,31 @@ export default function AdminUsers() {
       <form onSubmit={inviteAdmin} className="card grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto]">
         <div className="md:col-span-2 xl:col-span-4">
           <h2 className="font-semibold text-gray-900">Invite an administrator</h2>
-          <p className="mt-1 text-xs text-gray-500">Supabase sends the invite link. Student accounts are not changed.</p>
+          <p className="mt-1 text-xs text-gray-500">{user?.isDemo ? 'Demo mode shows sample users; administrator invitations require a live campus account.' : 'Supabase sends the invite link. Student accounts are not changed.'}</p>
         </div>
         <label className="text-sm text-gray-600">
           Name
-          <input required value={name} onChange={(event) => setName(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-gray-900" autoComplete="name" />
+          <input required disabled={user?.isDemo} value={name} onChange={(event) => setName(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-gray-900" autoComplete="name" />
         </label>
         <label className="text-sm text-gray-600">
           Email
-          <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-gray-900" autoComplete="email" />
+          <input required disabled={user?.isDemo} type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-gray-900" autoComplete="email" />
         </label>
         <label className="text-sm text-gray-600">
           Admin role
-          <select value={adminRole} onChange={(event) => setAdminRole(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-900">
-            {ROLE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          <select disabled={user?.isDemo} value={adminRole} onChange={(event) => setAdminRole(event.target.value)} className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-gray-900 disabled:opacity-60">
+            {ROLE_OPTIONS.map(([value, label]) => (
+              <option
+                key={value}
+                value={value}
+                disabled={value === ADMIN_ROLES.HOSTEL_MANAGEMENT && !isHostelManagementEmail(email)}
+              >
+                {label}
+              </option>
+            ))}
           </select>
         </label>
-        <button type="submit" disabled={saving} className="primary-button mt-auto inline-flex items-center justify-center gap-2">
+        <button type="submit" disabled={saving || user?.isDemo} className="primary-button mt-auto inline-flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
           <UserPlus size={16} /> Send invitation
         </button>
       </form>
@@ -168,7 +192,7 @@ export default function AdminUsers() {
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-5">
           <div>
             <h2 className="font-semibold text-gray-900">Campus users</h2>
-            <p className="text-xs text-gray-500">Only the Main Administrator can view this list.</p>
+            <p className="text-xs text-gray-500">{user?.isDemo ? 'Read-only sample accounts for preview.' : 'Only the Main Administrator can view this list.'}</p>
           </div>
           <span className="text-sm text-gray-500">{users.length} total</span>
         </div>
@@ -205,15 +229,31 @@ export default function AdminUsers() {
                               aria-label={`Role for ${target.email}`}
                               value={roleDrafts[target.id] || target.admin_role}
                               onChange={(event) => setRoleDrafts((current) => ({ ...current, [target.id]: event.target.value }))}
-                              disabled={isSelf || saving}
+                              disabled={isSelf || saving || user?.isDemo}
                               className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 disabled:opacity-60"
                             >
-                              {ROLE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                              {ROLE_OPTIONS.map(([value, label]) => (
+                                <option
+                                  key={value}
+                                  value={value}
+                                  disabled={value === ADMIN_ROLES.HOSTEL_MANAGEMENT && !isHostelManagementEmail(target.email)}
+                                >
+                                  {label}
+                                </option>
+                              ))}
                             </select>
-                            <button onClick={() => changeAdminRole(target)} disabled={isSelf || saving || !(roleDrafts[target.id] || target.admin_role)} className="text-xs font-semibold text-violet-700 disabled:opacity-40">
+                            <button onClick={() => changeAdminRole(target)} disabled={isSelf || saving || user?.isDemo || !(roleDrafts[target.id] || target.admin_role)} className="text-xs font-semibold text-violet-700 disabled:opacity-40">
                               Save
                             </button>
                           </div>
+                        ) : isHostelManagementEmail(target.email) ? (
+                          <button
+                            onClick={() => assignHostelManagement(target)}
+                            disabled={saving || user?.isDemo}
+                            className="text-xs font-semibold text-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Grant Hostel Management
+                          </button>
                         ) : <span className="text-gray-400">Student</span>}
                       </td>
                       <td className="px-4 py-3">
@@ -223,7 +263,7 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-4 py-3">
                         {isAdmin ? (
-                          <button onClick={() => toggleAdminStatus(target)} disabled={isSelf || saving} className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 disabled:cursor-not-allowed disabled:opacity-40">
+                          <button onClick={() => toggleAdminStatus(target)} disabled={isSelf || saving || user?.isDemo} className="inline-flex items-center gap-1.5 text-xs font-semibold text-violet-700 disabled:cursor-not-allowed disabled:opacity-40">
                             <ShieldCheck size={14} /> {target.is_active ? 'Disable' : 'Enable'}
                           </button>
                         ) : <span className="text-xs text-gray-400">Managed by student login</span>}

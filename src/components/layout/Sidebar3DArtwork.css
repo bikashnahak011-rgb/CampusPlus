@@ -1,0 +1,51 @@
+.internal-app .sidebar-surface {
+  isolation: isolate;
+}
+
+.internal-app .sidebar-3d-artwork {
+  position: absolute;
+  z-index: 0;
+  inset: 68px 0 112px;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 88%, rgba(175, 145, 211, 0.2), transparent 55%);
+}
+
+.internal-app .sidebar-3d-artwork img {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  display: block;
+  width: min(124%, 340px);
+  max-width: none;
+  height: auto;
+  object-fit: contain;
+  object-position: bottom center;
+  opacity: 0.25;
+  filter: drop-shadow(0 12px 18px rgba(77, 53, 116, 0.13));
+  transform: translateX(-50%);
+}
+
+.internal-app .sidebar-surface > div:first-child,
+.internal-app .sidebar-surface > nav,
+.internal-app .sidebar-surface > div:last-child {
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 1024px) {
+  .internal-app .sidebar-is-collapsed .sidebar-3d-artwork img {
+    width: 180%;
+    max-width: 150px;
+    opacity: 0.16;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .internal-app .sidebar-link,
+  .internal-app .admin-sidebar-link,
+  .internal-app .sidebar-link > svg,
+  .internal-app .admin-sidebar-link > svg {
+    transition: none;
+  }
+}

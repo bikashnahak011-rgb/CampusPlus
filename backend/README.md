@@ -20,6 +20,20 @@ flowchart TD
 
 Attendance uses the configured threshold, and recent `attendance_history` records identify continuously decreasing attendance. Complaint analysis uses keyword classification, location extraction, text similarity, and escalation rules. Rules are the default; setting `AI_PROVIDER=openai` and a server-only `OPENAI_API_KEY` enables structured OpenAI classification and admin copilot answers, with automatic rules fallback if the provider is unavailable. The mess forecast combines room capacity, approved leave, day/date context, and feedback volume, and always returns uncertainty.
 
+## Campus AI (Poe)
+
+The Campus AI chat uses Poe's OpenAI-compatible Chat Completions API. The backend calls `https://api.poe.com/v1/chat/completions` using the existing `httpx` dependency; no OpenAI SDK or additional package is needed. The existing `AI_PROVIDER` setting still controls the older classification/copilot flows; it does not enable or disable this Poe chat endpoint. The Poe key is read only by FastAPI and must never be placed in a `VITE_*` variable or sent from the browser.
+
+Set these backend environment variables locally in `backend/.env` or in the backend hosting provider's secret/environment settings:
+
+```env
+POE_API_KEY=your-poe-api-key
+POE_MODEL=assistant
+POE_TIMEOUT_SECONDS=30
+```
+
+`POE_MODEL` can be set to the Poe bot/model available to your Poe API account. The default is `assistant`. Campus AI's `POST /api/ai/ask` route requires a valid Supabase bearer token and accepts a question plus up to ten recent chat messages. Student requests only retrieve records filtered by the authenticated student ID; admin campus metrics are aggregated without sending student names or IDs. Campus data is fetched only for matching question topics. The route is limited to 12 requests per minute per client IP and returns a generic temporary-unavailable response if Poe is not configured or cannot be reached.
+
 ## Setup
 
 1. Run the existing `supabase/schema.sql` in Supabase.
@@ -74,6 +88,7 @@ All protected endpoints require `Authorization: Bearer <supabase-access-token>`.
 | GET | `/api/insights/action-center` | admin | Structured dashboard summary |
 | POST | `/api/assistant/admin` | admin | Natural-language campus copilot |
 | POST | `/api/assistant/student` | student | Caller-only assistant data |
+| POST | `/api/ai/ask` | student/admin | Poe-powered campus chat with caller-scoped context |
 | GET | `/api/notifications/me` | caller | Caller-only notifications |
 | POST | `/api/notifications/admin` | admin | Create an authorized notification |
 | GET | `/api/notifications/push-public-key` | public | VAPID public key for browser subscription |
@@ -127,7 +142,11 @@ Set `VITE_AI_API_URL=http://localhost:8000` in the React environment. Do not sen
 
 ## Deployment
 
-Deploy the backend as a Python web service with a start command such as `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`. Configure the Supabase URL, service-role key, CORS origin, and rate limit as platform secrets. Set Render `CORS_ORIGINS` to the exact Vercel origin (including `https://`); use HTTPS, restrict CORS to the deployed React origin, and rotate the service-role key if it is ever exposed.
+Deploy the backend as a Python web service with a start command such as `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`. Configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS`, `POE_API_KEY`, `POE_MODEL`, and `POE_TIMEOUT_SECONDS` as backend environment variables/secrets. On Render, set `CORS_ORIGINS` to the exact Vercel origin (including `https://`) and add the Poe API key through the service's Environment settings. In Vercel Project Settings → Environment Variables, set `VITE_AI_API_URL` to the public HTTPS Render backend URL and redeploy; do not add the Poe key to Vercel. Use HTTPS, restrict CORS to the deployed React origin, and rotate the service-role key if it is ever exposed.
+
+For local verification, copy `backend/.env.example` to `backend/.env`, set the Supabase and Poe values, start the backend from the repository root with `uvicorn backend.main:app --reload --port 8000`, then sign in through the frontend with a real Supabase account and open Campus AI. You can also inspect `POST /api/ai/ask` in `http://localhost:8000/docs`; authorize with a valid Supabase access token and send `{"question":"What is my attendance?","history":[]}`. The endpoint cannot authenticate local demo accounts because they do not have a Supabase access token.
+
+Run the focused backend contract tests from the repository root in the activated Python environment with `python -m unittest backend.tests.test_ai_contracts backend.tests.test_poe_assistant`.
 
 ## Demo data
 

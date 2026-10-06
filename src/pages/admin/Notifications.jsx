@@ -3,21 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { Bell, CheckCheck } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { DEMO_ADMIN_NOTIFICATIONS } from '../../data/demoData'
 
 export default function AdminNotifications() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(Boolean(supabase) && !user?.isDemo)
-  const [error, setError] = useState(user?.isDemo
-    ? 'Notifications are only available to authenticated Supabase users.'
-    : supabase ? '' : 'Supabase is not configured. Check the project environment settings.')
+  const [error, setError] = useState(user?.isDemo || supabase ? '' : 'Supabase is not configured. Check the project environment settings.')
 
   useEffect(() => {
     let active = true
 
     const loadNotifications = async () => {
-      if (!supabase || user?.isDemo) return
+      if (user?.isDemo) {
+        setNotifications(DEMO_ADMIN_NOTIFICATIONS)
+        setLoading(false)
+        setError('')
+        return
+      }
+      if (!supabase) return
 
       const { data, error: queryError } = await supabase
         .from('notifications')
@@ -36,7 +41,12 @@ export default function AdminNotifications() {
   }, [user.id, user?.isDemo])
 
   const markRead = async (notification) => {
-    if (!supabase || notification.read) return
+    if (notification.read) return
+    if (user?.isDemo) {
+      setNotifications((current) => current.map((item) => item.id === notification.id ? { ...item, read: true } : item))
+      return
+    }
+    if (!supabase) return
     const { error: updateError } = await supabase
       .from('notifications')
       .update({ read: true })
@@ -62,6 +72,7 @@ export default function AdminNotifications() {
         <Bell className="text-violet-600" />
       </header>
 
+      {user?.isDemo && <p className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">Demo mode · sample administrator notifications. Read status changes are local to this preview.</p>}
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <div className="space-y-3">

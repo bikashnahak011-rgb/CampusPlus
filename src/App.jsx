@@ -44,6 +44,8 @@ const CampusJournalPage = lazy(() => import('./pages/student/CampusJournal'))
 const ServicesPage = lazy(() => import('./pages/student/Services'))
 const AttendancePage = lazy(() => import('./pages/student/Attendance'))
 const TimetablePage = lazy(() => import('./pages/student/Timetable'))
+const AcademicResourcesPage = lazy(() => import('./pages/academic/Resources'))
+const AcademicTimetableManagement = lazy(() => import('./pages/academic/TimetableManagement'))
 const HostelPage = lazy(() => import('./pages/student/Hostel'))
 const MessPage = lazy(() => import('./pages/student/Mess'))
 const ComplaintsPage = lazy(() => import('./pages/student/Complaints'))
@@ -74,6 +76,7 @@ const AdminCareerManagement = lazy(() => import('./pages/admin/CareerManagement'
 const AdminComplaints = lazy(() => import('./pages/admin/Complaints'))
 const AdminRequests = lazy(() => import('./pages/admin/Requests'))
 const AdminHostel = lazy(() => import('./pages/admin/Hostel'))
+const AdminRoomAllocation = lazy(() => import('./pages/admin/RoomAllocation'))
 const AdminMess = lazy(() => import('./pages/admin/Mess'))
 const AdminNotices = lazy(() => import('./pages/admin/Notices'))
 const AdminAttendance = lazy(() => import('./pages/admin/Attendance'))
@@ -148,7 +151,7 @@ function getUserHome(user) {
   }
 
   if (user.is_active === false) return '/unauthorized'
-  if (user.role === 'admin') return getAdminHomePath(user.admin_role)
+  if (user.role === 'admin') return getAdminHomePath(user.admin_role, user.email)
   if (user.role === 'student') return '/student/dashboard'
   return '/unauthorized'
 }
@@ -207,7 +210,7 @@ function ProtectedRoute({ children, role }) {
 
 function AdminHomeRedirect() {
   const { user } = useAuth()
-  return <Navigate to={getAdminHomePath(user?.admin_role)} replace />
+  return <Navigate to={getAdminHomePath(user?.admin_role, user?.email)} replace />
 }
 
 function UnauthorizedPage() {
@@ -459,6 +462,10 @@ export default function App() {
                   path="timetable"
                   element={<TimetablePage />}
                 />
+                <Route path="syllabus" element={<AcademicResourcesPage resourceType="syllabus" />} />
+                <Route path="pyq" element={<AcademicResourcesPage resourceType="pyq" />} />
+                <Route path="class-material" element={<AcademicResourcesPage resourceType="class_material" />} />
+                <Route path="assignments" element={<AcademicResourcesPage resourceType="assignment" />} />
 
                 <Route
                   path="hostel"
@@ -543,13 +550,19 @@ export default function App() {
 
                 <Route path="main" element={<AdminDashboard />} />
                 <Route path="accounts-examination" element={<AdminFinance />} />
-                <Route path="room-allocation" element={<AdminHostel />} />
-                <Route path="maintenance" element={<AdminHostel />} />
-                <Route path="todays-menu" element={<AdminMess />} />
-                <Route path="mess-attendance" element={<AdminMess />} />
-                <Route path="classes" element={<FacultyDirectoryPage />} />
-                <Route path="assignments" element={<AdminExamResults />} />
+                <Route path="room-allocation" element={<AdminRoomAllocation />} />
+                <Route path="maintenance" element={<AdminComplaints maintenanceOnly />} />
+                <Route path="todays-menu" element={<AdminMess view="menu" />} />
+                <Route path="mess-attendance" element={<AdminMess view="feedback" />} />
+                <Route path="classes" element={<AcademicTimetableManagement view="today" />} />
+                <Route path="assignments" element={<AcademicResourcesPage resourceType="assignment" />} />
                 <Route path="academic-performance" element={<AdminAnalytics />} />
+                <Route path="timetable" element={<AcademicTimetableManagement />} />
+                <Route path="academic-resources" element={<AcademicResourcesPage />} />
+                <Route path="academic-resources/syllabus" element={<AcademicResourcesPage resourceType="syllabus" />} />
+                <Route path="academic-resources/pyq" element={<AcademicResourcesPage resourceType="pyq" />} />
+                <Route path="academic-resources/class-material" element={<AcademicResourcesPage resourceType="class_material" />} />
+                <Route path="academic-resources/assignment" element={<AcademicResourcesPage resourceType="assignment" />} />
 
                 <Route
                   path="students"
@@ -592,7 +605,7 @@ export default function App() {
 
                 <Route
                   path="mess"
-                  element={<AdminMess />}
+                  element={<AdminMess view="overview" />}
                 />
 
                 <Route

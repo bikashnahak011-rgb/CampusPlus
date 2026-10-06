@@ -6,6 +6,12 @@ export const ADMIN_ROLES = {
   MAIN_ADMINISTRATOR: 'main_administrator',
 }
 
+export const HOSTEL_MANAGEMENT_EMAIL = 'dragonfire0222@gmail.com'
+
+export function isHostelManagementEmail(email) {
+  return typeof email === 'string' && email.trim().toLowerCase() === HOSTEL_MANAGEMENT_EMAIL
+}
+
 export const ADMIN_ROLE_LABELS = {
   [ADMIN_ROLES.HOSTEL_MANAGEMENT]: 'Hostel Management',
   [ADMIN_ROLES.MESS_MANAGER]: 'Mess Manager',
@@ -20,7 +26,7 @@ export const ADMIN_ROLE_HOME = {
   [ADMIN_ROLES.HOSTEL_MANAGEMENT]: '/admin/hostel',
   [ADMIN_ROLES.MESS_MANAGER]: '/admin/mess',
   [ADMIN_ROLES.FACULTY]: '/admin/faculty',
-  [ADMIN_ROLES.ACCOUNT_EXAMINATION]: '/admin/accounts-examination',
+  [ADMIN_ROLES.ACCOUNT_EXAMINATION]: '/admin/dashboard',
   [ADMIN_ROLES.MAIN_ADMINISTRATOR]: '/admin/main',
 }
 
@@ -71,6 +77,8 @@ const PATH_ACCESS = {
   'campus-journal': [ADMIN_ROLES.MAIN_ADMINISTRATOR],
   'career-management': [ADMIN_ROLES.MAIN_ADMINISTRATOR],
   'ai-insights': [ADMIN_ROLES.MAIN_ADMINISTRATOR],
+  'academic-resources': [ADMIN_ROLES.FACULTY, ADMIN_ROLES.MAIN_ADMINISTRATOR],
+  timetable: [ADMIN_ROLES.FACULTY, ADMIN_ROLES.MAIN_ADMINISTRATOR],
 }
 
 export const ADMIN_NAVIGATION = {
@@ -89,7 +97,7 @@ export const ADMIN_NAVIGATION = {
     ['dashboard', 'Dashboard'],
     ['mess', 'Mess Management'],
     ['todays-menu', "Today's Menu"],
-    ['mess-attendance', 'Mess Attendance'],
+    ['mess-attendance', 'Meal Feedback'],
     ['complaints', 'Food Complaints'],
     ['reports', 'Mess Reports'],
     ['notifications', 'Notifications'],
@@ -102,6 +110,12 @@ export const ADMIN_NAVIGATION = {
     ['students', 'Students'],
     ['assignments', 'Assignments'],
     ['academic-performance', 'Academic Performance'],
+    ['academic-resources', 'Academic Resource', [
+      ['academic-resources/syllabus', 'Syllabus'],
+      ['timetable', 'Timetable'],
+      ['academic-resources/pyq', 'PYQ'],
+      ['academic-resources/class-material', 'Class Material'],
+    ]],
     ['results', 'Results'],
     ['notifications', 'Notifications'],
     ['profile', 'Profile'],
@@ -110,52 +124,65 @@ export const ADMIN_NAVIGATION = {
     ['dashboard', 'Dashboard'],
     ['fees', 'Fees'],
     ['payments', 'Payments'],
-    ['accounts', 'Accounts'],
-    ['examination', 'Examination'],
-    ['marks', 'Marks'],
-    ['results', 'Results'],
+    ['results', 'Exam Results'],
     ['reports', 'Reports'],
     ['notifications', 'Notifications'],
     ['profile', 'Profile'],
   ],
   [ADMIN_ROLES.MAIN_ADMINISTRATOR]: [
     ['dashboard', 'Dashboard'],
+    ['ai-insights', 'AI Insights'],
+    ['notices', 'Notices'],
+    ['bus-routes', 'Bus Routes'],
+    ['users', 'User Management'],
+    ['campus-journal', 'News / Journal'],
+    ['requests', 'Leave & Requests'],
     ['students', 'Students'],
     ['faculty', 'Faculty'],
     ['hostel', 'Hostel'],
     ['mess', 'Mess'],
     ['attendance', 'Attendance'],
     ['complaints', 'Complaints'],
-    ['requests', 'Leave & Requests'],
     ['accounts', 'Accounts & Fees'],
     ['results', 'Examination'],
-    ['campus-journal', 'News / Journal'],
+    ['assignments', 'Assignments'],
     ['notifications', 'Notifications'],
     ['reports', 'Reports'],
-    ['users', 'User Management'],
     ['settings', 'Settings'],
     ['profile', 'Profile'],
-    ['bus-routes', 'Bus Routes'],
     ['room-finder', 'Room Directory'],
-    ['notices', 'Notices'],
     ['career-management', 'Career Management'],
-    ['ai-insights', 'AI Insights'],
+    ['academic-resources', 'Academic Resource', [
+      ['academic-resources/syllabus', 'Syllabus'],
+      ['timetable', 'Timetable'],
+      ['academic-resources/pyq', 'PYQ'],
+      ['academic-resources/class-material', 'Class Material'],
+    ]],
   ],
 }
 
-export function getAdminHomePath(adminRole) {
+export function getAdminHomePath(adminRole, email) {
+  if (adminRole === ADMIN_ROLES.HOSTEL_MANAGEMENT && !isHostelManagementEmail(email)) {
+    return '/unauthorized'
+  }
   return ADMIN_ROLE_HOME[adminRole] || '/unauthorized'
 }
 
-export function canAccessAdminPath(adminRole, pathname) {
+export function canAccessAdminPath(adminRole, pathname, email) {
+  if (adminRole === ADMIN_ROLES.MAIN_ADMINISTRATOR) return true
+  if (adminRole === ADMIN_ROLES.HOSTEL_MANAGEMENT && !isHostelManagementEmail(email)) return false
   const segment = pathname.replace(/^\/admin\/?/, '').split('/')[0] || 'dashboard'
   return Boolean(PATH_ACCESS[segment]?.includes(adminRole))
 }
 
 export function getAdminNavigation(adminRole) {
   const links = ADMIN_NAVIGATION[adminRole] || []
-  return links.map(([path, label]) => ({
+  return links.map(([path, label, children]) => ({
     to: `/admin/${path}`,
     label,
+    children: Array.isArray(children) ? children.map(([childPath, childLabel]) => ({
+      to: `/admin/${childPath}`,
+      label: childLabel,
+    })) : null,
   }))
 }

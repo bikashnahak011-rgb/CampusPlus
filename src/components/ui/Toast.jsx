@@ -34,7 +34,7 @@ export function ToastProvider({ children }) {
           const Icon = cfg.icon
           return (
             <div key={t.id}
-              className="pointer-events-auto flex items-start gap-3 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
+              className="internal-toast pointer-events-auto flex items-start gap-3 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
               style={{ animation: 'notif-in 0.35s cubic-bezier(.21,1.02,.73,1) both' }}
             >
               <div className={`${cfg.bg} flex items-center justify-center p-3 self-stretch`}>

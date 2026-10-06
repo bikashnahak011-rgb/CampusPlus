@@ -13,18 +13,22 @@ export function StatusBadge({ status }) {
 
 export function LoadingState({ message = 'Loading...' }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <Loader2 size={32} className="text-blue-500 animate-spin" />
-      <p className="text-gray-500 text-sm">{message}</p>
+    <div role="status" aria-live="polite" className="internal-state-panel flex flex-col justify-center gap-4">
+      <div className="space-y-3" aria-hidden="true">
+        <div className="internal-state-skeleton h-4 w-2/5 rounded-lg" />
+        <div className="internal-state-skeleton h-3 w-4/5 rounded-lg" />
+        <div className="internal-state-skeleton h-3 w-3/5 rounded-lg" />
+      </div>
+      <p className="flex items-center gap-2 text-sm text-gray-500"><Loader2 size={16} className="animate-spin text-violet-600" />{message}</p>
     </div>
   )
 }
 
 export function ErrorState({ message = 'Something went wrong.', onRetry }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <AlertCircle size={32} className="text-red-400" />
-      <p className="text-gray-600 text-sm">{message}</p>
+    <div role="alert" className="internal-state-panel flex flex-col items-center justify-center gap-3 text-center">
+      <span className="grid h-12 w-12 place-items-center rounded-2xl bg-red-50"><AlertCircle size={25} className="text-red-500" /></span>
+      <p className="max-w-xl text-sm text-gray-600">{message}</p>
       {onRetry && <button onClick={onRetry} className="btn-secondary text-sm mt-1"><RefreshCw size={14} /> Retry</button>}
     </div>
   )
@@ -32,9 +36,9 @@ export function ErrorState({ message = 'Something went wrong.', onRetry }) {
 
 export function EmptyState({ message = 'No data found.', icon: Icon = Inbox }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <Icon size={32} className="text-gray-300" />
-      <p className="text-gray-400 text-sm">{message}</p>
+    <div className="internal-state-panel flex flex-col items-center justify-center gap-3 text-center">
+      <span className="internal-empty-icon grid h-14 w-14 place-items-center rounded-2xl bg-violet-50"><Icon size={27} className="text-violet-500" /></span>
+      <p className="max-w-xl text-sm font-semibold text-gray-700">{message}</p>
     </div>
   )
 }

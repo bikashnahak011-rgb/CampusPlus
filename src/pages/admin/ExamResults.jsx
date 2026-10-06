@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Award, Plus, Search, Send } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import { useToast } from '../../components/ui/Toast'
@@ -14,12 +15,15 @@ const EMPTY_FORM = {
 }
 
 export default function AdminExamResults() {
+  const { pathname } = useLocation()
   const { examResults, students, publishExamResult } = useApp()
   const toast = useToast()
   const [showForm, setShowForm] = useState(false)
   const [search, setSearch] = useState('')
   const [form, setForm] = useState(EMPTY_FORM)
   const [publishing, setPublishing] = useState(false)
+  const section = pathname.split('/').pop()
+  const pageTitle = section === 'examination' ? 'Examination' : section === 'marks' ? 'Student Marks' : 'Exam Results'
 
   const filteredResults = examResults.filter(result => {
     const student = students.find(item => item.id === result.student_id)
@@ -47,7 +51,7 @@ export default function AdminExamResults() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700"><Award size={22} /></div>
-          <div><h1 className="text-2xl font-bold text-gray-900">Exam Results</h1><p className="mt-1 text-sm text-gray-500">Publish SGPA or CGPA for individual students</p></div>
+          <div><h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1><p className="mt-1 text-sm text-gray-500">Publish SGPA or CGPA for individual students</p></div>
         </div>
         <button type="button" onClick={() => setShowForm(true)} className="btn-primary sm:w-auto!"><Plus size={16} /> Publish result</button>
       </div>

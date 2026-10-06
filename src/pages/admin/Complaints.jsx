@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, Filter, Loader2 } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { StatusBadge, EmptyState } from '../../components/ui/States'
@@ -9,7 +10,8 @@ const FILTERS = ['All', 'High Priority', 'Submitted', 'Assigned', 'In Progress',
 const STATUSES = ['Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed']
 const STAFF = ['Ravi Plumbing Team', 'Electrical Team', 'Housekeeping Team', 'Maintenance Team', 'Academic Staff']
 
-export default function AdminComplaints() {
+export default function AdminComplaints({ maintenanceOnly = false }) {
+  const { user } = useAuth()
   const { complaints, updateComplaint } = useApp()
   const toast = useToast()
   const [filter, setFilter] = useState('All')
@@ -18,9 +20,33 @@ export default function AdminComplaints() {
   const [updating, setUpdating] = useState(false)
   const [actionForm, setActionForm] = useState({ status: '', note: '', assignedTo: '' })
 
-  const filtered = complaints.filter(c => {
+  const isHostelRoute = user?.admin_role === 'hostel_management'
+  const isMessRoute = user?.admin_role === 'mess_manager'
+  const scopedComplaints = complaints.filter(complaint => {
+    const category = `${complaint.category || ''}`.toLowerCase()
+    const department = `${complaint.department || ''}`.toLowerCase()
+    const location = `${complaint.location || ''}`.toLowerCase()
+    const details = `${category} ${department} ${location}`
+    const isFoodComplaint = /mess|food|meal|canteen/.test(details)
+    if (maintenanceOnly) {
+      const hostelIssue = /hostel|room|block/.test(location)
+      const maintenanceIssue = /maintenance|plumb|electr|water|repair|housekeep|leak|broken/.test(`${category} ${department}`)
+      return !isFoodComplaint && maintenanceIssue && (hostelIssue || /maintenance|hostel/.test(department))
+    }
+    if (isHostelRoute) return /hostel|room|block/.test(details) && !isFoodComplaint
+    if (isMessRoute) return isFoodComplaint
+    return true
+  })
+  const pageTitle = maintenanceOnly
+    ? 'Hostel Maintenance'
+    : isHostelRoute
+      ? 'Hostel Complaints'
+      : isMessRoute
+        ? 'Food Complaints'
+        : 'Complaint Management'
+  const filtered = scopedComplaints.filter(c => {
     const mf = filter === 'All' ? true : filter === 'High Priority' ? c.priority === 'High' : c.status === filter
-    const ms = !search || c.id.toLowerCase().includes(search.toLowerCase()) || c.student_name.toLowerCase().includes(search.toLowerCase()) || c.category.toLowerCase().includes(search.toLowerCase()) || c.description.toLowerCase().includes(search.toLowerCase())
+    const ms = !search || `${c.id || ''} ${c.student_name || ''} ${c.category || ''} ${c.description || ''}`.toLowerCase().includes(search.toLowerCase())
     return mf && ms
   })
 
@@ -54,7 +80,7 @@ export default function AdminComplaints() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold text-gray-900">Complaint Management</h1><p className="text-gray-500 text-sm mt-1">{complaints.length} total complaints</p></div>
+      <div><h1 className="text-2xl font-bold text-gray-900">{pageTitle}</h1><p className="text-gray-500 text-sm mt-1">{scopedComplaints.length} {maintenanceOnly ? 'maintenance requests' : 'complaints'}</p></div>
 
       <div className="card">
         <div className="flex flex-col sm:flex-row gap-3">

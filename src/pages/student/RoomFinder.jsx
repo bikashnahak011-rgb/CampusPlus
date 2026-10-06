@@ -43,7 +43,7 @@ export default function RoomFinder() {
       </div>
 
       <div className="card space-y-3">
-        <div className="relative"><Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search room code, library, lab or faculty name..." className="w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" /></div>
+        <div className="relative"><Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search room code, library, lab or faculty name..." className="search-input w-full rounded-xl border border-gray-200 py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400" /></div>
         <div className="flex flex-wrap items-center gap-2">
           {TYPES.map(option => <button key={option} onClick={() => setType(option)} className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${type === option ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-cyan-50 hover:text-cyan-700'}`}>{option}</button>)}
           <button onClick={() => setOnlyAvailable(!onlyAvailable)} className={`rounded-full px-3 py-1.5 text-xs font-semibold ${onlyAvailable ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'}`}>{onlyAvailable ? 'Showing available' : 'Only available'}</button>

@@ -5,13 +5,10 @@ import {
   MessageSquareWarning,
   BookOpen,
   Building2,
-  UtensilsCrossed,
   FileText,
-  DoorOpen,
   ChevronRight,
   Calendar,
   AlertCircle,
-  Award,
   Megaphone,
 } from 'lucide-react'
 
@@ -20,8 +17,13 @@ import { useApp } from '../../contexts/AppContext'
 import DashboardVideoShowcase from '../../components/DashboardVideoShowcase'
 import CampusJournalPreview from '../../components/CampusJournalPreview'
 import EmailVerificationPrompt from '../../components/EmailVerificationPrompt'
-import LiquidGlassActions from '../../components/LiquidGlassActions'
+import DashboardHero from '../../components/DashboardHero'
+import AssignmentPreview from '../../components/academic/AssignmentPreview'
 import { StatusBadge } from '../../components/ui/States'
+import attendanceArt from '../../assets/3d-academic/chart.png'
+import requestsArt from '../../assets/3d-academic/requests.png'
+import complaintsArt from '../../assets/3d-academic/messages.png'
+import timetableArt from '../../assets/3d-academic/calendar.png'
 import { supabase } from '../../lib/supabase'
 import { matchesNoticeTarget } from '../../lib/noticeAudience'
 import {
@@ -239,20 +241,18 @@ export default function StudentDashboard() {
           </section>
         )}
 
-        {/* GREETING */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {getGreeting(t)}, {user?.name?.split(' ')[0]} 👋
-          </h1>
-
-          <p className="text-gray-500 mt-1">
-            {t('campusToday')}
-          </p>
-        </div>
-
+        <DashboardHero
+          audience="student"
+          eyebrow={t('campusToday')}
+          title={`${getGreeting(t)}, ${user?.name?.split(' ')[0] || 'Student'} 👋`}
+          subtitle={[
+            "Let's make today productive.",
+            [user?.department, user?.semester ? `Semester ${user.semester}` : null, user?.section ? `Section ${user.section}` : null].filter(Boolean).join(' · '),
+          ].filter(Boolean).join('  ·  ')}
+        />
 
         {/* SUMMARY CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="internal-stats-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
           {[
             {
@@ -261,7 +261,7 @@ export default function StudentDashboard() {
               icon: ClipboardList,
               color: 'text-emerald-700',
               bg: 'bg-emerald-50',
-              to: '/student/attendance'
+              art: attendanceArt,
             },
             {
               label: t('pendingRequests'),
@@ -269,7 +269,7 @@ export default function StudentDashboard() {
               icon: FileText,
               color: 'text-amber-700',
               bg: 'bg-amber-50',
-              to: '/student/documents'
+              art: requestsArt,
             },
             {
               label: t('openComplaints'),
@@ -277,7 +277,7 @@ export default function StudentDashboard() {
               icon: MessageSquareWarning,
               color: 'text-red-600',
               bg: 'bg-red-50',
-              to: '/student/complaints'
+              art: complaintsArt,
             },
             {
               label: t('todaysClasses'),
@@ -285,7 +285,7 @@ export default function StudentDashboard() {
               icon: BookOpen,
               color: 'text-teal-700',
               bg: 'bg-teal-50',
-              to: '/student/timetable'
+              art: timetableArt,
             }
           ].map(
             ({
@@ -294,12 +294,11 @@ export default function StudentDashboard() {
               icon: Icon,
               color,
               bg,
-              to
+              art
             }) => (
-              <button
+              <div
                 key={label}
-                onClick={() => navigate(to)}
-                className="card hover:shadow-md transition-all text-left"
+                className="card"
               >
                 <div
                   className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center mb-3`}
@@ -309,6 +308,7 @@ export default function StudentDashboard() {
                     className={color}
                   />
                 </div>
+                <img className="dashboard-stat-art" src={art} alt="" aria-hidden="true" />
 
                 <p className="text-2xl font-bold text-gray-900">
                   {value}
@@ -317,27 +317,13 @@ export default function StudentDashboard() {
                 <p className="text-xs text-gray-500 mt-0.5">
                   {label}
                 </p>
-              </button>
+              </div>
             )
           )}
 
         </div>
 
-
-        <LiquidGlassActions
-          columns="three"
-          subtitle={t('jumpBack')}
-          actions={[
-            { icon: MessageSquareWarning, label: t('reportProblem'), description: t('getCampusSupport'), to: '/student/complaints' },
-            { icon: DoorOpen, label: t('applyLeave'), description: t('planTimeAway'), to: '/student/leave' },
-            { icon: FileText, label: t('requestDocument'), description: t('certificatesRecords'), to: '/student/documents' },
-            { icon: DoorOpen, label: t('applyGatePass'), description: t('submitPassRequest'), to: '/student/leave' },
-            { icon: ClipboardList, label: t('viewAttendance'), description: t('trackClassProgress'), to: '/student/attendance' },
-            { icon: UtensilsCrossed, label: t('viewMessMenu'), description: t('seeMeals'), to: '/student/mess' },
-            { icon: Award, label: t('examMarks'), description: t('viewPublishedMarks'), to: '/student/results' },
-          ]}
-        />
-
+        <AssignmentPreview />
 
         {/* ATTENDANCE + TODAY'S CLASSES */}
         <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
@@ -345,21 +331,24 @@ export default function StudentDashboard() {
           {/* ATTENDANCE CARD */}
           <div className="card">
 
-            <div className="flex items-center justify-between mb-4">
+            <div className="dashboard-feature-heading flex items-center justify-between gap-2 mb-4">
 
               <h2 className="font-semibold text-gray-900">
                 {t('attendance')}
               </h2>
 
-              <button
-                onClick={() =>
-                  navigate('/student/attendance')
-                }
-                className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
-              >
-                {t('viewDetails')}
-                <ChevronRight size={14} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    navigate('/student/attendance')
+                  }
+                  className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
+                >
+                  {t('viewDetails')}
+                  <ChevronRight size={14} />
+                </button>
+                <img className="dashboard-feature-art" src={attendanceArt} alt="" aria-hidden="true" />
+              </div>
 
             </div>
 
@@ -424,10 +413,10 @@ export default function StudentDashboard() {
 
             </div>
 
-            <div className="w-full bg-gray-100 rounded-full h-2">
+            <div className="internal-meter-track w-full rounded-full h-2" role="progressbar" aria-label={t('attendance')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={attendanceGauge}>
 
               <div
-                className="bg-gradient-to-r from-emerald-600 to-amber-500 h-2 rounded-full"
+                className="internal-meter-fill bg-gradient-to-r from-emerald-600 to-amber-500 h-2 rounded-full"
                 style={{
                   width: `${attendanceGauge}%`
                 }}
@@ -451,21 +440,24 @@ export default function StudentDashboard() {
           {/* TODAY'S CLASSES */}
           <div className="card">
 
-            <div className="flex items-center justify-between mb-4">
+            <div className="dashboard-feature-heading flex items-center justify-between gap-2 mb-4">
 
               <h2 className="font-semibold text-gray-900">
                 {t('todaysClasses')}
               </h2>
 
-              <button
-                onClick={() =>
-                  navigate('/student/timetable')
-                }
-                className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
-              >
-                {t('fullTimetable')}
-                <ChevronRight size={14} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    navigate('/student/timetable')
+                  }
+                  className="text-emerald-700 text-xs hover:underline flex items-center gap-1"
+                >
+                  {t('fullTimetable')}
+                  <ChevronRight size={14} />
+                </button>
+                <img className="dashboard-feature-art" src={timetableArt} alt="" aria-hidden="true" />
+              </div>
 
             </div>
 
@@ -487,7 +479,7 @@ export default function StudentDashboard() {
                   return (
                     <div
                       key={cls.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
+                      className="dashboard-class-row flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
                     >
 
                       <div className="text-center min-w-[50px]">
@@ -650,20 +642,23 @@ export default function StudentDashboard() {
         {/* RECENT REQUESTS */}
         <div className="card">
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="dashboard-feature-heading flex items-center justify-between gap-2 mb-4">
 
             <h2 className="font-semibold text-gray-900">
               {t('recentRequestsComplaints')}
             </h2>
 
-            <button
-              onClick={() =>
-                navigate('/student/complaints')
-              }
-              className="text-blue-600 text-xs hover:underline"
-            >
-              {t('viewAll')}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  navigate('/student/complaints')
+                }
+                className="text-blue-600 text-xs hover:underline"
+              >
+                {t('viewAll')}
+              </button>
+              <img className="dashboard-feature-art" src={requestsArt} alt="" aria-hidden="true" />
+            </div>
 
           </div>
 
@@ -691,7 +686,7 @@ export default function StudentDashboard() {
                         : '/student/documents'
                     )
                   }
-                  className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-left"
+                  className="dashboard-request-row w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-left"
                 >
 
                   <div>

@@ -33,7 +33,7 @@ Open **http://localhost:5173**
 | Icons | Lucide React |
 | Charts | Recharts |
 | Backend | Supabase (PostgreSQL + Auth) |
-| AI | Authenticated FastAPI services with deterministic campus rules |
+| AI | Poe-powered Campus AI chat and authenticated FastAPI campus services |
 
 ---
 
@@ -42,14 +42,17 @@ Open **http://localhost:5173**
 1. Create a project at [supabase.com](https://supabase.com)
 2. Run `supabase/schema.sql` in the SQL Editor
 3. Run `supabase/production_hardening.sql` to secure account roles, document/leave requests, and approval notifications
-4. Run `supabase/complaints_realtime.sql` to enable secure complaint updates and live complaint subscriptions
-5. Run `supabase/ai_engine.sql` to enable live insights and backend analysis tables
-6. Run `supabase/bus_tracking.sql` to enable secure GPS publishing and live bus route/location updates
-7. Run `supabase/faculty.sql` to enable the shared faculty directory and admin-only editing
-8. Run `supabase/exam_results.sql` to enable SGPA/CGPA result publishing and student notifications
-9. Run `supabase/email_notifications.sql` to queue student email notifications for new in-app updates and journal reviews
-10. Deploy the FastAPI backend as a separate HTTPS service. Set its `SUPABASE_URL`, server-only `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS`, and the Resend email settings described in `backend/README.md`.
-11. Set these frontend environment variables in Vercel Project Settings → Environment Variables:
+4. Run `supabase/document_requests.sql` to create private PDF storage and student/admin access policies for approved documents
+5. Run `supabase/complaints_realtime.sql` to enable secure complaint updates and live complaint subscriptions
+6. Run `supabase/ai_engine.sql` to enable live insights and backend analysis tables
+7. Run `supabase/bus_tracking.sql` to enable secure GPS publishing and live bus route/location updates
+8. Run `supabase/faculty.sql` to enable the shared faculty directory and admin-only editing
+9. Run `supabase/exam_results.sql` to enable SGPA/CGPA result publishing and student notifications
+10. Run `supabase/email_notifications.sql` to queue student email notifications for new in-app updates and journal reviews
+11. Run or re-run `supabase/admin_roles.sql` and deploy `supabase/functions/manage-admin-users/index.ts`; it defines the five admin roles, restricts Hostel Management to `dragonfire0222@gmail.com`, and applies the role access helpers. The Main Administrator can invite this address or grant the role to its existing student account from User Management.
+12. Run or re-run `supabase/academic_resources.sql` to add Academic Resources (including faculty assignment PDFs), faculty subject permissions, timetable management, the private storage bucket, and RLS policies
+13. Deploy the FastAPI backend as a separate HTTPS service. Set its `SUPABASE_URL`, server-only `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS`, and `POE_API_KEY` (plus optional `POE_MODEL` and `POE_TIMEOUT_SECONDS`) in the backend service settings. Keep the Poe key on the backend only. Add the Resend email settings described in `backend/README.md` if email delivery is enabled.
+14. Set these frontend environment variables in Vercel Project Settings → Environment Variables:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
@@ -57,17 +60,56 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here
 VITE_AI_API_URL=https://your-deployed-backend.example.com
 ```
 
-`VITE_AI_API_URL` must be the deployed backend's public HTTPS URL, never `localhost`. Redeploy Vercel after changing environment variables. Never put the Supabase service-role key or an AI provider key in a `VITE_*` variable. Demo login is development-only and is not included in production builds.
+`VITE_AI_API_URL` must be the deployed backend's public HTTPS URL, never `localhost`. Redeploy Vercel after changing environment variables. Never put the Supabase service-role key or an AI provider key in a `VITE_*` variable. The login page includes preview-only Student and administrator demo profiles; demo changes are stored locally and are not sent to Supabase.
 
 Promote a trusted account to administrator from the Supabase SQL Editor after that account signs up; do not grant admin by changing the login tab:
 
 ```sql
-UPDATE public.profiles SET role = 'admin' WHERE email = 'trusted-admin@example.edu';
+UPDATE public.profiles
+SET role = 'admin', admin_role = 'main_administrator', is_active = TRUE
+WHERE email = 'trusted-admin@example.edu';
 ```
 
 Production tables intentionally start without sample campus records. Add actual attendance, timetable, fee, hostel, bus, room, and meal records before those pages can show live data. If this Supabase project was initialized with an older schema, inspect `mess_menu` and `events` for the former sample rows before removing them so real records are not deleted accidentally. Real fee payment processing is not available until a payment provider is integrated.
 
 Bus GPS sharing is started by an authenticated admin from Admin → Bus Routes using the driver's device. The browser must have location permission, and production deployments must use HTTPS. Demo mode does not publish or simulate GPS locations.
+
+### Academic Resources setup and verification
+
+The feature adds `/student/syllabus`, `/student/timetable`, `/student/pyq`, `/student/class-material`, and `/student/assignments`, plus `/admin/assignments` and the faculty/main-administrator resource management routes under `/admin`. Assignment uploads are PDF-only and remain private until approved; students can browse approved PDFs from their assignments page and dashboard. It uses the existing `profiles`, authentication provider, layouts, toast system, and Supabase client. The migration extends the current timetable table in place and does not delete existing rows.
+
+**Apply the SQL in this order:** `schema.sql` → `production_hardening.sql` → `document_requests.sql` → `admin_roles.sql` → `academic_resources.sql`. The `document_requests.sql` script creates the private `document-requests` bucket for approved student documents; `academic_resources.sql` creates a separate private `academic-resources` bucket. Keep both buckets private.
+
+From the Supabase Dashboard:
+
+1. Open **SQL Editor → New query**.
+2. Open `supabase/academic_resources.sql` in VS Code, copy the complete file, paste it into the query, and click **Run**. If the prerequisite migrations are not applied, apply those first in the order above.
+3. Open **Storage → Buckets** and confirm `academic-resources` exists with **Public bucket** turned off. Its storage policies should appear under **Storage → Policies**.
+4. Sign in as the main administrator and open **Admin → Academic Management**. Assign each faculty account its department, course, semester, and subject. Faculty uploads and timetable edits are checked against these assignments in database policies; frontend visibility is not the authorization boundary.
+5. Confirm faculty profiles have `role = 'admin'` and `admin_role = 'faculty'`; verify student profiles have their department, semester, and section populated for timetable matching.
+
+**Windows PowerShell commands** from the project directory:
+
+```powershell
+Set-Location 'C:\Users\bikas\OneDrive\Documents\Campus Portal\campusplus'
+npm install
+npm run dev
+```
+
+Open the local Vite URL printed in the terminal. Before deployment, run:
+
+```powershell
+npm run lint
+npm run build
+```
+
+**Beginner-friendly checks:**
+
+1. Log in as a student. Open each item under **Academic Resources**; search/filter results, open a PDF or image preview, and download an approved item. Switch the timetable between Weekly and Daily and verify the department, semester, section, day, faculty, room, and time details.
+2. Log in as a faculty account with an assigned subject. Upload a syllabus, PYQ, and class material for that exact assignment; confirm each is marked pending and that you can edit/delete your own entries. Try an unassigned subject and confirm Supabase rejects it.
+3. Log in as the main administrator. Approve a pending resource and confirm it appears for students. Edit/delete resources, add a timetable entry, and add/remove a faculty subject permission.
+4. Log in as each non-academic admin role (Hostel Management, Mess Manager, and Account & Examination). Confirm their existing dashboard/modules still load and academic-management routes send them back to their permitted home.
+5. In Supabase, inspect **Table Editor → academic_resources**, **faculty_subjects**, and **timetable**, and **Storage → academic-resources**. Confirm student uploads are denied and the storage bucket remains private.
 
 ---
 

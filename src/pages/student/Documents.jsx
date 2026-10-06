@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { Plus, Download, Loader2, ChevronRight, FileText } from 'lucide-react'
+import { Plus, Download, Loader2, ChevronRight, FileText, FileCheck2 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { StatusBadge, EmptyState } from '../../components/ui/States'
+import { supabase } from '../../lib/supabase'
+
+const DOCUMENT_BUCKET = 'document-requests'
 
 const DOC_TYPES = ['Bonafide Certificate', 'Character Certificate', 'Fee Receipt', 'ID Card', 'Migration Certificate', 'Other']
 
@@ -15,6 +18,7 @@ export default function DocumentsPage() {
   const [showForm, setShowForm] = useState(false)
   const [detail, setDetail] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [downloadingId, setDownloadingId] = useState('')
   const [form, setForm] = useState({ type: '', reason: '' })
 
   const myRequests = requests.filter(r => r.student_id === user?.id)
@@ -35,6 +39,32 @@ export default function DocumentsPage() {
     }
   }
 
+  const downloadDocument = async request => {
+    if (!request.file_url || downloadingId) return
+    if (!supabase) {
+      toast('Document downloads require a configured campus account.', 'error')
+      return
+    }
+
+    setDownloadingId(request.id)
+    try {
+      const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).download(request.file_url)
+      if (error) throw error
+      const objectUrl = URL.createObjectURL(data)
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = `${request.type.replace(/[^a-zA-Z0-9_-]/g, '_')}-${request.id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
+    } catch (error) {
+      toast(error.message || 'The document could not be downloaded.', 'error')
+    } finally {
+      setDownloadingId('')
+    }
+  }
+
   const statusFlow = ['Submitted', 'Under Review', 'Approved', 'Ready']
 
   return (
@@ -49,22 +79,29 @@ export default function DocumentsPage() {
         {myRequests.length === 0 ? <EmptyState message="No document requests yet." icon={FileText} /> : (
           <div className="space-y-3">
             {myRequests.map(r => (
-              <button key={r.id} onClick={() => setDetail(r)} className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl text-left transition-colors">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs text-blue-600 font-semibold">{r.id}</span>
-                    <StatusBadge status={r.status} />
+              <div key={r.id} className="flex items-center justify-between gap-3 rounded-xl border border-violet-100 bg-gradient-to-r from-violet-50/70 to-white p-4 transition-colors hover:border-violet-200 hover:from-violet-50">
+                <button type="button" onClick={() => setDetail(r)} className="min-w-0 flex-1 text-left">
+                  <div>
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-blue-600">{r.id}</span>
+                      <StatusBadge status={r.status} />
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">{r.type}</p>
+                    <p className="mt-0.5 text-xs text-gray-500">{r.reason} • {new Date(r.created_at).toLocaleDateString('en-IN')}</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">{r.type}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{r.reason} • {new Date(r.created_at).toLocaleDateString('en-IN')}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {r.file_url && r.status === 'Approved' && (
-                    <a href={r.file_url} onClick={e => e.stopPropagation()} className="btn-success py-1.5 px-3 text-xs"><Download size={14} /> Download</a>
+                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  {r.file_url && ['Approved', 'Ready'].includes(r.status) && (
+                    <button type="button" onClick={() => downloadDocument(r)} disabled={!!downloadingId} className="btn-success px-3 py-1.5 text-xs disabled:opacity-60">
+                      {downloadingId === r.id ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                      <span className="hidden sm:inline">{downloadingId === r.id ? 'Downloading' : 'Download PDF'}</span>
+                    </button>
                   )}
-                  <ChevronRight size={16} className="text-gray-400" />
+                  <button type="button" aria-label={`View request ${r.id}`} onClick={() => setDetail(r)} className="rounded-lg p-2 text-gray-400 hover:bg-violet-100 hover:text-violet-700">
+                    <ChevronRight size={16} />
+                  </button>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
@@ -119,9 +156,13 @@ export default function DocumentsPage() {
               </div>
             </div>
             {detail.admin_comment && <div className="bg-blue-50 rounded-xl p-3"><p className="text-xs text-blue-600 font-medium mb-1">Admin Comment</p><p className="text-sm text-gray-800">{detail.admin_comment}</p></div>}
-            {detail.file_url && detail.status === 'Approved' && (
-              <a href={detail.file_url} className="btn-success w-full justify-center"><Download size={16} /> Download Document</a>
+            {detail.file_url && ['Approved', 'Ready'].includes(detail.status) && (
+              <button type="button" onClick={() => downloadDocument(detail)} disabled={!!downloadingId} className="btn-success w-full justify-center disabled:opacity-60">
+                {downloadingId === detail.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                Download Document PDF
+              </button>
             )}
+            {detail.status === 'Approved' && !detail.file_url && <div className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-800"><FileCheck2 size={17} className="mt-0.5 shrink-0" /><p>Your request is approved. The document PDF will appear here once it has been uploaded by the administration.</p></div>}
           </div>
         )}
       </Modal>

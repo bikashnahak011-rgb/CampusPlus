@@ -111,8 +111,8 @@ export default function AttendancePage() {
                   <p className="text-xs text-gray-400">{s.present}/{s.total}</p>
                 </div>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2.5">
-                <div className={`h-2.5 rounded-full ${s.pct < 75 ? 'bg-red-500' : s.pct < 80 ? 'bg-orange-500' : 'bg-green-500'}`} style={{ width: `${s.pct}%` }} />
+              <div className="internal-meter-track w-full rounded-full h-2.5" role="progressbar" aria-label={`${s.name} attendance`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={s.pct}>
+                <div className={`internal-meter-fill h-2.5 rounded-full ${s.pct < 75 ? 'bg-red-500' : s.pct < 80 ? 'bg-orange-500' : 'bg-green-500'}`} style={{ width: `${s.pct}%` }} />
               </div>
               {s.pct < 80 && <p className="text-xs text-orange-600 mt-1 flex items-center gap-1"><AlertCircle size={11} /> Need {Math.max(0, Math.ceil((0.75 * s.total - s.present) / 0.25))} more classes to reach 75%</p>}
             </div>

@@ -1,12 +1,18 @@
 import { useState } from 'react'
-import { Search, Loader2 } from 'lucide-react'
+import { Search, Loader2, FileUp, FileCheck2 } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { StatusBadge, EmptyState } from '../../components/ui/States'
+import { supabase } from '../../lib/supabase'
+
+const DOCUMENT_BUCKET = 'document-requests'
+const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024
 
 export default function AdminRequests() {
   const { requests, leaveRequests, updateRequest, updateLeave } = useApp()
+  const { user } = useAuth()
   const toast = useToast()
   const [tab, setTab] = useState('Documents')
   const [search, setSearch] = useState('')
@@ -14,8 +20,11 @@ export default function AdminRequests() {
   const [detailType, setDetailType] = useState('doc')
   const [comment, setComment] = useState('')
   const [updating, setUpdating] = useState(false)
+  const [uploadingDocument, setUploadingDocument] = useState(false)
 
-  const allDocs = requests.filter(r => r.status?.toLowerCase() !== 'approved')
+  const allDocs = requests.filter(r => !['approved', 'ready'].includes(r.status?.toLowerCase()))
+    .filter(r => !search || r.id.toLowerCase().includes(search.toLowerCase()) || r.student_name.toLowerCase().includes(search.toLowerCase()) || r.type.toLowerCase().includes(search.toLowerCase()))
+  const approvedDocs = requests.filter(r => r.status?.toLowerCase() === 'approved' && !r.file_url)
     .filter(r => !search || r.id.toLowerCase().includes(search.toLowerCase()) || r.student_name.toLowerCase().includes(search.toLowerCase()) || r.type.toLowerCase().includes(search.toLowerCase()))
   const allLeave = leaveRequests.filter(l => l.status?.toLowerCase() !== 'approved')
     .filter(l => !search || l.id.toLowerCase().includes(search.toLowerCase()) || l.student_name.toLowerCase().includes(search.toLowerCase()))
@@ -42,6 +51,66 @@ export default function AdminRequests() {
   }
 
   const handleAction = action => applyDecision(detail, detailType, action, comment)
+
+  const uploadApprovedDocument = async event => {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    if (!file || !detail || detailType !== 'doc') return
+    if (detail.status?.toLowerCase() !== 'approved') {
+      toast('Approve this request before attaching its document.', 'warning')
+      return
+    }
+    if (!file.name.toLowerCase().endsWith('.pdf') || (file.type && file.type !== 'application/pdf')) {
+      toast('Choose a PDF file to provide to the student.', 'warning')
+      return
+    }
+    if (file.size > MAX_DOCUMENT_SIZE) {
+      toast('PDF files must be 10 MB or smaller.', 'warning')
+      return
+    }
+    if (await file.slice(0, 5).text() !== '%PDF-') {
+      toast('The selected file is not a valid PDF.', 'warning')
+      return
+    }
+    if (!supabase || user?.isDemo) {
+      toast('PDF uploads require a configured campus account and document storage.', 'error')
+      return
+    }
+
+    setUploadingDocument(true)
+    let uploadedPath = null
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+      uploadedPath = `${detail.student_id}/${detail.id}/${crypto.randomUUID()}-${safeName}`
+      const { error: uploadError } = await supabase.storage.from(DOCUMENT_BUCKET).upload(uploadedPath, file, {
+        cacheControl: '3600',
+        contentType: 'application/pdf',
+        upsert: false,
+      })
+      if (uploadError) throw uploadError
+
+      await updateRequest(
+        detail.id,
+        'Ready',
+        comment.trim() || detail.admin_comment || 'Approved document is ready for download.',
+        uploadedPath
+      )
+      setDetail(null)
+      toast('PDF uploaded. The document is now available to the student.', 'success')
+    } catch (error) {
+      if (uploadedPath) {
+        try {
+          const { error: cleanupError } = await supabase.storage.from(DOCUMENT_BUCKET).remove([uploadedPath])
+          if (cleanupError) console.error('Failed to remove an unattached document PDF:', cleanupError.message)
+        } catch (cleanupError) {
+          console.error('Failed to remove an unattached document PDF:', cleanupError)
+        }
+      }
+      toast(error.message || 'The PDF could not be uploaded.', 'error')
+    } finally {
+      setUploadingDocument(false)
+    }
+  }
 
   const days = (d) => Math.floor((Date.now() - new Date(d)) / 86400000)
 
@@ -92,6 +161,38 @@ export default function AdminRequests() {
             </table>
           )}
         </div>
+      )}
+
+      {tab === 'Documents' && approvedDocs.length > 0 && (
+        <section className="card space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="rounded-xl bg-emerald-100 p-2.5 text-emerald-700"><FileUp size={19} /></span>
+            <div>
+              <h2 className="font-semibold text-gray-900">Approved documents — upload PDF</h2>
+              <p className="text-sm text-gray-500">Attach the approved PDF to make it available in the student portal.</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead><tr className="border-b border-gray-100">{['Request ID', 'Student', 'Document', 'Approved', 'Action'].map(heading => <th key={heading} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">{heading}</th>)}</tr></thead>
+              <tbody>
+                {approvedDocs.map(request => (
+                  <tr key={request.id} className="border-b border-gray-50 last:border-0">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-semibold text-blue-600">{request.id}</td>
+                    <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">{request.student_name}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-700">{request.type}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">{new Date(request.updated_at || request.created_at).toLocaleDateString('en-IN')}</td>
+                    <td className="px-4 py-3">
+                      <button type="button" onClick={() => openDoc(request)} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                        <FileUp size={14} /> Upload PDF
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {tab === 'Leave & Gate Pass' && (
@@ -152,6 +253,27 @@ export default function AdminRequests() {
                   </button>
                 </div>
               </div>
+            )}
+            {detailType === 'doc' && detail.status?.toLowerCase() === 'approved' && !detail.file_url && (
+              <section className="space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
+                <div className="flex items-start gap-3">
+                  <FileCheck2 size={19} className="mt-0.5 shrink-0 text-emerald-700" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-emerald-900">Provide the approved document</h3>
+                    <p className="mt-1 text-xs leading-5 text-emerald-800">Import the final PDF. The student will be able to download it from their Documents page.</p>
+                  </div>
+                </div>
+                <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">
+                  {uploadingDocument ? <><Loader2 size={16} className="animate-spin" /> Uploading PDF...</> : <><FileUp size={16} /> Choose PDF (max 10 MB)</>}
+                  <input
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={uploadApprovedDocument}
+                    disabled={uploadingDocument}
+                    className="sr-only"
+                  />
+                </label>
+              </section>
             )}
             {detail.admin_comment && <div className="bg-blue-50 rounded-xl p-3"><p className="text-xs text-blue-600 font-medium mb-1">Admin Comment</p><p className="text-sm text-gray-800">{detail.admin_comment}</p></div>}
           </div>

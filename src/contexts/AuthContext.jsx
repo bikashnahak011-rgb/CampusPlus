@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { ADMIN_ROLES } from '../lib/adminRoles'
+import { isHostelManagementEmail } from '../lib/adminRoles'
+import { DEMO_LOGIN_ACCOUNTS } from '../data/demoAccounts'
 
 const AuthContext = createContext(null)
 
@@ -10,39 +11,12 @@ const AuthContext = createContext(null)
   ============================
 */
 
-const DEMO_USERS = {
-  'student@demo.com': {
-    id: 'stu-001',
-    email: 'student@demo.com',
-    role: 'student',
-    admin_role: null,
-    is_active: true,
-    name: 'Demo Student',
-    roll_no: 'DEMO001',
-    department: 'Computer Science',
-    branch: 'B.Tech CSE',
-    year: 3,
-    hostel_block: 'A',
-    profileComplete: true,
-    isDemo: true,
-  },
-
-  'admin@demo.com': {
-    id: 'demo-admin-001',
-    email: 'admin@demo.com',
-    role: 'admin',
-    admin_role: ADMIN_ROLES.MAIN_ADMINISTRATOR,
-    name: 'Demo Admin',
-    is_active: true,
-    profileComplete: true,
-    isDemo: true,
-  },
-}
-
-const DEMO_PASSWORDS = {
-  'student@demo.com': 'student123',
-  'admin@demo.com': 'admin123',
-}
+const DEMO_USERS = Object.fromEntries(
+  DEMO_LOGIN_ACCOUNTS.map(({ password: _password, label: _label, description: _description, ...user }) => [user.email, user]),
+)
+const DEMO_PASSWORDS = Object.fromEntries(
+  DEMO_LOGIN_ACCOUNTS.map(({ email, password }) => [email, password]),
+)
 
 const DEMO_STORAGE_KEY = 'campusplus_demo_user'
 
@@ -69,12 +43,7 @@ export function AuthProvider({ children }) {
         demo login.
         */
 
-        const savedDemoUser = import.meta.env.DEV
-          ? localStorage.getItem(DEMO_STORAGE_KEY)
-          : null
-        if (!import.meta.env.DEV) {
-          localStorage.removeItem(DEMO_STORAGE_KEY)
-        }
+        const savedDemoUser = localStorage.getItem(DEMO_STORAGE_KEY)
 
         if (savedDemoUser) {
           try {
@@ -238,9 +207,13 @@ export function AuthProvider({ children }) {
       }
 
       const role = data?.role === 'admin' ? 'admin' : data?.role === 'student' ? 'student' : null
-      const admin_role = role === 'admin'
-        ? data?.admin_role || ADMIN_ROLES.MAIN_ADMINISTRATOR
-        : null
+      let admin_role = role === 'admin' ? data?.admin_role || null : null
+      if (
+        admin_role === ADMIN_ROLES.HOSTEL_MANAGEMENT &&
+        (!isHostelManagementEmail(authUser.email) || !isHostelManagementEmail(data?.email))
+      ) {
+        admin_role = null
+      }
 
       const profileComplete =
         !!(
@@ -309,7 +282,7 @@ export function AuthProvider({ children }) {
       DEMO LOGIN
     */
 
-    if (import.meta.env.DEV && DEMO_USERS[normalizedEmail]) {
+    if (DEMO_USERS[normalizedEmail]) {
       if (DEMO_PASSWORDS[normalizedEmail] !== password) {
         return {
           error: {

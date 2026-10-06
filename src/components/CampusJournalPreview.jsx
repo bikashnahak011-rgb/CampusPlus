@@ -16,12 +16,21 @@ export default function CampusJournalPreview({ items = [], admin = false }) {
         <button type="button" onClick={() => navigate(path)} className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700 hover:text-violet-900">{admin ? 'Manage journal' : 'Explore journal'}<ArrowUpRight size={14} /></button>
       </div>
       {admin && pendingCount > 0 && <button type="button" onClick={() => navigate(path)} className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-left text-xs font-semibold text-amber-800 hover:bg-amber-100">{pendingCount} submission{pendingCount === 1 ? '' : 's'} need review</button>}
-      {previewItems.length ? <div className="mt-4 grid gap-3 md:grid-cols-3">
-        {previewItems.map(item => <button key={item.id} type="button" onClick={() => navigate(path)} className="rounded-xl border border-violet-100 bg-white/80 p-3 text-left transition-colors hover:border-violet-300 hover:bg-violet-50/60">
-          <span className="flex items-center gap-1 text-[11px] font-semibold text-violet-700">{item.is_featured && <Star size={12} fill="currentColor" />} {item.is_featured ? 'Featured' : item.category}</span>
-          <span className="mt-1 block text-sm font-semibold text-gray-900">{item.title}</span>
-          <span className="mt-1 block line-clamp-2 text-xs leading-5 text-gray-500">{item.summary}</span>
-        </button>)}
+      {previewItems.length ? <div className="campus-journal-preview-list mt-4">
+        {previewItems.map(item => {
+          const articleText = [item.title, item.summary].filter(Boolean).join(' · ')
+          return (
+            <button key={item.id} type="button" onClick={() => navigate(path)} className="campus-journal-preview-card">
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-violet-700">{item.is_featured && <Star size={12} fill="currentColor" />} {item.is_featured ? 'Featured' : item.category}</span>
+              <span className="campus-journal-marquee" aria-hidden="true">
+                <span className="campus-journal-marquee-track">
+                  {[0, 1].map(copy => <span key={copy} className="campus-journal-marquee-group">{articleText}</span>)}
+                </span>
+              </span>
+              <span className="sr-only">{item.title}{item.summary ? `. ${item.summary}` : ''}</span>
+            </button>
+          )
+        })}
       </div> : <p className="mt-4 text-sm text-gray-500">No published journal entries yet.</p>}
     </section>
   )

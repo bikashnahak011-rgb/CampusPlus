@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, MessageSquareWarning, ClipboardList, Bell, Grid3X3 } from 'lucide-react'
+import { LayoutDashboard, MessageSquareWarning, DoorOpen, Bell, Grid3X3 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 
 const BOTTOM_NAV = [
   { to: '/student/dashboard', icon: LayoutDashboard, label: 'Home' },
   { to: '/student/services', icon: Grid3X3, label: 'Services' },
   { to: '/student/complaints', icon: MessageSquareWarning, label: 'Complaints' },
-  { to: '/student/attendance', icon: ClipboardList, label: 'Attendance' },
-  { to: '/student/notifications', icon: Bell, label: 'Alerts' },
+  { to: '/student/leave', icon: DoorOpen, label: 'Gate Pass' },
+  { to: '/student/notifications', icon: Bell, label: 'Notices' },
 ]
 
 export default function MobileBottomNav() {
@@ -24,7 +24,7 @@ export default function MobileBottomNav() {
                 <Icon size={20} />
               </div>
               <span className="text-[10px] font-medium">{label}</span>
-              {label === 'Alerts' && unreadCount > 0 && (
+              {label === 'Notices' && unreadCount > 0 && (
                 <span className="absolute top-1 right-2 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>

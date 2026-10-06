@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Mail,
@@ -9,36 +9,46 @@ import {
   Loader2,
   Shield,
   GraduationCap,
-  CalendarDays,
-  Award,
-  MapPinned,
-  ArrowUpRight
+  Sparkles,
+  X,
 } from 'lucide-react'
 
 import { useAuth } from '../contexts/AuthContext'
 import { useApp } from '../contexts/AppContext'
 import AppLogo from '../components/AppLogo'
-import Ambient3DBackground from '../components/Ambient3DBackground'
-import { LANGUAGE_OPTIONS } from '../lib/translations'
-import { getAdminHomePath } from '../lib/adminRoles'
+import { ADMIN_ROLES, ADMIN_ROLE_LABELS, getAdminHomePath } from '../lib/adminRoles'
+import { DEMO_LOGIN_ACCOUNTS } from '../data/demoAccounts'
+import loginStudentArtwork from '../assets/login-student-3d-transparent.png'
+
+const ADMIN_LOGIN_ROLES = [
+  { value: ADMIN_ROLES.HOSTEL_MANAGEMENT, label: 'Hostel Management' },
+  { value: ADMIN_ROLES.MESS_MANAGER, label: 'Mess Management' },
+  { value: ADMIN_ROLES.FACULTY, label: 'Faculty' },
+  { value: ADMIN_ROLES.ACCOUNT_EXAMINATION, label: 'Accounts & Examination' },
+  { value: ADMIN_ROLES.MAIN_ADMINISTRATOR, label: 'Main Administrator' },
+]
 
 export default function LoginPage() {
 
   const [role, setRole] = useState('student')
+  const [selectedAdminRole, setSelectedAdminRole] = useState(ADMIN_ROLES.MAIN_ADMINISTRATOR)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showDemoAccounts, setShowDemoAccounts] = useState(false)
 
   const {
     user,
     signIn,
-    signInWithGoogle
+    signInWithGoogle,
+    signOut,
   } = useAuth()
 
   const navigate = useNavigate()
-  const { language, setLanguage, t } = useApp()
+  const { t } = useApp()
+  const pendingLoginSelection = useRef(null)
 
   /*
   ============================================================
@@ -58,6 +68,20 @@ export default function LoginPage() {
       return
     }
 
+    const requested = pendingLoginSelection.current
+    if (requested) {
+      pendingLoginSelection.current = null
+      const roleMatches = user.role === requested.role
+      const adminRoleMatches = user.role !== 'admin' || user.admin_role === requested.adminRole
+      if (!roleMatches || !adminRoleMatches) {
+        setError(user.role !== requested.role
+          ? `This account is assigned to the ${user.role} portal. Choose the matching sign-in type.`
+          : `This account is assigned the ${ADMIN_ROLE_LABELS[user.admin_role] || 'admin'} role. Select that role to continue.`)
+        void signOut()
+        return
+      }
+    }
+
     const isAdmin = user.role === 'admin'
 
     /*
@@ -68,7 +92,7 @@ export default function LoginPage() {
     if (user.profileComplete) {
 
       if (isAdmin) {
-        navigate(getAdminHomePath(user.admin_role), {
+        navigate(getAdminHomePath(user.admin_role, user.email), {
           replace: true
         })
       } else {
@@ -95,7 +119,7 @@ export default function LoginPage() {
       })
     }
 
-  }, [user, navigate])
+  }, [user, navigate, role, selectedAdminRole, signOut])
 
 
   /*
@@ -107,6 +131,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
 
     e.preventDefault()
+    pendingLoginSelection.current = null
 
     /*
       Clear previous error.
@@ -131,6 +156,7 @@ export default function LoginPage() {
 
     setLoading(true)
 
+    pendingLoginSelection.current = { role, adminRole: selectedAdminRole }
 
     try {
 
@@ -156,6 +182,7 @@ export default function LoginPage() {
 
       if (result?.error) {
 
+        pendingLoginSelection.current = null
         setError(
           result.error.message ||
           'Invalid email or password.'
@@ -186,32 +213,8 @@ export default function LoginPage() {
           loggedUser
         )
 
-
-        /*
-          IMPORTANT:
-
-          Do NOT use the selected role here.
-
-          Use the actual role returned
-          from AuthContext.
-        */
-
-        if (loggedUser.role === 'admin') {
-
-          navigate(getAdminHomePath(loggedUser.admin_role), {
-            replace: true
-          })
-
-        } else {
-
-          navigate('/student/dashboard', {
-            replace: true
-          })
-
-        }
-
+        // The authentication effect validates the profile role before routing.
         setLoading(false)
-
         return
       }
 
@@ -242,6 +245,7 @@ export default function LoginPage() {
 
     } catch (err) {
 
+      pendingLoginSelection.current = null
       console.error(
         'Login error:',
         err
@@ -272,6 +276,11 @@ export default function LoginPage() {
     setLoading(true)
 
     localStorage.setItem('campusplus_oauth_role', role)
+    if (role === 'admin') {
+      localStorage.setItem('campusplus_oauth_admin_role', selectedAdminRole)
+    } else {
+      localStorage.removeItem('campusplus_oauth_admin_role')
+    }
 
     try {
 
@@ -286,6 +295,9 @@ export default function LoginPage() {
 
       if (result?.error) {
 
+        localStorage.removeItem('campusplus_oauth_role')
+        localStorage.removeItem('campusplus_oauth_admin_role')
+        pendingLoginSelection.current = null
         setError(
           result.error.message ||
           'Google login failed.'
@@ -307,6 +319,9 @@ export default function LoginPage() {
 
     } catch (err) {
 
+      localStorage.removeItem('campusplus_oauth_role')
+      localStorage.removeItem('campusplus_oauth_admin_role')
+      pendingLoginSelection.current = null
       console.error(
         'Google login error:',
         err
@@ -328,41 +343,36 @@ export default function LoginPage() {
   ============================================================
   */
 
-  const handleDemoLogin = async (
-    demoRole
-  ) => {
+  const handleDemoLogin = async (account) => {
 
     setError('')
     setLoading(true)
-
-    const demoEmail =
-      demoRole === 'admin'
-        ? 'admin@demo.com'
-        : 'student@demo.com'
-
-    const demoPassword =
-      demoRole === 'admin'
-        ? 'admin123'
-        : 'student123'
-
 
     /*
       Update visible role selector.
     */
 
-    setRole(demoRole)
+    setRole(account.role)
+    if (account.role === 'admin') {
+      setSelectedAdminRole(account.admin_role)
+    }
+    pendingLoginSelection.current = {
+      role: account.role,
+      adminRole: account.admin_role,
+    }
 
 
     try {
 
       const result = await signIn(
-        demoEmail,
-        demoPassword
+        account.email,
+        account.password
       )
 
 
       if (result?.error) {
 
+        pendingLoginSelection.current = null
         setError(
           result.error.message
         )
@@ -386,29 +396,16 @@ export default function LoginPage() {
           loggedUser
         )
 
-
-        if (loggedUser.role === 'admin') {
-
-          navigate(getAdminHomePath(loggedUser.admin_role), {
-            replace: true
-          })
-
-        } else {
-
-          navigate('/student/dashboard', {
-            replace: true
-          })
-
-        }
-
+        // The authentication effect validates the profile role before routing.
+        setShowDemoAccounts(false)
         setLoading(false)
-
         return
       }
 
 
     } catch (err) {
 
+      pendingLoginSelection.current = null
       console.error(
         'Demo login error:',
         err
@@ -434,133 +431,58 @@ export default function LoginPage() {
 
   return (
 
-    <div className="login-page relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6 lg:px-10">
-
-      <Ambient3DBackground variant="login" />
-
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(420px,480px)] lg:gap-10 xl:gap-16">
-        <section className="login-showcase hidden lg:flex" aria-labelledby="login-showcase-title">
-          <div className="flex items-center gap-3">
-            <AppLogo size={40} />
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">NexCampus platform</p>
-              <p className="mt-0.5 text-xs text-violet-950/55">One campus, connected</p>
-            </div>
+    <main className="login-page">
+      <section className="login-illustration" aria-labelledby="login-showcase-title">
+        <div className="login-brand">
+          <AppLogo size={42} />
+          <div>
+            <p>NEXCAMPUS PLATFORM</p>
+            <span>One campus, connected</span>
           </div>
-          <h2 id="login-showcase-title" className="mt-8 max-w-2xl text-5xl font-black leading-[1.04] text-[#251444] xl:text-6xl">
-            Campus life,<br /><span className="text-violet-700">in better view.</span>
-          </h2>
-          <p className="mt-5 max-w-xl text-base leading-7 text-[#5e5277]">
-            Bring classes, attendance, results, and campus services together in one clear place.
-          </p>
-
-          <div className="login-campus-stage" aria-hidden="true">
-            <div className="login-campus-plane" />
-            <div className="login-campus-mark"><AppLogo size={66} /></div>
-
-            <div className="login-glass-panel login-glass-panel--schedule">
-              <div className="flex items-start justify-between gap-3">
-                <div><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-700">Your campus, at a glance</p><p className="mt-1 text-sm font-bold text-[#2d2148]">Everything in sync</p></div>
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
-              </div>
-              <div className="login-glass-row"><span className="login-glass-icon"><CalendarDays size={15} /></span><span><b>Class schedule</b><small>Keep your day on track</small></span><ArrowUpRight size={15} className="ml-auto text-violet-500" /></div>
-              <div className="login-glass-row"><span className="login-glass-icon"><Award size={15} /></span><span><b>Exam results</b><small>Progress, clearly shown</small></span><ArrowUpRight size={15} className="ml-auto text-violet-500" /></div>
-            </div>
-
-            <div className="login-glass-panel login-glass-panel--services">
-              <div className="flex items-center justify-between"><p className="text-xs font-bold text-[#2d2148]">Campus services</p><MapPinned size={16} className="text-violet-600" /></div>
-              <div className="mt-3 flex gap-2"><span className="login-service-chip">Attendance</span><span className="login-service-chip">Notices</span><span className="login-service-chip">Rooms</span></div>
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-violet-100"><div className="h-full w-[72%] rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500" /></div>
-              <p className="mt-2 text-[10px] text-violet-950/50">One portal for everyday campus life</p>
-            </div>
+        </div>
+        <div className="login-copy">
+          <h1 id="login-showcase-title">Campus life,<br /><span>in better view.</span></h1>
+          <p>Bring classes, attendance, results, and campus services together in one clear place.</p>
+        </div>
+        <div className="login-art-scene" aria-hidden="true">
+          <div className="login-art-halo login-art-halo--outer" />
+          <div className="login-art-halo login-art-halo--inner" />
+          <div className="login-art-orbit login-art-orbit--one" />
+          <div className="login-art-orbit login-art-orbit--two" />
+          <div className="login-art-student">
+            <img src={loginStudentArtwork} alt="" />
           </div>
-
-          <div className="mt-1 flex flex-wrap gap-2 text-xs font-medium text-violet-950/65">
-            <span className="rounded-full border border-violet-200/80 bg-white/55 px-3 py-1.5">Student services</span>
-            <span className="rounded-full border border-violet-200/80 bg-white/55 px-3 py-1.5">Academic updates</span>
-            <span className="rounded-full border border-violet-200/80 bg-white/55 px-3 py-1.5">Campus notices</span>
+          <div className="login-art-float login-art-float--book"><Sparkles size={22} /></div>
+          <div className="login-art-float login-art-float--cap"><GraduationCap size={28} /></div>
+          <div className="login-art-caption">
+            <span>YOUR CAMPUS, AT A GLANCE</span>
+            <strong>Everything in sync</strong>
+            <small>Student services · Academic updates · Campus notices</small>
           </div>
-        </section>
+        </div>
+      </section>
 
-      <div className="login-form-column mx-auto w-full max-w-lg lg:max-w-none">
-
-        {/* Back button */}
+      <section className="login-panel" aria-labelledby="login-title">
+        <div className="login-form-column">
 
         <button
           onClick={() => navigate('/landing')}
-          className="mb-4 flex items-center gap-2 text-sm text-gray-600 transition-all duration-200 hover:-translate-x-1 hover:text-violet-700 sm:mb-6"
+          className="login-back-link"
         >
-
           <ArrowLeft size={16} />
-
           {t('backToHome')}
-
         </button>
 
-
-        {/* Login Card */}
-
-        <div
-          className="login-card bg-white rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-scale-in"
-          style={{
-            boxShadow:
-              '0 28px 70px rgba(11,5,35,0.42), 0 0 32px rgba(139,92,246,0.12)'
-          }}
-        >
-
-          {/* Header */}
-
-          <div className="login-header px-6 py-8 sm:p-8 text-center relative overflow-hidden">
-
-            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-
-
-            <div className="flex justify-center mb-3 sm:mb-4">
-
-              <div
-                className="animate-float"
-                style={{
-                  filter:
-                    'drop-shadow(0 0 20px rgba(255,255,255,0.3))'
-                }}
-              >
-
-                <AppLogo size={48} />
-
-              </div>
-
+        <div className="login-form-surface">
+          <header className="login-form-heading">
+            <div className="login-heading-row">
+              <span className="login-form-logo"><AppLogo size={38} /></span>
+              <h1 id="login-title">Welcome to NexCampus</h1>
             </div>
+            <span>Sign in to continue to your campus</span>
+          </header>
 
-
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              {t('appName')}
-            </h1>
-
-
-            <p className="text-violet-100 text-xs sm:text-sm mt-1">
-              {t('welcomeBack')}
-            </p>
-
-          </div>
-
-
-          {/* Form area */}
-
-          <div className="px-5 py-6 sm:p-8">
-
-
-            {/* Role selector */}
-
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-2.5 text-[11px] font-medium text-violet-800">
-              <span>{t('languageLabel')}</span>
-              <select value={language} onChange={(event) => setLanguage(event.target.value)} className="rounded-lg border border-violet-200 bg-white px-2 py-1 text-[11px] font-medium text-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500">
-                {LANGUAGE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.nativeLabel}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex bg-gray-100 rounded-2xl p-1 mb-5 sm:mb-6">
+            <div className="login-role-switch flex bg-gray-100 rounded-2xl p-1 mb-5 sm:mb-6">
 
               {/* Student */}
 
@@ -608,6 +530,28 @@ export default function LoginPage() {
               </button>
 
             </div>
+
+            {role === 'admin' && (
+              <div className="login-admin-role-field">
+                <label htmlFor="admin-dashboard-role">Admin role</label>
+                <select
+                  id="admin-dashboard-role"
+                  value={selectedAdminRole}
+                  onChange={(event) => {
+                    setSelectedAdminRole(event.target.value)
+                    setError('')
+                  }}
+                  disabled={loading}
+                >
+                  {ADMIN_LOGIN_ROLES.map(({ value, label }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <p>Select the dashboard role assigned to your account.</p>
+              </div>
+            )}
 
 
             {/* Login form */}
@@ -834,7 +778,7 @@ export default function LoginPage() {
 
               <a
                 href="mailto:admin@nexcampus.dev"
-                className="text-emerald-700 font-medium hover:underline"
+                className="login-contact-link font-medium hover:underline"
               >
                 Contact your administrator
               </a>
@@ -842,50 +786,72 @@ export default function LoginPage() {
             </p>
 
 
-            {import.meta.env.DEV && (
-              <div className="mt-5 p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-
-              <p className="text-xs font-semibold text-emerald-700 mb-3">
-                Demo Login
-              </p>
-
-
+            <div className="login-demo-box">
               <button
                 type="button"
                 disabled={loading}
-                onClick={() =>
-                  handleDemoLogin('student')
-                }
-                className="w-full text-left text-xs text-emerald-700 hover:text-emerald-800 mb-2 disabled:opacity-50"
+                aria-expanded={showDemoAccounts}
+                aria-controls="login-demo-accounts"
+                onClick={() => setShowDemoAccounts((visible) => !visible)}
+                className="login-demo-toggle"
               >
-                <strong>Student:</strong>{' '}
-                student@demo.com / student123
+                <Sparkles size={16} />
+                {showDemoAccounts ? 'Choose a demo account' : 'Use a demo account'}
               </button>
-
-
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() =>
-                  handleDemoLogin('admin')
-                }
-                className="w-full text-left text-xs text-amber-700 hover:text-amber-800 disabled:opacity-50"
-              >
-                <strong>Admin:</strong>{' '}
-                admin@demo.com / admin123
-              </button>
-
-              </div>
+            </div>
+            {showDemoAccounts && (
+              <>
+                <button
+                  type="button"
+                  className="login-demo-backdrop"
+                  aria-label="Close demo account picker"
+                  onClick={() => setShowDemoAccounts(false)}
+                />
+                <section
+                  id="login-demo-accounts"
+                  className="login-demo-dialog"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="login-demo-title"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') setShowDemoAccounts(false)
+                  }}
+                >
+                  <header className="login-demo-dialog-heading">
+                    <div>
+                      <h2 id="login-demo-title">Choose a demo account</h2>
+                      <p>Preview the portal from a specific role.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="login-demo-close"
+                      aria-label="Close demo account picker"
+                      onClick={() => setShowDemoAccounts(false)}
+                    >
+                      <X size={18} />
+                    </button>
+                  </header>
+                  <div className="login-demo-accounts">
+                    {DEMO_LOGIN_ACCOUNTS.map((account) => (
+                      <button
+                        key={account.email}
+                        type="button"
+                        disabled={loading}
+                        onClick={() => handleDemoLogin(account)}
+                        className="login-demo-account"
+                      >
+                        <span>{account.label}</span>
+                        <small>{account.description}</small>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              </>
             )}
 
-          </div>
-
         </div>
-
       </div>
-
-    </div>
-
-    </div>
+      </section>
+    </main>
   )
 }

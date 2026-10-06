@@ -5,18 +5,16 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 
 from .config import get_settings
-from .routes import assistant, attendance, complaints, insights, mess, notifications, push_notifications
+from .limiting import limiter
+from .routes import ai, assistant, attendance, complaints, insights, mess, notifications, push_notifications
 from .services.email_notifications import run_email_dispatcher
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("campuspulse-ai")
-limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -59,6 +57,7 @@ app.include_router(attendance.router, prefix="/api")
 app.include_router(complaints.router, prefix="/api")
 app.include_router(mess.router, prefix="/api")
 app.include_router(insights.router, prefix="/api")
+app.include_router(ai.router, prefix="/api")
 app.include_router(assistant.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(push_notifications.router, prefix="/api")

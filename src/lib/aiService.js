@@ -220,28 +220,26 @@ export function getCampusWebsiteHelp(message, user = {}) {
   return 'Use My Services or the sidebar to open campus features. I can guide you through attendance, timetable, hostel, mess, fees, requests, complaints, notices, faculty, and bus routes.'
 }
 
-export async function askCampusAssistant(message, user = {}, { signal } = {}) {
+export async function askCampusAssistant(message, user = {}, { signal, history = [] } = {}) {
   const prompt = String(message || '').trim()
   if (!prompt) return 'Type a question about using NexCampus or your campus records.'
 
-  const guidance = getCampusWebsiteHelp(prompt, user)
-  if (guidance) return guidance
-
   if (user.isDemo) {
-    return getCampusAssistantReply(prompt, user)
+    return 'Sign in with your campus account to use Campus AI.'
   }
 
   try {
-    const endpoint = user.role === 'admin' ? 'assistant/admin' : 'assistant/student'
-    const result = await requestBackend(endpoint, {
+    const result = await requestBackend('ai/ask', {
       method: 'POST',
-      body: { question: prompt },
+      body: {
+        question: prompt,
+        history: history.slice(-10).map(({ role, content }) => ({ role, content })),
+      },
       signal,
     })
     return String(result.answer || 'The campus assistant returned no answer.')
   } catch (error) {
     if (signal?.aborted) throw error
-    const reason = error instanceof Error ? error.message : 'Check your connection and try again.'
-    return `The campus data assistant is unavailable. ${reason} Live attendance and campus records are not available offline.`
+    return 'Campus AI is temporarily unavailable. Please try again in a moment.'
   }
 }

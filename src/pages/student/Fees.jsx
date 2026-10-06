@@ -102,8 +102,8 @@ export default function FeesPage() {
           <p className="text-sm font-medium text-gray-700">Payment Progress</p>
           <p className="text-sm font-bold text-blue-600">{pct}%</p>
         </div>
-        <div className="w-full bg-gray-100 rounded-full h-3">
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all" style={{ width: `${pct}%` }} />
+        <div className="internal-meter-track w-full rounded-full h-3" role="progressbar" aria-label="Fee payment progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+          <div className="internal-meter-fill bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all" style={{ width: `${pct}%` }} />
         </div>
         <p className="text-xs text-gray-400 mt-2">₹{fees.paid.toLocaleString('en-IN')} paid of ₹{fees.total.toLocaleString('en-IN')}</p>
       </div>

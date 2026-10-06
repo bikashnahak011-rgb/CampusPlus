@@ -18,6 +18,7 @@ import {
   INITIAL_FACULTY,
   DEMO_STUDENTS_ADMIN,
   DEMO_EXAM_RESULTS,
+  DEMO_MESS_FEEDBACK,
   INITIAL_CAMPUS_JOURNAL,
 } from '../data/demoData.js'
 
@@ -53,6 +54,14 @@ function getStoredDemoValue(key, fallback) {
   } catch {
     return fallback
   }
+}
+
+function getStoredDemoRecords(key, seeds) {
+  const merged = new Map(seeds.map(record => [record.id, record]))
+  for (const record of getStoredDemoValue(key, [])) {
+    merged.set(record.id, { ...merged.get(record.id), ...record })
+  }
+  return [...merged.values()]
 }
 
 function normalizeBusRoute(route) {
@@ -146,14 +155,14 @@ export function AppProvider({ children }) {
     }
     if (user.isDemo) {
       setNotices(getStoredDemoValue(DEMO_NOTICES_KEY, INITIAL_NOTICES))
-      setCampusJournalItems(getStoredDemoValue(DEMO_CAMPUS_JOURNAL_KEY, INITIAL_CAMPUS_JOURNAL))
+      setCampusJournalItems(getStoredDemoRecords(DEMO_CAMPUS_JOURNAL_KEY, INITIAL_CAMPUS_JOURNAL))
       setCampusJournalError('')
       setFaculty(INITIAL_FACULTY)
       setStudents(DEMO_STUDENTS_ADMIN)
       setBusRoutes(INITIAL_BUS_ROUTES.map(normalizeBusRoute))
       setCampusRooms(INITIAL_CAMPUS_ROOMS.map(normalizeCampusRoom))
       setMessMenu(DEMO_MESS_MENU)
-      setMessFeedback([])
+      setMessFeedback(DEMO_MESS_FEEDBACK)
       return undefined
     }
     setNotices([])
@@ -834,12 +843,13 @@ export function AppProvider({ children }) {
       const request = requests.find(item => item.id === id)
       if (!user?.isDemo) {
         if (!supabase || user?.role !== 'admin') throw new Error('Only a signed-in administrator can update requests.')
-        const { error } = await supabase.from('requests').update({
+        const updates = {
           status,
           admin_comment: comment,
-          file_url: fileUrl,
           updated_at: updatedAt,
-        }).eq('id', id)
+        }
+        if (fileUrl) updates.file_url = fileUrl
+        const { error } = await supabase.from('requests').update(updates).eq('id', id)
         if (error) throw new Error(`Request could not be updated: ${error.message}`)
       }
 
@@ -852,7 +862,9 @@ export function AppProvider({ children }) {
       } : item))
 
       if (user?.isDemo && request) {
-        const notificationType = status === 'Approved' && /certificate/i.test(request.type) ? 'certificate' : status === 'Approved' ? 'success' : 'info'
+        const notificationType = ['Approved', 'Ready'].includes(status) && /certificate/i.test(request.type)
+          ? 'certificate'
+          : ['Approved', 'Ready'].includes(status) ? 'success' : 'info'
         addNotif(request.student_id, `${request.type} ${status}`, `Your ${request.type} request ${id} has been ${status.toLowerCase()}.`, notificationType, '/student/documents')
       }
     },
