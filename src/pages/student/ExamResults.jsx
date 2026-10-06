@@ -2,13 +2,19 @@ import { Award, BookOpen, TrendingUp } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useApp } from '../../contexts/AppContext'
 import { EmptyState } from '../../components/ui/States'
+import { DEMO_EXAM_RESULTS } from '../../data/demoData'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 export default function StudentExamResults() {
   const { user } = useAuth()
   const { examResults } = useApp()
-  const results = examResults
+  const liveResults = examResults
     .filter(result => result.student_id === user?.id && result.published)
     .sort((first, second) => new Date(second.published_at || second.created_at) - new Date(first.published_at || first.created_at))
+  const samplePreview = !user?.isDemo && liveResults.length === 0
+  const results = samplePreview
+    ? DEMO_EXAM_RESULTS.filter(result => result.student_id === 'stu-001' && result.published).map(result => ({ ...result, id: `sample-${result.id}`, demo_sample: true }))
+    : liveResults
   const latestCgpa = results.find(result => result.result_type === 'CGPA')
 
   return (
@@ -17,6 +23,8 @@ export default function StudentExamResults() {
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-700"><Award size={22} /></div>
         <div><h1 className="text-2xl font-bold text-gray-900">Exam Results</h1><p className="mt-1 text-sm text-gray-500">Your published marks and grades</p></div>
       </div>
+
+      {samplePreview && <SamplePreviewNotice>These grades are example results only, not your academic record.</SamplePreviewNotice>}
 
       {results.length === 0
         ? <div className="card py-12"><EmptyState message="No exam results have been published for you yet." icon={Award} /></div>

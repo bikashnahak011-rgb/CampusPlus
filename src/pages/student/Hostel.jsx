@@ -22,6 +22,7 @@ export default function HostelPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [assignmentMessage, setAssignmentMessage] = useState('')
+  const [samplePreview, setSamplePreview] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -30,19 +31,23 @@ export default function HostelPage() {
       setLoading(false)
       setError('')
       setAssignmentMessage('')
+      setSamplePreview(false)
       return
     }
     if (!supabase) {
-      setHostel({ block: user.hostel_block || '', room: user.room_number || '', roommates: [] })
+      setHostel({ ...DEMO_HOSTEL, block: user.hostel_block || DEMO_HOSTEL.block, room: user.room_number || DEMO_HOSTEL.room })
       setLoading(false)
-      setError('Live hostel information is unavailable because Supabase is not configured.')
+      setError('')
+      setAssignmentMessage('Showing sample hostel details because live hostel records are unavailable.')
+      setSamplePreview(true)
       return
     }
     if (!user.hostel_block) {
-      setHostel({ block: '', room: user.room_number || '', roommates: [] })
+      setHostel(DEMO_HOSTEL)
       setLoading(false)
       setError('')
-      setAssignmentMessage('No hostel block is assigned to your profile. Add your hostel details in your profile, or contact the hostel office to confirm your assignment.')
+      setAssignmentMessage('Sample hostel details are shown as a preview. They are not assigned to your account. Add your real hostel details in your profile, or contact the hostel office.')
+      setSamplePreview(true)
       return
     }
 
@@ -50,6 +55,7 @@ export default function HostelPage() {
     setLoading(true)
     setError('')
     setAssignmentMessage('')
+    setSamplePreview(false)
     const loadHostel = async () => {
       const { data: hostelData, error: hostelError } = await supabase
         .from('hostels')
@@ -59,13 +65,16 @@ export default function HostelPage() {
       if (!active) return
       if (hostelError) {
         setError(`Could not load hostel information: ${hostelError.message}`)
-        setHostel({ block: user.hostel_block, room: user.room_number || '', roommates: [] })
+        setHostel({ ...DEMO_HOSTEL, block: user.hostel_block, room: user.room_number || DEMO_HOSTEL.room })
+        setAssignmentMessage('Showing sample warden, roommate, and service details until live hostel records can be loaded. These are not live assignments.')
+        setSamplePreview(true)
         setLoading(false)
         return
       }
       if (!hostelData) {
-        setHostel({ block: user.hostel_block, room: user.room_number || '', roommates: [] })
-        setAssignmentMessage(`Your profile lists Block ${user.hostel_block}, but its hostel directory details have not been published yet.`)
+        setHostel({ ...DEMO_HOSTEL, block: user.hostel_block, room: user.room_number || DEMO_HOSTEL.room })
+        setAssignmentMessage(`Your profile lists Block ${user.hostel_block}, but its hostel directory is not published. Other details below are sample preview data, not live assignments.`)
+        setSamplePreview(true)
         setLoading(false)
         return
       }
@@ -79,7 +88,9 @@ export default function HostelPage() {
           .maybeSingle()
         if (roomError) {
           setError(`Could not load room information: ${roomError.message}`)
-          setHostel({ block: hostelData.block, room: user.room_number || '', warden: hostelData.warden_name, warden_phone: hostelData.warden_phone, roommates: [] })
+          setHostel({ ...DEMO_HOSTEL, block: hostelData.block, room: user.room_number || DEMO_HOSTEL.room, warden: hostelData.warden_name || DEMO_HOSTEL.warden, warden_phone: hostelData.warden_phone || DEMO_HOSTEL.warden_phone })
+          setAssignmentMessage('Room details could not be loaded. Missing details below use sample preview data, not live assignments.')
+          setSamplePreview(true)
           setLoading(false)
           return
         }
@@ -93,8 +104,10 @@ export default function HostelPage() {
         capacity: roomData?.capacity,
         warden: hostelData.warden_name,
         warden_phone: hostelData.warden_phone,
-        roommates: [],
+        roommates: DEMO_HOSTEL.roommates,
       })
+      setSamplePreview(true)
+      setAssignmentMessage('Room and warden details are from your live profile. Roommates and service statuses below are sample preview data until those live records are available.')
       setLoading(false)
     }
 
@@ -121,7 +134,7 @@ export default function HostelPage() {
       {error && <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{error}</div>}
       {assignmentMessage && <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <span>{assignmentMessage}</span>
-        {!user?.isDemo && <button onClick={() => navigate('/student/profile')} className="font-semibold underline underline-offset-2 self-start sm:self-auto">Update my profile</button>}
+        {!user?.isDemo && !user?.hostel_block && <button onClick={() => navigate('/student/profile')} className="font-semibold underline underline-offset-2 self-start sm:self-auto">Update my profile</button>}
       </div>}
 
       {!loading && hostel && <>
@@ -145,21 +158,25 @@ export default function HostelPage() {
         </div>
       </div>
 
-      {user?.isDemo ? <div className="card">
-        <h2 className="font-semibold text-gray-900 mb-4">Roommates</h2>
+      {user?.isDemo || samplePreview ? <div className="card">
+        <h2 className="font-semibold text-gray-900 mb-1">Roommates</h2>
+        {samplePreview && !user?.isDemo && <p className="text-xs text-amber-700 mb-4">Sample preview only · not your assigned roommates</p>}
+        {(!samplePreview || user?.isDemo) && <div className="mb-4" />}
         <div className="grid sm:grid-cols-2 gap-3">
-          {DEMO_HOSTEL.roommates.map(r => (
+          {(hostel.roommates || DEMO_HOSTEL.roommates).map(r => (
             <div key={r.roll} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">{r.name[0]}</div>
               <div><p className="font-medium text-gray-900 text-sm">{r.name}</p><p className="text-xs text-gray-500">{r.roll}</p></div>
-              <a href={`tel:${r.phone}`} className="ml-auto text-blue-600"><Phone size={15} /></a>
+              {(!samplePreview || user?.isDemo) && <a href={`tel:${r.phone}`} className="ml-auto text-blue-600"><Phone size={15} /></a>}
             </div>
           ))}
         </div>
       </div> : <div className="card text-sm text-gray-500">Roommate details are not available in the published hostel directory.</div>}
 
-      {user?.isDemo ? <div className="card">
-        <h2 className="font-semibold text-gray-900 mb-4">Hostel Services</h2>
+      {user?.isDemo || samplePreview ? <div className="card">
+        <h2 className="font-semibold text-gray-900 mb-1">Hostel Services</h2>
+        {samplePreview && !user?.isDemo && <p className="text-xs text-amber-700 mb-4">Sample status preview · check with the hostel office for live service status</p>}
+        {(!samplePreview || user?.isDemo) && <div className="mb-4" />}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {SERVICES.map(({ icon: Icon, label, status, color, bg }) => (
             <div key={label} className={`${bg} rounded-2xl p-4 text-center`}>

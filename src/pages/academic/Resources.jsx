@@ -12,6 +12,7 @@ import Modal from '../../components/ui/Modal'
 import { supabase } from '../../lib/supabase'
 import { DEMO_ACADEMIC_RESOURCES } from '../../data/demoData'
 import { isPdfAssignmentFile } from '../../lib/academicResources'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 const BUCKET = 'academic-resources'
 const PAGE_SIZE = 9
@@ -56,6 +57,7 @@ export default function AcademicResources({ resourceType }) {
   const navigate = useNavigate()
   const isAdmin = user?.admin_role === 'main_administrator'
   const isFaculty = user?.admin_role === 'faculty'
+  const canViewSamplePreview = user?.role === 'student' && !user?.isDemo
   const canManage = (isAdmin || isFaculty) && !user?.isDemo
   const overview = !resourceType
   const category = resourceType ? CATEGORIES[resourceType] : null
@@ -64,7 +66,8 @@ export default function AcademicResources({ resourceType }) {
   const [facultyProfiles, setFacultyProfiles] = useState([])
   const [assignmentError, setAssignmentError] = useState('')
   const [loading, setLoading] = useState(Boolean(supabase) && !user?.isDemo)
-  const [error, setError] = useState(user?.isDemo || supabase ? '' : 'Academic Resources requires a configured Supabase project.')
+  const [forceSamplePreview, setForceSamplePreview] = useState(false)
+  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({ department: '', course: '', semester: '', subject: '', year: '', examination_type: '', faculty: '' })
   const [page, setPage] = useState(1)
@@ -76,20 +79,26 @@ export default function AcademicResources({ resourceType }) {
   const [preview, setPreview] = useState(null)
   const [permissionForm, setPermissionForm] = useState({ faculty_id: '', department: '', course: '', semester: '', subject: '' })
   const [permissionBusy, setPermissionBusy] = useState(false)
-  const resources = user?.isDemo
-    ? DEMO_ACADEMIC_RESOURCES.filter(resource => !resourceType || resource.resource_type === resourceType)
-    : loadedResources
+  const resourceTypesWithLiveData = new Set(loadedResources.map(resource => resource.resource_type))
+  const sampleResources = DEMO_ACADEMIC_RESOURCES.filter(resource =>
+    (!resourceType || resource.resource_type === resourceType)
+    && (user?.isDemo || (canViewSamplePreview && (forceSamplePreview || !resourceTypesWithLiveData.has(resource.resource_type)))),
+  )
+  const resources = user?.isDemo ? sampleResources : [...loadedResources, ...sampleResources]
 
   const load = useCallback(async () => {
     if (user?.isDemo) return
     if (!supabase) {
+      setError('')
+      setLoadedResources([])
+      setLoading(false)
       return
     }
     let query = supabase.from('academic_resources').select('*').order('created_at', { ascending: false })
     if (resourceType) query = query.eq('resource_type', resourceType)
     const { data, error: queryError } = await query
     if (queryError) {
-      setError(`Could not load academic resources: ${queryError.message}`)
+      setError('')
       setLoadedResources([])
     } else {
       setError('')
@@ -399,6 +408,12 @@ export default function AcademicResources({ resourceType }) {
         )}
       </div>
       {user?.isDemo && <p className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">Demo mode · showing sample academic resources. Sample entries do not include downloadable PDFs.</p>}
+      {canViewSamplePreview && <div className="flex flex-wrap items-start justify-between gap-3">
+        {resources.some(resource => resource.demo_sample) && <SamplePreviewNotice>Sample syllabi, assignments, PYQs, and class materials are examples only. Sample PDFs are not downloadable.</SamplePreviewNotice>}
+        <button type="button" onClick={() => setForceSamplePreview(value => !value)} className="shrink-0 rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800">
+          {forceSamplePreview ? 'Show published resources' : 'Show all sample resources'}
+        </button>
+      </div>}
 
       {overview && isAdmin && (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

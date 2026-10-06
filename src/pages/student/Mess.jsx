@@ -7,6 +7,8 @@ import { supabase } from '../../lib/supabase'
 import { getDemoMessOrders, makeLocalDateValue, saveDemoMessOrders } from '../../lib/messOrderStorage'
 import MessMenuWeek from '../../components/MessMenuWeek'
 import { MEAL_SLOTS, MESS_DAYS } from '../../data/messMenuConfig'
+import { DEMO_MESS_MENU } from '../../data/demoData'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 function getWeekLimit() {
   const date = new Date()
@@ -37,7 +39,10 @@ export default function MessPage() {
   const { messMenu, addMessFeedback } = useApp()
   const toast = useToast()
   const orderDay = useMemo(() => new Date(`${serviceDate}T12:00:00`).toLocaleDateString('en-US', { weekday: 'long' }), [serviceDate])
-  const selectedMenu = messMenu?.[orderDay]
+  const hasLiveMenu = Object.keys(messMenu || {}).length > 0
+  const sampleMenuPreview = !user?.isDemo && !hasLiveMenu
+  const displayMenu = hasLiveMenu ? messMenu : DEMO_MESS_MENU
+  const selectedMenu = displayMenu?.[orderDay]
   const availableMeals = MEAL_SLOTS.filter(meal => selectedMenu?.[meal.key]?.trim())
   const selectedMeal = availableMeals.find(meal => meal.key === mealSlot) || availableMeals[0]
 
@@ -93,7 +98,7 @@ export default function MessPage() {
 
   const handlePlaceOrder = async (event) => {
     event.preventDefault()
-    if (!selectedMeal || !user?.id) return
+    if (!selectedMeal || !user?.id || sampleMenuPreview) return
     const order = {
       student_id: user.id,
       student_name: user.name || user.email || 'Student',
@@ -134,7 +139,9 @@ export default function MessPage() {
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-gray-900">Mess Menu</h1><p className="text-gray-500 text-sm mt-1">Weekly meal schedule and feedback</p></div>
 
-      <MessMenuWeek menus={messMenu} activeDay={activeDay} onSelectDay={setActiveDay} />
+      {sampleMenuPreview && <SamplePreviewNotice>Meals below are examples only. Ordering is disabled until the mess publishes a live menu.</SamplePreviewNotice>}
+
+      <MessMenuWeek menus={displayMenu} activeDay={activeDay} onSelectDay={setActiveDay} />
 
       <section className="card space-y-5" aria-labelledby="meal-order-heading">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -151,7 +158,7 @@ export default function MessPage() {
             <input type="date" min={makeLocalDateValue()} max={getWeekLimit()} value={serviceDate} onChange={event => setServiceDate(event.target.value)} className="input mt-1" required />
           </label>
           <label className="text-sm font-medium text-gray-700">Available meal
-            <select value={selectedMeal?.key || ''} onChange={event => setMealSlot(event.target.value)} className="input mt-1" disabled={!availableMeals.length} required>
+            <select value={selectedMeal?.key || ''} onChange={event => setMealSlot(event.target.value)} className="input mt-1" disabled={!availableMeals.length || sampleMenuPreview} required>
               {availableMeals.length ? availableMeals.map(meal => <option key={meal.key} value={meal.key}>{meal.label} · {meal.time}</option>) : <option value="">No published meals for {orderDay}</option>}
             </select>
           </label>
@@ -167,7 +174,7 @@ export default function MessPage() {
             <input type="text" maxLength="160" value={orderNotes} onChange={event => setOrderNotes(event.target.value)} placeholder="Dietary or pickup note" className="input mt-1" />
           </label>
           <div className="md:col-span-2">
-            <button type="submit" disabled={placingOrder || !selectedMeal || !serviceDate || !Number.isInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > 10} className="btn-primary sm:w-auto sm:px-6">
+            <button type="submit" disabled={sampleMenuPreview || placingOrder || !selectedMeal || !serviceDate || !Number.isInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > 10} className="btn-primary sm:w-auto sm:px-6">
               {placingOrder ? <><Loader2 size={16} className="animate-spin" /> Saving order...</> : <><ShoppingBag size={16} /> Place meal order</>}
             </button>
           </div>

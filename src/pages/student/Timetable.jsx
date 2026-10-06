@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { getDemoTimetable } from '../../data/demoData'
 import { EmptyState, ErrorState, LoadingState } from '../../components/ui/States'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const selectClass = 'rounded-xl border border-violet-100 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-violet-400'
@@ -34,6 +35,7 @@ function normalizeRow(row) {
 function demoEntries(user) {
   return getDemoTimetable(user).map(row => ({
     ...row,
+    day_of_week: row.day,
     start_time: row.time,
     end_time: `${String(Number(row.time.split(':')[0]) + 1).padStart(2, '0')}:${row.time.split(':')[1]}`,
     faculty_name: row.faculty,
@@ -48,9 +50,11 @@ export default function TimetablePage() {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
   const [entries, setEntries] = useState(() => user?.isDemo ? demoEntries(user) : [])
   const [loading, setLoading] = useState(!user?.isDemo && Boolean(supabase && user))
-  const [error, setError] = useState(!user?.isDemo && !supabase ? 'Live timetable is unavailable because Supabase is not configured.' : '')
+  const [error, setError] = useState('')
   const [activeDay, setActiveDay] = useState(DAYS.includes(today) ? today : 'Monday')
   const [view, setView] = useState('week')
+  const [samplePreview, setSamplePreview] = useState(false)
+  const [forceSamplePreview, setForceSamplePreview] = useState(false)
   const [filters, setFilters] = useState({
     department: user?.department || '',
     semester: user?.semester ? String(user.semester) : '',
@@ -61,6 +65,9 @@ export default function TimetablePage() {
     if (!user) return
     if (user.isDemo) return
     if (!supabase) {
+      setEntries(demoEntries(user))
+      setSamplePreview(true)
+      setLoading(false)
       return
     }
     const [departmentResult, personalResult] = await Promise.all([
@@ -71,20 +78,25 @@ export default function TimetablePage() {
     ])
     const queryError = departmentResult.error || personalResult.error
     if (queryError) {
-      setError(`Could not load timetable: ${queryError.message}`)
-      setEntries([])
+      setError('')
+      setEntries(demoEntries(user))
+      setSamplePreview(true)
     } else {
       setError('')
-      setEntries([...(departmentResult.data || []), ...(personalResult.data || [])].map(normalizeRow))
+      const liveEntries = [...(departmentResult.data || []), ...(personalResult.data || [])].map(normalizeRow)
+      if (liveEntries.length) { setEntries(liveEntries); setSamplePreview(false) }
+      else { setEntries(demoEntries(user)); setSamplePreview(true) }
     }
     setLoading(false)
   }, [user, setEntries, setError, setLoading])
 
   useEffect(() => { load() }, [load])
 
-  const departmentOptions = useMemo(() => [...new Set(entries.map(row => row.department).filter(Boolean))], [entries])
-  const sectionOptions = useMemo(() => [...new Set(entries.map(row => row.section).filter(Boolean))], [entries])
-  const matchingEntries = entries.filter(row =>
+  const showingSamplePreview = !user?.isDemo && (samplePreview || forceSamplePreview)
+  const displayedEntries = showingSamplePreview ? demoEntries(user) : entries
+  const departmentOptions = useMemo(() => [...new Set(displayedEntries.map(row => row.department).filter(Boolean))], [displayedEntries])
+  const sectionOptions = useMemo(() => [...new Set(displayedEntries.map(row => row.section).filter(Boolean))], [displayedEntries])
+  const matchingEntries = displayedEntries.filter(row =>
     (!filters.department || row.department === filters.department)
     && (!filters.semester || String(row.semester || '') === filters.semester)
     && (!filters.section || row.section === filters.section)
@@ -103,6 +115,11 @@ export default function TimetablePage() {
           {['week', 'day'].map(option => <button key={option} onClick={() => setView(option)} className={`rounded-lg px-4 py-2 text-sm font-medium capitalize ${view === option ? 'bg-white text-violet-800 shadow-sm' : 'text-violet-600'}`}>{option === 'week' ? 'Weekly' : 'Daily'}</button>)}
         </div>
       </div>
+
+      {!loading && showingSamplePreview && <SamplePreviewNotice>Classes below are examples, not your published schedule.</SamplePreviewNotice>}
+      {!loading && !user?.isDemo && entries.length > 0 && <button type="button" onClick={() => setForceSamplePreview(value => !value)} className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800">
+        {forceSamplePreview ? 'Show my live timetable' : 'Show sample timetable'}
+      </button>}
 
       <div className="card grid gap-3 sm:grid-cols-3">
         <label className="space-y-1 text-xs text-gray-500">Department

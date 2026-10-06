@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { supabase } from '../../lib/supabase'
 import { DEMO_FEES } from '../../data/demoData'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 export default function FeesPage() {
   const { user } = useAuth()
@@ -12,31 +13,36 @@ export default function FeesPage() {
   const [fees, setFees] = useState({ total: 0, paid: 0, pending: 0, transactions: [] })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [samplePreview, setSamplePreview] = useState(false)
 
   useEffect(() => {
     if (!user) return
     if (user.isDemo) {
       setFees(DEMO_FEES)
+      setSamplePreview(false)
       setLoading(false)
       setError('')
       return
     }
     if (!supabase) {
-      setFees({ total: 0, paid: 0, pending: 0, transactions: [] })
+      setFees(DEMO_FEES)
+      setSamplePreview(true)
       setLoading(false)
-      setError('Live fee records are unavailable because Supabase is not configured.')
+      setError('')
       return
     }
 
     let active = true
     setLoading(true)
     setError('')
+    setSamplePreview(false)
     const loadFees = async () => {
       const { data, error: queryError } = await supabase.from('fees').select('*').eq('student_id', user.id).order('due_date')
         if (!active) return
         if (queryError) {
-          setError(`Could not load fee records: ${queryError.message}`)
-          setFees({ total: 0, paid: 0, pending: 0, transactions: [] })
+          setError('')
+          setFees(DEMO_FEES)
+          setSamplePreview(true)
         } else {
           const transactions = (data || []).map(fee => ({
             id: fee.id,
@@ -48,7 +54,8 @@ export default function FeesPage() {
           }))
           const total = transactions.reduce((sum, fee) => sum + fee.amount, 0)
           const paid = transactions.filter(fee => fee.status === 'Paid').reduce((sum, fee) => sum + fee.amount, 0)
-          setFees({ total, paid, pending: total - paid, transactions })
+          if (transactions.length) setFees({ total, paid, pending: total - paid, transactions })
+          else { setFees(DEMO_FEES); setSamplePreview(true) }
         }
         setLoading(false)
     }
@@ -76,6 +83,8 @@ export default function FeesPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold text-gray-900">Fees & Dues</h1><p className="text-gray-500 text-sm mt-1">Your fee payment status and history</p></div>
+
+      {!loading && samplePreview && <SamplePreviewNotice>Fee figures below are examples only. Confirm your actual balance with the campus accounts office.</SamplePreviewNotice>}
 
       {loading && <div className="card text-sm text-gray-500">Loading fee records...</div>}
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}

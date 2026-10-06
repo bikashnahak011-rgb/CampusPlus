@@ -6,6 +6,8 @@ import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { StatusBadge, EmptyState } from '../../components/ui/States'
 import { supabase } from '../../lib/supabase'
+import { INITIAL_REQUESTS } from '../../data/demoData'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 const DOCUMENT_BUCKET = 'document-requests'
 
@@ -21,7 +23,11 @@ export default function DocumentsPage() {
   const [downloadingId, setDownloadingId] = useState('')
   const [form, setForm] = useState({ type: '', reason: '' })
 
-  const myRequests = requests.filter(r => r.student_id === user?.id)
+  const liveRequests = requests.filter(r => r.student_id === user?.id)
+  const samplePreview = !user?.isDemo && liveRequests.length === 0
+  const myRequests = samplePreview
+    ? INITIAL_REQUESTS.filter(r => r.student_id === 'stu-001').map(r => ({ ...r, id: `sample-${r.id}`, demo_sample: true }))
+    : liveRequests
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -73,6 +79,8 @@ export default function DocumentsPage() {
         <div><h1 className="text-2xl font-bold text-gray-900">Documents</h1><p className="text-gray-500 text-sm mt-1">Request and track your documents</p></div>
         <button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={18} /> New Request</button>
       </div>
+
+      {samplePreview && <SamplePreviewNotice>These document requests are examples only. New requests you submit are saved to your account.</SamplePreviewNotice>}
 
       <div className="card">
         <h2 className="font-semibold text-gray-900 mb-4">My Document Requests</h2>

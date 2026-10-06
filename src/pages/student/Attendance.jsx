@@ -3,41 +3,48 @@ import { AlertCircle, CheckCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { getDemoAttendance } from '../../data/demoData'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 export default function AttendancePage() {
   const { user } = useAuth()
   const [subjects, setSubjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [samplePreview, setSamplePreview] = useState(false)
+  const [forceSamplePreview, setForceSamplePreview] = useState(false)
 
   useEffect(() => {
     if (!user) return
     if (user.isDemo) {
       setSubjects(getDemoAttendance(user))
+      setSamplePreview(false)
       setLoading(false)
       setError('')
       return
     }
     if (!supabase) {
-      setSubjects([])
+      setSubjects(getDemoAttendance(user))
+      setSamplePreview(true)
       setLoading(false)
-      setError('Live attendance is unavailable because Supabase is not configured.')
+      setError('')
       return
     }
 
     let active = true
     setLoading(true)
     setError('')
+    setSamplePreview(false)
     const loadAttendance = async () => {
       const { data, error: queryError } = await supabase.from('attendance')
         .select('subject_id,total_classes,present_classes,subject:subjects(id,name,code,faculty)')
         .eq('student_id', user.id)
         if (!active) return
         if (queryError) {
-          setError(`Could not load attendance: ${queryError.message}`)
-          setSubjects([])
+          setError('')
+          setSubjects(getDemoAttendance(user))
+          setSamplePreview(true)
         } else {
-          setSubjects((data || []).map(row => {
+          const liveSubjects = (data || []).map(row => {
             const subject = Array.isArray(row.subject) ? row.subject[0] : row.subject
             return {
               id: subject?.id || row.subject_id,
@@ -47,7 +54,9 @@ export default function AttendancePage() {
               total: Number(row.total_classes) || 0,
               present: Number(row.present_classes) || 0,
             }
-          }))
+          })
+          if (liveSubjects.length) setSubjects(liveSubjects)
+          else { setSubjects(getDemoAttendance(user)); setSamplePreview(true) }
         }
         setLoading(false)
     }
@@ -63,7 +72,9 @@ export default function AttendancePage() {
     }
   }, [user])
 
-  const subjectsWithPercent = subjects.map(subject => ({
+  const showingSamplePreview = !user?.isDemo && (samplePreview || forceSamplePreview)
+  const displayedSubjects = showingSamplePreview ? getDemoAttendance(user) : subjects
+  const subjectsWithPercent = displayedSubjects.map(subject => ({
     ...subject,
     pct: subject.total > 0 ? Math.round((subject.present / subject.total) * 100) : 0,
   }))
@@ -77,6 +88,10 @@ export default function AttendancePage() {
       <div><h1 className="text-2xl font-bold text-gray-900">Attendance</h1><p className="text-gray-500 text-sm mt-1">Subject-wise attendance overview</p></div>
       {loading && <div className="card text-sm text-gray-500">Loading attendance records...</div>}
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+      {!loading && showingSamplePreview && <SamplePreviewNotice>Attendance figures below are examples, not your published attendance.</SamplePreviewNotice>}
+      {!loading && !user?.isDemo && subjects.length > 0 && <button type="button" onClick={() => setForceSamplePreview(value => !value)} className="rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800">
+        {forceSamplePreview ? 'Show my live attendance' : 'Show sample attendance'}
+      </button>}
       {!loading && !error && subjectsWithPercent.length === 0 && <div className="card text-center py-10 text-sm text-gray-500">No attendance records have been published for your account.</div>}
       {!loading && !error && subjectsWithPercent.length > 0 && <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

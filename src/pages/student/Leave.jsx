@@ -5,6 +5,8 @@ import { useApp } from '../../contexts/AppContext'
 import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { StatusBadge, EmptyState } from '../../components/ui/States'
+import { INITIAL_LEAVE } from '../../data/demoData'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 const EMPTY = { type: 'Gate Pass', reason: '', destination: '', from_date: '', from_time: '', to_date: '', to_time: '' }
 
@@ -18,7 +20,11 @@ export default function LeavePage() {
   const [form, setForm] = useState(EMPTY)
   const [tab, setTab] = useState('All')
 
-  const myLeave = leaveRequests.filter(l => l.student_id === user?.id)
+  const liveLeave = leaveRequests.filter(l => l.student_id === user?.id)
+  const samplePreview = !user?.isDemo && liveLeave.length === 0
+  const myLeave = samplePreview
+    ? INITIAL_LEAVE.filter(l => l.student_id === 'stu-001').map(l => ({ ...l, id: `sample-${l.id}`, demo_sample: true }))
+    : liveLeave
   const filtered = tab === 'All' ? myLeave : myLeave.filter(l => l.type === tab)
 
   const handleSubmit = async (e) => {
@@ -43,6 +49,8 @@ export default function LeavePage() {
         <div><h1 className="text-2xl font-bold text-gray-900">Leave & Gate Pass</h1><p className="text-gray-500 text-sm mt-1">Manage your leave and gate pass requests</p></div>
         <button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={18} /> New Request</button>
       </div>
+
+      {samplePreview && <SamplePreviewNotice>These leave and gate pass entries are examples only. Submitting a request creates a real request for your account.</SamplePreviewNotice>}
 
       <div className="card">
         <div className="flex gap-2 mb-4">

@@ -6,6 +6,8 @@ import { useToast } from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { StatusBadge, EmptyState } from '../../components/ui/States'
 import { analyzeComplaint } from '../../lib/aiService'
+import { INITIAL_COMPLAINTS } from '../../data/demoData'
+import SamplePreviewNotice from '../../components/ui/SamplePreviewNotice'
 
 const CATEGORIES = ['Hostel', 'Mess', 'Electricity', 'Water', 'Cleaning', 'Academic', 'Transport', 'Other']
 const FILTERS = ['All', 'High Priority', 'Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed']
@@ -21,9 +23,14 @@ export default function ComplaintsPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResult, setAiResult] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [showSamplePreview, setShowSamplePreview] = useState(false)
   const [form, setForm] = useState({ category: '', location: '', description: '', priority: 'Medium' })
 
-  const myComplaints = complaints.filter(c => c.student_id === user?.id)
+  const liveComplaints = complaints.filter(c => c.student_id === user?.id)
+  const samplePreview = !user?.isDemo && (liveComplaints.length === 0 || showSamplePreview)
+  const myComplaints = samplePreview
+    ? INITIAL_COMPLAINTS.filter(c => c.student_id === 'stu-001').map(c => ({ ...c, id: `sample-${c.id}`, demo_sample: true }))
+    : liveComplaints
   const filtered = myComplaints.filter(c => {
     const mf = filter === 'All' ? true : filter === 'High Priority' ? c.priority === 'High' : c.status === filter
     const ms = !search || c.id.toLowerCase().includes(search.toLowerCase()) || c.description.toLowerCase().includes(search.toLowerCase()) || c.category.toLowerCase().includes(search.toLowerCase())
@@ -66,6 +73,13 @@ export default function ComplaintsPage() {
         <div><h1 className="text-2xl font-bold text-gray-900">My Complaints</h1><p className="text-gray-500 text-sm mt-1">Track and manage your campus complaints</p></div>
         <button onClick={() => setShowForm(true)} className="btn-primary"><Plus size={18} /> Report a Problem</button>
       </div>
+
+      {!user?.isDemo && <div className="flex flex-wrap items-start justify-between gap-3">
+        {samplePreview && <SamplePreviewNotice>Complaint examples below are for preview only. Submitting a problem creates a real complaint for your account.</SamplePreviewNotice>}
+        {liveComplaints.length > 0 && <button type="button" onClick={() => setShowSamplePreview(value => !value)} className="shrink-0 rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800">
+          {showSamplePreview ? 'Show my complaints' : 'Show sample complaints'}
+        </button>}
+      </div>}
 
       <div className="card">
         <div className="flex flex-col sm:flex-row gap-3">
