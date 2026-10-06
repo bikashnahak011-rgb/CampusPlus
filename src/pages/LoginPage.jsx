@@ -15,9 +15,17 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import { useApp } from '../contexts/AppContext'
 import AppLogo from '../components/AppLogo'
-import { getAdminHomePath } from '../lib/adminRoles'
+import { ADMIN_ROLES, ADMIN_ROLE_LABELS, getAdminHomePath } from '../lib/adminRoles'
 import { DEMO_LOGIN_ACCOUNTS } from '../data/demoAccounts'
 import loginStudentArtwork from '../assets/login-student-3d-transparent.png'
+
+const ADMIN_ROLE_OPTIONS = [
+  { value: ADMIN_ROLES.HOSTEL_MANAGEMENT, description: 'Hostel rooms, allocations, student housing, and maintenance.' },
+  { value: ADMIN_ROLES.MESS_MANAGER, description: 'Dining menus, meal orders, and mess operations.' },
+  { value: ADMIN_ROLES.FACULTY, description: 'Classes, timetables, attendance, assignments, and academic results.' },
+  { value: ADMIN_ROLES.ACCOUNT_EXAMINATION, description: 'Fees, payments, accounts, and examination records.' },
+  { value: ADMIN_ROLES.MAIN_ADMINISTRATOR, description: 'Admin accounts, campus settings, and all campus modules.' },
+]
 
 export default function LoginPage() {
 
@@ -27,6 +35,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showDemoAccounts, setShowDemoAccounts] = useState(false)
+  const [loginMode, setLoginMode] = useState('student')
+  const [adminRoleChoice, setAdminRoleChoice] = useState('')
 
   const {
     user,
@@ -303,6 +313,8 @@ export default function LoginPage() {
 
     setError('')
     setLoading(true)
+    setLoginMode(account.role === 'admin' ? 'admin' : 'student')
+    setAdminRoleChoice(account.admin_role || '')
 
     try {
 
@@ -422,7 +434,46 @@ export default function LoginPage() {
             <span>Sign in to continue to your campus</span>
           </header>
 
-            <p className="mb-4 text-sm text-gray-500">Your account’s assigned campus role determines your access after sign in.</p>
+            <div className="login-role-switch" role="group" aria-label="Choose sign-in type">
+              <button
+                type="button"
+                className={loginMode === 'student' ? 'bg-white' : ''}
+                aria-pressed={loginMode === 'student'}
+                onClick={() => setLoginMode('student')}
+                disabled={loading}
+              >Login as Student</button>
+              <button
+                type="button"
+                className={loginMode === 'admin' ? 'bg-white' : ''}
+                aria-pressed={loginMode === 'admin'}
+                onClick={() => setLoginMode('admin')}
+                disabled={loading}
+              >Login as Admin</button>
+            </div>
+
+            {loginMode === 'admin' ? (
+              <div className="login-admin-role-field">
+                <label htmlFor="login-admin-role">Admin area</label>
+                <select
+                  id="login-admin-role"
+                  value={adminRoleChoice}
+                  onChange={event => setAdminRoleChoice(event.target.value)}
+                  disabled={loading}
+                >
+                  <option value="">Choose an admin area</option>
+                  {ADMIN_ROLE_OPTIONS.map(({ value }) => (
+                    <option key={value} value={value}>{ADMIN_ROLE_LABELS[value]}</option>
+                  ))}
+                </select>
+                <p>
+                  {ADMIN_ROLE_OPTIONS.find(({ value }) => value === adminRoleChoice)?.description
+                    || 'Choose an area to see what that admin role manages.'}
+                </p>
+                <p className="login-role-note">Your actual role and permissions are assigned by the Main Administrator in User Management. This choice does not grant access.</p>
+              </div>
+            ) : (
+              <p className="login-role-note mb-4 text-sm text-gray-500">Student accounts access classes, attendance, results, and campus services. Your account role is checked after sign in.</p>
+            )}
 
 
             {/* Login form */}
@@ -555,7 +606,7 @@ export default function LoginPage() {
 
                 ) : (
 
-                  'Sign In'
+                  `Sign in as ${loginMode === 'admin' ? 'Admin' : 'Student'}`
 
                 )}
 

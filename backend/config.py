@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     supabase_service_role_key: str
     supabase_jwt_secret: str | None = None
 
-    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    cors_origins: str = "https://campus-plus-zeta.vercel.app,http://localhost:5173,http://127.0.0.1:5173"
     attendance_required: float = 75.0
     rate_limit_per_minute: int = 60
 

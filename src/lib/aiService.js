@@ -188,7 +188,7 @@ export function getCampusWebsiteHelp(message, user = {}) {
   const text = String(message || '').trim().toLowerCase()
   const asksHowTo = /\b(how|where|which page|navigate|find|open|use|add|edit|update|submit|apply)\b/.test(text)
   if (!text) return 'Ask me how to use any student or admin page, or ask about your live campus records.'
-  if (/\b(hello|hi|hey)\b/.test(text)) {
+  if (/\b(hello+|h+i+|hey+)\b/.test(text)) {
     return `Hello ${user?.name?.split(' ')[0] || 'there'}! I can guide you around NexCampus or look up information available to your account.`
   }
   if (!asksHowTo) return null
@@ -240,6 +240,42 @@ export async function askCampusAssistant(message, user = {}, { signal, history =
     return String(result.answer || 'The campus assistant returned no answer.')
   } catch (error) {
     if (signal?.aborted) throw error
-    return 'Campus AI is temporarily unavailable. Please try again in a moment.'
+
+    if (error.status === 401) {
+      return 'Your campus sign-in has expired. Sign out and sign in again, then retry your question.'
+    }
+    if (error.status === 403) {
+      return 'Your campus account does not have an active student or administrator role. Ask the Main Administrator to check your profile.'
+    }
+
+    const websiteHelp = getCampusWebsiteHelp(prompt, user)
+    if (websiteHelp) return websiteHelp
+
+    const fallbackPath = user.role === 'admin'
+      ? 'assistant/admin'
+      : user.role === 'student'
+        ? 'assistant/student'
+        : null
+
+    if (fallbackPath) {
+      try {
+        const fallback = await requestBackend(fallbackPath, {
+          method: 'POST',
+          body: { question: prompt },
+          signal,
+        })
+        if (fallback?.answer) return String(fallback.answer)
+      } catch (fallbackError) {
+        if (signal?.aborted) throw fallbackError
+        if (fallbackError.status === 401) {
+          return 'Your campus sign-in has expired. Sign out and sign in again, then retry your question.'
+        }
+        if (fallbackError.status === 403) {
+          return 'Your campus account does not have an active student or administrator role. Ask the Main Administrator to check your profile.'
+        }
+      }
+    }
+
+    return 'Campus AI is unavailable right now. The live campus assistant needs its Poe API key configured in the backend hosting settings.'
   }
 }

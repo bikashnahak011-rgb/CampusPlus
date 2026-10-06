@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from backend.auth import CurrentUser
 from backend.main import app
 from backend.routes import ai as ai_routes
-from backend.routes.ai import AskRequest, UNAVAILABLE_MESSAGE
+from backend.routes.ai import AskRequest
 from backend.services import poe_assistant
 
 
@@ -212,7 +212,7 @@ class PoeAssistantTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValidationError):
             AskRequest(question="hello", history=history)
 
-    async def test_ai_route_requires_auth_limits_requests_and_hides_provider_errors(self):
+    async def test_ai_route_requires_auth_and_limits_requests(self):
         user = CurrentUser(id="student-1", role="student", email=None, name=None)
         previous_override = app.dependency_overrides.get(ai_routes.get_current_user)
         async with httpx.AsyncClient(
@@ -258,9 +258,43 @@ class PoeAssistantTests(unittest.IsolatedAsyncioTestCase):
                         "/api/ai/ask",
                         json={"question": "Hello"},
                     )
-            self.assertEqual(unavailable.status_code, 503)
-            self.assertEqual(unavailable.json()["detail"], UNAVAILABLE_MESSAGE)
+            self.assertEqual(unavailable.status_code, 200)
+            self.assertIn("Hi there", unavailable.json()["answer"])
             self.assertNotIn("provider secret detail", unavailable.text)
+        finally:
+            if previous_override is None:
+                app.dependency_overrides.pop(ai_routes.get_current_user, None)
+            else:
+                app.dependency_overrides[ai_routes.get_current_user] = previous_override
+
+    async def test_ai_route_uses_student_records_fallback_if_poe_is_unavailable(self):
+        user = CurrentUser(id="student-1", role="student", email=None, name="Arjun Sharma")
+        previous_override = app.dependency_overrides.get(ai_routes.get_current_user)
+        app.dependency_overrides[ai_routes.get_current_user] = lambda: user
+        try:
+            async with httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app, client=("203.0.113.90", 12345)),
+                base_url="http://testserver",
+            ) as client:
+                with (
+                    patch.object(
+                        ai_routes,
+                        "answer_with_poe",
+                        new=AsyncMock(side_effect=poe_assistant.PoeAssistantUnavailable("provider offline")),
+                    ),
+                    patch.object(
+                        ai_routes,
+                        "student_assistant",
+                        new=AsyncMock(return_value={"answer": "Your attendance is 88% (44 of 50 classes)."}),
+                    ) as fallback,
+                ):
+                    response = await client.post(
+                        "/api/ai/ask",
+                        json={"question": "What is my attendance?"},
+                    )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["answer"], "Your attendance is 88% (44 of 50 classes).")
+            fallback.assert_awaited_once()
         finally:
             if previous_override is None:
                 app.dependency_overrides.pop(ai_routes.get_current_user, None)

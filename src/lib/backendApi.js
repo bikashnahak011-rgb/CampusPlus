@@ -43,7 +43,9 @@ export async function requestBackend(path, { method = 'GET', body, signal } = {}
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
     const detail = typeof payload.detail === 'string' ? payload.detail : `AI service returned ${response.status}.`
-    throw new Error(detail)
+    const error = new Error(detail)
+    error.status = response.status
+    throw error
   }
 
   return payload

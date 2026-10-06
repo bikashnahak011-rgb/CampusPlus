@@ -3767,6 +3767,78 @@
   }
 }
 
+/* Premium surface palette and matching hover states for cards throughout the site. */
+.internal-app :is(.card, .feature-card, .metric-box, .internal-state-panel, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n + 1),
+.public-page :is(.card, .feature-card, .metric-box, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n + 1),
+.login-page :is(.card, .feature-card, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.login-panel):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n + 1) {
+  border-color: rgba(195, 174, 225, 0.76);
+  background-color: rgba(242, 235, 250, 0.96) !important;
+  background-image: linear-gradient(145deg, rgba(249, 245, 253, 0.98), rgba(233, 223, 245, 0.94)) !important;
+}
+
+.internal-app :is(.card, .feature-card, .metric-box, .internal-state-panel, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n + 2),
+.public-page :is(.card, .feature-card, .metric-box, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n + 2),
+.login-page :is(.card, .feature-card, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.login-panel):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n + 2) {
+  border-color: rgba(169, 192, 222, 0.76);
+  background-color: rgba(234, 242, 251, 0.96) !important;
+  background-image: linear-gradient(145deg, rgba(247, 250, 255, 0.98), rgba(222, 234, 248, 0.94)) !important;
+}
+
+.internal-app :is(.card, .feature-card, .metric-box, .internal-state-panel, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n),
+.public-page :is(.card, .feature-card, .metric-box, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n),
+.login-page :is(.card, .feature-card, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.login-panel):not(.campus-ai-panel):not(.ambient-3d-panel):nth-child(3n) {
+  border-color: rgba(165, 203, 183, 0.76);
+  background-color: rgba(231, 243, 236, 0.96) !important;
+  background-image: linear-gradient(145deg, rgba(246, 251, 248, 0.98), rgba(216, 237, 225, 0.94)) !important;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .internal-app :is(.card, .feature-card, .metric-box, .internal-state-panel, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):hover,
+  .public-page :is(.card, .feature-card, .metric-box, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):hover,
+  .login-page :is(.card, .feature-card, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.login-panel):hover {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    background-image: linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(238, 231, 249, 0.98)) !important;
+    border-color: rgba(143, 116, 199, 0.62);
+    box-shadow: inset 0 1px 0 #fff, 0 0 0 3px rgba(137, 107, 194, 0.1), 0 16px 34px rgba(55, 42, 81, 0.14);
+    transform: translateY(-2px);
+  }
+
+  .internal-app :is(.card, .feature-card, .metric-box, .internal-state-panel, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):nth-child(3n + 1):hover,
+  .public-page :is(.card, .feature-card, .metric-box, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):nth-child(3n + 1):hover,
+  .login-page :is(.card, .feature-card, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.login-panel):nth-child(3n + 1):hover {
+    background-color: rgba(237, 227, 248, 0.98) !important;
+    background-image: linear-gradient(145deg, #f7f2fc, #e8dcf5) !important;
+    border-color: rgba(174, 149, 210, 0.82);
+  }
+
+  .internal-app :is(.card, .feature-card, .metric-box, .internal-state-panel, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):nth-child(3n + 2):hover,
+  .public-page :is(.card, .feature-card, .metric-box, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):nth-child(3n + 2):hover,
+  .login-page :is(.card, .feature-card, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.login-panel):nth-child(3n + 2):hover {
+    background-color: rgba(225, 237, 249, 0.98) !important;
+    background-image: linear-gradient(145deg, #f1f6fd, #dce9f7) !important;
+    border-color: rgba(147, 177, 216, 0.82);
+  }
+
+  .internal-app :is(.card, .feature-card, .metric-box, .internal-state-panel, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):nth-child(3n):hover,
+  .public-page :is(.card, .feature-card, .metric-box, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):nth-child(3n):hover,
+  .login-page :is(.card, .feature-card, [class*="-card"], [class*="panel"], [class*="tile"]):not([class*="avatar"]):not(.login-panel):nth-child(3n):hover {
+    background-color: rgba(221, 239, 228, 0.98) !important;
+    background-image: linear-gradient(145deg, #f0f8f3, #d8eddf) !important;
+    border-color: rgba(142, 187, 161, 0.82);
+  }
+
+  .internal-app :is([class*="row"], [role="row"], tbody tr),
+  .public-page :is([class*="row"], [role="row"], tbody tr) {
+    transition: background-color 160ms ease, box-shadow 160ms ease, color 160ms ease;
+  }
+
+  .internal-app :is([class*="row"], [role="row"], tbody tr):hover,
+  .public-page :is([class*="row"], [role="row"], tbody tr):hover {
+    background-color: rgba(235, 228, 246, 0.76) !important;
+    box-shadow: inset 3px 0 0 rgba(126, 98, 185, 0.52), 0 4px 12px rgba(63, 48, 94, 0.07);
+  }
+}
+
 /* Shared liquid-glass card surfaces. */
 .internal-app {
   --internal-ink: #292238;
@@ -4168,4 +4240,119 @@
   .public-page button,
   .login-page .card,
   .login-page button { transition: none !important; }
+}
+
+/* Four soft accent surfaces for card/panel groups in student and admin portals. */
+.internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n + 1),
+.public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n + 1) {
+  background-color: rgba(240, 233, 249, 0.94) !important;
+  background-image: linear-gradient(145deg, rgba(248, 244, 253, 0.98), rgba(232, 222, 244, 0.94)) !important;
+  border-color: rgba(198, 178, 226, 0.72);
+}
+
+.internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n + 2),
+.public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n + 2) {
+  background-color: rgba(231, 239, 250, 0.95) !important;
+  background-image: linear-gradient(145deg, rgba(245, 249, 255, 0.98), rgba(220, 232, 247, 0.94)) !important;
+  border-color: rgba(173, 195, 225, 0.72);
+}
+
+.internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n + 3),
+.public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n + 3) {
+  background-color: rgba(228, 241, 235, 0.95) !important;
+  background-image: linear-gradient(145deg, rgba(243, 250, 246, 0.98), rgba(215, 236, 226, 0.94)) !important;
+  border-color: rgba(167, 207, 187, 0.72);
+}
+
+.internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n),
+.public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(4n) {
+  background-color: rgba(248, 235, 239, 0.95) !important;
+  background-image: linear-gradient(145deg, rgba(255, 247, 249, 0.98), rgba(243, 222, 230, 0.94)) !important;
+  border-color: rgba(224, 180, 196, 0.72);
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):hover,
+  .public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):hover {
+    filter: saturate(1.06);
+    transform: translateY(-2px);
+  }
+}
+
+/* Coordinated soft colorways for repeated cards across both campus panels. */
+.internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 1),
+.public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 1) {
+  background-color: #f1ebfb !important;
+  background-image: linear-gradient(145deg, #fbf9ff 0%, #eee7fa 100%) !important;
+  border-color: #d9caf2 !important;
+}
+
+.internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 2),
+.public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 2) {
+  background-color: #eaf1fb !important;
+  background-image: linear-gradient(145deg, #f8fbff 0%, #e5eef9 100%) !important;
+  border-color: #c8d9ef !important;
+}
+
+.internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n),
+.public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n) {
+  background-color: #e9f4f1 !important;
+  background-image: linear-gradient(145deg, #f7fcfa 0%, #e2f0eb 100%) !important;
+  border-color: #c4dfd4 !important;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 1):hover,
+  .public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 1):hover {
+    background-color: #e6dcf7 !important;
+    background-image: linear-gradient(145deg, #f1eaff 0%, #e3d8f5 100%) !important;
+    border-color: #bba5e6 !important;
+  }
+
+  .internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 2):hover,
+  .public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n + 2):hover {
+    background-color: #dce8f8 !important;
+    background-image: linear-gradient(145deg, #eaf3ff 0%, #dbe8f8 100%) !important;
+    border-color: #a9c4e7 !important;
+  }
+
+  .internal-app :is(.grid, .internal-stats-grid, .internal-stats-grid-inner, .career-path-grid, .career-project-grid, .career-module-grid, .career-company-grid, .career-campus-grid, [class*="list"], [class*="stack"], .space-y-2, .space-y-3, .space-y-4, .space-y-5) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n):hover,
+  .public-page :is(.grid, [class*="list"], [class*="stack"]) > :is([class*="card"], [class*="panel"], [class*="tile"]):nth-child(3n):hover {
+    background-color: #d9ece5 !important;
+    background-image: linear-gradient(145deg, #eaf6f1 0%, #d8ebe3 100%) !important;
+    border-color: #a8d1bf !important;
+  }
+
+  .internal-app tbody tr:hover,
+  .public-page tbody tr:hover {
+    background: #eee8f8 !important;
+    box-shadow: inset 3px 0 #8a70ca, 0 5px 14px rgba(69, 51, 101, 0.08);
+  }
+}
+
+/* Keep the login demo picker readable and prevent a washed-out page backdrop. */
+.login-demo-backdrop {
+  position: fixed !important;
+  z-index: 9998 !important;
+  inset: 0 !important;
+  appearance: none;
+  padding: 0 !important;
+  border: 0 !important;
+  background-color: rgba(32, 20, 49, 0.76) !important;
+  background-image: radial-gradient(ellipse at 50% 38%, rgba(120, 82, 166, 0.2), transparent 58%) !important;
+  backdrop-filter: blur(5px) saturate(0.85);
+  -webkit-backdrop-filter: blur(5px) saturate(0.85);
+}
+
+.login-demo-dialog {
+  position: fixed !important;
+  z-index: 9999 !important;
+  top: 50% !important;
+  left: 50% !important;
+  max-height: min(82dvh, 32rem) !important;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  background: linear-gradient(145deg, #fff, #f2ecfb) !important;
+  box-shadow: 0 28px 80px rgba(20, 10, 34, 0.42), inset 0 1px 0 #fff;
+  transform: translate(-50%, -50%) !important;
 }

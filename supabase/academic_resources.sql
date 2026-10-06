@@ -303,7 +303,7 @@ CREATE POLICY "academic_storage_read" ON storage.objects
       public.has_admin_role(ARRAY['main_administrator'])
       OR (
         public.has_admin_role(ARRAY['faculty'])
-        AND storage.foldername(name)[2] = auth.uid()::text
+        AND (storage.foldername(name))[2] = auth.uid()::text
       )
       OR EXISTS (
         SELECT 1 FROM public.academic_resources AS r
@@ -320,8 +320,8 @@ CREATE POLICY "academic_storage_upload" ON storage.objects
       public.has_admin_role(ARRAY['main_administrator'])
       OR (
         public.has_admin_role(ARRAY['faculty'])
-        AND storage.foldername(name)[1] IN ('syllabus', 'pyq', 'class_material', 'assignment')
-        AND storage.foldername(name)[2] = auth.uid()::text
+        AND (storage.foldername(name))[1] IN ('syllabus', 'pyq', 'class_material', 'assignment')
+        AND (storage.foldername(name))[2] = auth.uid()::text
       )
     )
   );
@@ -333,7 +333,7 @@ CREATE POLICY "academic_storage_delete" ON storage.objects
       public.has_admin_role(ARRAY['main_administrator'])
       OR (
         public.has_admin_role(ARRAY['faculty'])
-        AND storage.foldername(name)[2] = auth.uid()::text
+        AND (storage.foldername(name))[2] = auth.uid()::text
       )
     )
   );

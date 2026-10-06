@@ -3,6 +3,7 @@ import sunitaPortrait from '../assets/faculty/sunita.jpg'
 import anilPortrait from '../assets/faculty/anil.jpg'
 import kavitaPortrait from '../assets/faculty/kavita.jpg'
 import deepakPortrait from '../assets/faculty/deepak.jpg'
+import { ADMIN_ROLES } from '../lib/adminRoles.js'
 
 export const DEMO_STUDENT = {
   id: 'stu-001', email: 'student@campusone.demo', role: 'student',
@@ -104,7 +105,7 @@ export const DEMO_MESS_FEEDBACK = [
   { id: 'mess-feedback-demo-4', student_id: 'stu-004', day: 'Thursday', rating: 2, comment: 'Please add more vegetarian options at dinner.', created_at: new Date(Date.now() - 2 * 86400000).toISOString() },
 ]
 
-export const DEMO_ADMIN_USERS = DEMO_STUDENTS_ADMIN.slice(0, 4).map((student, index) => ({
+const DEMO_STUDENT_USERS = DEMO_STUDENTS_ADMIN.map((student, index) => ({
   id: student.id,
   name: student.name,
   email: `${student.roll.toLowerCase()}@demo.campus`,
@@ -113,6 +114,25 @@ export const DEMO_ADMIN_USERS = DEMO_STUDENTS_ADMIN.slice(0, 4).map((student, in
   is_active: true,
   created_at: new Date(Date.now() - (index + 3) * 86400000).toISOString(),
 }))
+
+const DEMO_FACULTY_USERS = INITIAL_FACULTY.map((member, index) => ({
+  id: `demo-user-${member.id}`,
+  name: member.name,
+  email: `${member.name.toLowerCase().replace(/[^a-z]+/g, '.').replace(/^\.|\.$/g, '')}@demo.campus`,
+  role: 'admin',
+  admin_role: ADMIN_ROLES.FACULTY,
+  is_active: true,
+  created_at: new Date(Date.now() - (index + 12) * 86400000).toISOString(),
+}))
+
+export const DEMO_ADMIN_USERS = [
+  ...DEMO_STUDENT_USERS,
+  ...DEMO_FACULTY_USERS,
+  { id: 'demo-role-hostel', name: 'Demo Hostel Manager', email: 'hostel.manager@demo.campus', role: 'admin', admin_role: ADMIN_ROLES.HOSTEL_MANAGEMENT, is_active: true, created_at: new Date(Date.now() - 20 * 86400000).toISOString() },
+  { id: 'demo-role-mess', name: 'Demo Mess Manager', email: 'mess.manager@demo.campus', role: 'admin', admin_role: ADMIN_ROLES.MESS_MANAGER, is_active: true, created_at: new Date(Date.now() - 21 * 86400000).toISOString() },
+  { id: 'demo-role-accounts', name: 'Demo Accounts Manager', email: 'accounts.manager@demo.campus', role: 'admin', admin_role: ADMIN_ROLES.ACCOUNT_EXAMINATION, is_active: true, created_at: new Date(Date.now() - 22 * 86400000).toISOString() },
+  { id: 'demo-role-main', name: 'Demo Main Administrator', email: 'main.admin@demo.campus', role: 'admin', admin_role: ADMIN_ROLES.MAIN_ADMINISTRATOR, is_active: true, created_at: new Date(Date.now() - 30 * 86400000).toISOString() },
+]
 
 export const DEMO_HOSTEL_BLOCKS = [
   { block: 'A', rooms: 120, occupied: 108 },
@@ -145,6 +165,9 @@ export const DEMO_ADMIN_NOTIFICATIONS = [
 
 export const DEMO_ACADEMIC_RESOURCES = [
   { id: 'resource-demo-assignment', title: 'Data Structures and Algorithms Assignment 1', description: 'Practice problems on arrays, linked lists, and complexity analysis.', resource_type: 'assignment', department: 'Computer Science', course: 'B.Tech CSE', semester: 6, subject: 'Data Structures and Algorithms', academic_year: '2025-2026', faculty_name: 'Prof. Ramesh Kumar', file_name: 'data-structures-assignment-1.pdf', file_type: 'application/pdf', file_url: null, link_url: null, demo_sample: true, status: 'approved', created_at: new Date(Date.now() - 1 * 86400000).toISOString() },
+  { id: 'resource-demo-assignment-dbms', title: 'Database Management Systems — SQL Lab', description: 'Write and test SQL queries using joins, grouping, constraints, and transactions. Submit query output with your answers.', resource_type: 'assignment', department: 'Computer Science', course: 'B.Tech CSE', semester: 6, subject: 'Database Management', academic_year: '2025-2026', faculty_name: 'Prof. Sunita Rao', file_name: 'dbms-sql-lab-assignment.pdf', file_type: 'application/pdf', file_url: null, link_url: null, demo_sample: true, status: 'approved', created_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+  { id: 'resource-demo-assignment-networks', title: 'Computer Networks — Routing and Subnetting', description: 'Solve IPv4 subnetting exercises and compare distance-vector with link-state routing.', resource_type: 'assignment', department: 'Computer Science', course: 'B.Tech CSE', semester: 6, subject: 'Computer Networks', academic_year: '2025-2026', faculty_name: 'Prof. Anil Verma', file_name: 'networks-routing-assignment.pdf', file_type: 'application/pdf', file_url: null, link_url: null, demo_sample: true, status: 'approved', created_at: new Date(Date.now() - 5 * 86400000).toISOString() },
+  { id: 'resource-demo-assignment-se', title: 'Software Engineering — Requirements and Design', description: 'Prepare a concise requirements specification, use-case diagram, and test plan for a campus service.', resource_type: 'assignment', department: 'Computer Science', course: 'B.Tech CSE', semester: 6, subject: 'Software Engineering', academic_year: '2025-2026', faculty_name: 'Prof. Deepak Joshi', file_name: 'software-engineering-design-assignment.pdf', file_type: 'application/pdf', file_url: null, link_url: null, demo_sample: true, status: 'approved', created_at: new Date(Date.now() - 7 * 86400000).toISOString() },
   { id: 'resource-demo-syllabus', title: 'Data Structures and Algorithms Syllabus', description: 'Course outline, learning objectives, and semester assessment plan.', resource_type: 'syllabus', department: 'Computer Science', course: 'B.Tech CSE', semester: 6, subject: 'Data Structures and Algorithms', academic_year: '2025-2026', faculty_name: 'Prof. Ramesh Kumar', file_name: 'data-structures-syllabus.pdf', file_type: 'application/pdf', file_url: null, link_url: null, demo_sample: true, status: 'approved', created_at: new Date(Date.now() - 8 * 86400000).toISOString() },
   { id: 'resource-demo-pyq', title: 'Database Management Previous Paper', description: 'Practice paper for the previous semester examination.', resource_type: 'pyq', department: 'Computer Science', course: 'B.Tech CSE', semester: 6, subject: 'Database Management', academic_year: '2024-2025', question_year: 2025, examination_type: 'End Semester', faculty_name: 'Prof. Sunita Rao', file_name: 'database-management-paper.pdf', file_type: 'application/pdf', file_url: null, link_url: null, demo_sample: true, status: 'approved', created_at: new Date(Date.now() - 6 * 86400000).toISOString() },
   { id: 'resource-demo-notes', title: 'Computer Networks: Routing Notes', description: 'Lecture notes covering routing protocols and network layers.', resource_type: 'class_material', department: 'Computer Science', course: 'B.Tech CSE', semester: 6, subject: 'Computer Networks', academic_year: '2025-2026', faculty_name: 'Prof. Anil Verma', file_name: '', file_type: 'note', file_url: null, link_url: null, demo_sample: true, status: 'approved', created_at: new Date(Date.now() - 4 * 86400000).toISOString() },
