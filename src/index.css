@@ -1213,22 +1213,19 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   box-shadow: inset 0 2px 10px rgba(255,255,255,.52);
 }
 
-.login-art-student {
+.login-art-campus {
   position: absolute;
-  bottom: 0;
+  z-index: 1;
+  bottom: -3%;
   left: 50%;
-  width: auto;
-  height: min(90%, 270px);
-  min-height: 0;
-  max-width: 66%;
+  width: min(88%, 480px);
+  height: 110%;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 22px rgba(57, 35, 84, .2));
   translate: -50% 0;
-  filter: drop-shadow(0 14px 16px rgba(57, 35, 84, .18));
 }
 
-.login-art-student img { display: block; width: auto; height: 100%; max-width: 100%; object-fit: contain; }
-
 @media (min-width: 701px) {
-  .login-art-student { animation: loginStudentFloat 6s ease-in-out infinite; }
   .login-art-halo--outer { animation: loginHaloRotate 32s linear infinite; }
   .login-art-halo--inner { animation: loginHaloPulse 7s ease-in-out infinite; }
   .login-art-orbit--one { animation: loginOrbitPulse 4.5s ease-in-out infinite; }
@@ -1248,11 +1245,6 @@ body.lite-mode * { animation: none !important; transition: none !important; }
 @keyframes loginPanelColorDrift {
   from { background-position: 100% 0%, 0% 50%; }
   to { background-position: 0% 100%, 100% 50%; }
-}
-
-@keyframes loginStudentFloat {
-  0%, 100% { transform: translateY(0) rotate(-1deg); }
-  50% { transform: translateY(-8px) rotate(1deg); }
 }
 
 @keyframes loginHaloRotate {
@@ -1302,6 +1294,7 @@ body.lite-mode * { animation: none !important; transition: none !important; }
 
 .login-art-float {
   position: absolute;
+  z-index: 2;
   display: grid;
   place-items: center;
   border: 1px solid rgba(255,255,255,.85);
@@ -1330,6 +1323,7 @@ body.lite-mode * { animation: none !important; transition: none !important; }
 
 .login-art-caption {
   position: absolute;
+  z-index: 3;
   right: 2%;
   top: 6%;
   display: grid;
@@ -1648,18 +1642,14 @@ body.lite-mode * { animation: none !important; transition: none !important; }
     position: absolute;
     top: 0;
     right: .85rem;
-    width: 142px;
+    width: clamp(142px, 31vw, 205px);
     height: 112px;
     min-height: 0;
     margin: 0;
   }
   .login-art-halo--outer { width: 108px; }
   .login-art-halo--inner { width: 78px; }
-  .login-art-student {
-    height: 104px;
-    max-width: 76%;
-    margin: 0;
-  }
+  .login-art-campus { width: 100%; height: 112%; bottom: -4%; }
   .login-art-orbit--one { top: 12%; right: 6%; width: 1.7rem; height: 1.7rem; }
   .login-art-orbit--two { bottom: 10%; left: 7%; }
   .login-art-float--book { top: 12%; left: 4%; width: 1.8rem; height: 1.8rem; border-radius: .65rem; }
@@ -1783,7 +1773,6 @@ body.lite-mode * { animation: none !important; transition: none !important; }
   .login-illustration { height: 88px; }
   .login-page { background: linear-gradient(to bottom, #fff 0 88px, var(--login-panel) 88px); }
   .login-art-scene { height: 88px; }
-  .login-art-student { height: 78px; max-width: 76%; }
   .login-panel { padding-top: 98px; }
   .login-back-link { top: -2rem; }
   .login-form-heading { margin-bottom: .45rem; }
@@ -1799,7 +1788,6 @@ body.lite-mode * { animation: none !important; transition: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-art-student,
   .login-art-halo--outer,
   .login-art-halo--inner,
   .login-art-orbit--one,

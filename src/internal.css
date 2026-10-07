@@ -935,6 +935,10 @@
   box-shadow: 0 12px 32px rgba(70, 49, 105, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
+.internal-app .dashboard-hero--student {
+  min-height: 260px;
+}
+
 .internal-app .dashboard-hero::before,
 .internal-app .dashboard-hero::after {
   position: absolute;
@@ -1035,6 +1039,20 @@
   width: 95%;
   height: 130%;
   overflow: visible;
+  filter: drop-shadow(0 14px 13px rgba(76, 54, 112, 0.16));
+  transform-origin: 50% 100%;
+  animation: character-bob 5s ease-in-out infinite;
+}
+
+.internal-app .dashboard-student-image {
+  position: absolute;
+  z-index: 2;
+  right: 3%;
+  bottom: -18%;
+  width: auto;
+  height: 120%;
+  max-width: 100%;
+  object-fit: contain;
   filter: drop-shadow(0 14px 13px rgba(76, 54, 112, 0.16));
   transform-origin: 50% 100%;
   animation: character-bob 5s ease-in-out infinite;
@@ -3006,6 +3024,12 @@
     height: 120%;
   }
 
+  .internal-app .dashboard-student-image {
+    right: 1%;
+    bottom: -12%;
+    height: 140%;
+  }
+
   .internal-app .dashboard-hero-icon-tile {
     top: 7%;
     right: 76%;
@@ -3096,6 +3120,12 @@
     height: 125%;
   }
 
+  .internal-app .dashboard-student-image {
+    right: -3%;
+    bottom: -8%;
+    height: 127%;
+  }
+
   .internal-app .dashboard-hero-icon-tile {
     display: none;
   }
@@ -3133,6 +3163,7 @@
 @media (prefers-reduced-motion: reduce) {
   .internal-app .dashboard-hero-art,
   .internal-app .dashboard-student-character,
+  .internal-app .dashboard-student-image,
   .internal-app .dashboard-hero-spark,
   .internal-app .dashboard-hero-object {
     animation: none;

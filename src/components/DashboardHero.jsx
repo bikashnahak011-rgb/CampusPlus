@@ -2,6 +2,7 @@ import { Building2, GraduationCap, UtensilsCrossed, Wallet } from 'lucide-react'
 import notebook3d from '../assets/3d-academic/notebook.png'
 import pencil3d from '../assets/3d-academic/pencil.png'
 import bulb3d from '../assets/3d-academic/bulb.png'
+import studentArtwork from '../assets/college-student-hero.png'
 
 const HERO_ICONS = {
   student: GraduationCap,
@@ -25,6 +26,9 @@ export default function DashboardHero({ audience = 'student', eyebrow, title, su
       <div className="dashboard-hero-art" aria-hidden="true">
         <div className="dashboard-hero-orbit dashboard-hero-orbit--one" />
         <div className="dashboard-hero-orbit dashboard-hero-orbit--two" />
+        {audience === 'student' ? (
+          <img className="dashboard-student-image" src={studentArtwork} alt="" />
+        ) : (
         <svg className="dashboard-student-character" viewBox="0 0 230 260" fill="none">
           <defs>
             <linearGradient id="character-skin" x1="79" y1="60" x2="148" y2="153" gradientUnits="userSpaceOnUse">
@@ -76,6 +80,7 @@ export default function DashboardHero({ audience = 'student', eyebrow, title, su
             <path d="M179 191c4-5 10-6 14-2l10 9c4 4 3 10-1 13-4 3-9 3-13 0l-10-8" fill="url(#character-skin)" />
           </g>
         </svg>
+        )}
         <div className="dashboard-hero-icon-tile"><Icon size={28} strokeWidth={1.8} /></div>
         <div className="dashboard-hero-object dashboard-hero-object--notebook">
           <img src={notebook3d} alt="" />

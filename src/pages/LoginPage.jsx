@@ -17,7 +17,7 @@ import { useApp } from '../contexts/AppContext'
 import AppLogo from '../components/AppLogo'
 import { ADMIN_ROLES, ADMIN_ROLE_LABELS, getAdminHomePath } from '../lib/adminRoles'
 import { DEMO_LOGIN_ACCOUNTS } from '../data/demoAccounts'
-import loginStudentArtwork from '../assets/man-at-computer.png'
+import campusBuildingArtwork from '../assets/campus-building-login.png'
 
 const ADMIN_ROLE_OPTIONS = [
   { value: ADMIN_ROLES.HOSTEL_MANAGEMENT, description: 'Hostel rooms, allocations, student housing, and maintenance.' },
@@ -431,9 +431,7 @@ export default function LoginPage() {
           <div className="login-art-halo login-art-halo--inner" />
           <div className="login-art-orbit login-art-orbit--one" />
           <div className="login-art-orbit login-art-orbit--two" />
-          <div className="login-art-student">
-            <img src={loginStudentArtwork} alt="" />
-          </div>
+          <img className="login-art-campus" src={campusBuildingArtwork} alt="" />
           <div className="login-art-float login-art-float--book"><Sparkles size={22} /></div>
           <div className="login-art-float login-art-float--cap"><GraduationCap size={28} /></div>
           <div className="login-art-caption">
