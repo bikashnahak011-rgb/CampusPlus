@@ -33,7 +33,7 @@ export default function TopHeader({ onMenuClick }) {
     <>
       <header className="h-14 sm:h-16 bg-white border-b border-gray-100 flex items-center px-3 sm:px-4 gap-2 sticky top-0 z-20 shadow-sm">
         {/* Hamburger */}
-        <button onClick={onMenuClick} aria-label="Open navigation menu" className="lg:hidden p-2 hover:bg-gray-100 rounded-xl flex-shrink-0">
+        <button onClick={onMenuClick} aria-label={t('Open navigation menu')} className="lg:hidden p-2 hover:bg-gray-100 rounded-xl flex-shrink-0">
           <Menu size={20} />
         </button>
 
@@ -58,7 +58,7 @@ export default function TopHeader({ onMenuClick }) {
           <select
             value={language}
             onChange={(event) => setLanguage(event.target.value)}
-            className="hidden rounded-xl border border-violet-200 bg-violet-50 px-2 py-1.5 text-xs font-medium text-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:block"
+            className="max-w-20 rounded-xl border border-violet-200 bg-violet-50 px-1.5 py-1.5 text-[10px] font-medium text-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:max-w-none sm:px-2 sm:text-xs"
             aria-label={t('languageLabel')}
           >
             {LANGUAGE_OPTIONS.map((option) => (
@@ -66,7 +66,7 @@ export default function TopHeader({ onMenuClick }) {
             ))}
           </select>
           {/* Mobile search toggle */}
-          <button onClick={() => setShowSearch(!showSearch)} aria-label={showSearch ? 'Close search' : 'Open search'} aria-expanded={showSearch} className="sm:hidden p-2 hover:bg-gray-100 rounded-xl">
+          <button onClick={() => setShowSearch(!showSearch)} aria-label={showSearch ? t('Close search') : t('Open search')} aria-expanded={showSearch} className="sm:hidden p-2 hover:bg-gray-100 rounded-xl">
             <Search size={19} className="text-gray-600" />
           </button>
 
@@ -125,7 +125,7 @@ export default function TopHeader({ onMenuClick }) {
                   : (user?.name?.[0] || 'S')}
               </div>
               <span className="text-sm font-medium text-gray-700 hidden md:block max-w-[90px] truncate">{user?.name}</span>
-              <span className="hidden xl:inline rounded-full bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">Student</span>
+              <span className="hidden xl:inline rounded-full bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">{t('student')}</span>
               <ChevronDown size={13} className="text-gray-400 hidden sm:block" />
             </button>
             {showProfile && (

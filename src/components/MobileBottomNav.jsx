@@ -11,7 +11,7 @@ const BOTTOM_NAV = [
 ]
 
 export default function MobileBottomNav() {
-  const { unreadCount } = useApp()
+  const { unreadCount, t } = useApp()
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex items-center justify-around px-1 py-1 safe-area-pb">
       {BOTTOM_NAV.map(({ to, icon: Icon, label }) => (
@@ -23,7 +23,7 @@ export default function MobileBottomNav() {
               <div className={`p-1.5 rounded-xl transition-colors ${isActive ? 'bg-violet-50' : ''}`}>
                 <Icon size={20} />
               </div>
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{t(label, label)}</span>
               {label === 'Notices' && unreadCount > 0 && (
                 <span className="absolute top-1 right-2 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}

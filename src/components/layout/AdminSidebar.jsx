@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Users, GraduationCap, MessageSquareWarning, ClipboardList, Building2, UtensilsCrossed, BusFront, MapPinned, Megaphone, Calendar, BarChart3, Brain, Settings, LogOut, X, UserCircle, Award, BookOpen, BriefcaseBusiness, Bell, Wallet, ClipboardCheck, ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useApp } from '../../contexts/AppContext'
 import AppLogo from '../AppLogo'
 import { ADMIN_ROLE_LABELS, getAdminNavigation } from '../../lib/adminRoles'
 import Sidebar3DArtwork from './Sidebar3DArtwork'
@@ -54,6 +55,7 @@ const ICONS_BY_PATH = {
 
 export default function AdminSidebar({ open, onClose, collapsed = false, onToggleCollapse }) {
   const { signOut, user } = useAuth()
+  const { t } = useApp()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const nav = getAdminNavigation(user?.admin_role)
@@ -67,27 +69,29 @@ export default function AdminSidebar({ open, onClose, collapsed = false, onToggl
             <AppLogo size={32} showText className="internal-brand" />
           </div>
           <div className="flex items-center gap-1">
-            <button type="button" onClick={onToggleCollapse} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} className="sidebar-collapse-button hidden rounded-lg p-2 lg:inline-flex">
+            <button type="button" onClick={onToggleCollapse} title={collapsed ? t('Expand sidebar') : t('Collapse sidebar')} aria-label={collapsed ? t('Expand sidebar') : t('Collapse sidebar')} className="sidebar-collapse-button hidden rounded-lg p-2 lg:inline-flex">
               {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
             </button>
-            <button onClick={onClose} aria-label="Close navigation menu" className="sidebar-close-button lg:hidden"><X size={20} /></button>
+            <button onClick={onClose} aria-label={t('Close navigation menu')} className="sidebar-close-button lg:hidden"><X size={20} /></button>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto scrollbar-hide py-3 px-3 space-y-0.5">
           {nav.map(({ to, label, children }) => {
+            const translatedLabel = t(label, label)
             const path = to.split('/').pop()
             const Icon = ICONS_BY_PATH[path] || LayoutDashboard
             if (children) {
               const active = pathname.startsWith('/admin/academic-resources') || pathname.startsWith('/admin/timetable')
               return (
                 <div key={to}>
-                  <button type="button" title={label} aria-label={label} aria-expanded={academicOpen} onClick={() => setAcademicOpen(open => !open)} className={`admin-sidebar-link w-full ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${active ? 'active' : ''}`}>
-                    <Icon size={18} /><span className={`flex-1 text-left ${collapsed ? 'lg:hidden' : ''}`}>{label}</span><ChevronDown size={16} className={`${collapsed ? 'lg:hidden' : ''} transition-transform ${academicOpen ? 'rotate-180' : ''}`} />
+                  <button type="button" title={translatedLabel} aria-label={translatedLabel} aria-expanded={academicOpen} onClick={() => setAcademicOpen(open => !open)} className={`admin-sidebar-link w-full ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${active ? 'active' : ''}`}>
+                    <Icon size={18} /><span className={`flex-1 text-left ${collapsed ? 'lg:hidden' : ''}`}>{translatedLabel}</span><ChevronDown size={16} className={`${collapsed ? 'lg:hidden' : ''} transition-transform ${academicOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {academicOpen && <div className="sidebar-subnav ml-3 border-l pl-2">
                     {children.map(child => {
                       const ChildIcon = ICONS_BY_PATH[child.to.split('/').pop()] || BookOpen
-                      return <NavLink key={child.to} to={child.to} title={child.label} aria-label={child.label} onClick={onClose} className={({ isActive }) => `admin-sidebar-link text-sm ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${isActive ? 'active' : ''}`}><ChildIcon size={16} /><span className={collapsed ? 'lg:hidden' : ''}>{child.label}</span></NavLink>
+                      const translatedChildLabel = t(child.label, child.label)
+                      return <NavLink key={child.to} to={child.to} title={translatedChildLabel} aria-label={translatedChildLabel} onClick={onClose} className={({ isActive }) => `admin-sidebar-link text-sm ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${isActive ? 'active' : ''}`}><ChildIcon size={16} /><span className={collapsed ? 'lg:hidden' : ''}>{translatedChildLabel}</span></NavLink>
                     })}
                   </div>}
                 </div>
@@ -95,8 +99,8 @@ export default function AdminSidebar({ open, onClose, collapsed = false, onToggl
             }
             return (
             <div key={to}>
-            <NavLink to={to} title={label} aria-label={label} onClick={onClose} className={({ isActive }) => `admin-sidebar-link ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${isActive ? 'active' : ''}`}>
-              <Icon size={18} /><span className={collapsed ? 'lg:hidden' : ''}>{label}</span>
+            <NavLink to={to} title={translatedLabel} aria-label={translatedLabel} onClick={onClose} className={({ isActive }) => `admin-sidebar-link ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${isActive ? 'active' : ''}`}>
+              <Icon size={18} /><span className={collapsed ? 'lg:hidden' : ''}>{translatedLabel}</span>
             </NavLink>
             </div>
             )
@@ -106,13 +110,13 @@ export default function AdminSidebar({ open, onClose, collapsed = false, onToggl
         <div className="sidebar-profile-area p-3 border-t border-white/10">
           <SidebarUserProfile
             name={user?.name}
-            subtitle={user?.designation || ADMIN_ROLE_LABELS[user?.admin_role] || 'Administrator'}
+            subtitle={user?.designation || t(ADMIN_ROLE_LABELS[user?.admin_role] || 'Administrator')}
             avatarUrl={user?.avatar_url}
             collapsed={collapsed}
             fallbackInitial="A"
           />
-          <button onClick={async () => { await signOut(); navigate('/') }} title="Logout" aria-label="Logout" className={`admin-sidebar-link logout-link w-full ${collapsed ? 'lg:justify-center lg:px-2' : ''}`}>
-            <LogOut size={18} /> <span className={collapsed ? 'lg:hidden' : ''}>Logout</span>
+          <button onClick={async () => { await signOut(); navigate('/') }} title={t('logout')} aria-label={t('logout')} className={`admin-sidebar-link logout-link w-full ${collapsed ? 'lg:justify-center lg:px-2' : ''}`}>
+            <LogOut size={18} /> <span className={collapsed ? 'lg:hidden' : ''}>{t('logout')}</span>
           </button>
         </div>
       </aside>

@@ -22,14 +22,14 @@ export default function StudentSidebar({ open, onClose, collapsed = false, onTog
     { to: '/student/hostel', icon: Building2, label: t('hostel') },
     { to: '/student/complaints', icon: MessageSquareWarning, label: t('complaints') },
     { to: '/student/leave', icon: DoorOpen, label: t('leaveGatePass') },
-    { section: 'Academic Resource', children: [
-    { to: '/student/assignments', icon: ClipboardList, label: 'Assignments' },
-    { to: '/student/syllabus', icon: BookOpen, label: 'Syllabus' },
+    { section: t('Academic Resource'), children: [
+    { to: '/student/assignments', icon: ClipboardList, label: t('Assignments', 'Assignments') },
+    { to: '/student/syllabus', icon: BookOpen, label: t('Syllabus', 'Syllabus') },
       { to: '/student/timetable', icon: Calendar, label: t('timetable') },
-      { to: '/student/pyq', icon: FileText, label: 'PYQ' },
-      { to: '/student/class-material', icon: NotebookTabs, label: 'Class Material' },
+      { to: '/student/pyq', icon: FileText, label: t('PYQ', 'PYQ') },
+      { to: '/student/class-material', icon: NotebookTabs, label: t('Class Material', 'Class Material') },
     ] },
-    { to: '/student/career-hub', icon: BriefcaseBusiness, label: 'Career Hub' },
+    { to: '/student/career-hub', icon: BriefcaseBusiness, label: t('Career Hub', 'Career Hub') },
     { to: '/student/room-finder', icon: MapPinned, label: t('roomFinder') },
     { to: '/student/mess', icon: UtensilsCrossed, label: t('mess') },
     { to: '/student/documents', icon: FileText, label: t('documents') },
@@ -52,10 +52,10 @@ export default function StudentSidebar({ open, onClose, collapsed = false, onTog
             <AppLogo size={32} showText className="internal-brand" />
           </div>
           <div className="flex items-center gap-1">
-            <button type="button" onClick={onToggleCollapse} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} className="sidebar-collapse-button hidden rounded-lg p-2 lg:inline-flex">
+            <button type="button" onClick={onToggleCollapse} title={collapsed ? t('Expand sidebar') : t('Collapse sidebar')} aria-label={collapsed ? t('Expand sidebar') : t('Collapse sidebar')} className="sidebar-collapse-button hidden rounded-lg p-2 lg:inline-flex">
               {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
             </button>
-            <button onClick={onClose} aria-label="Close navigation menu" className="sidebar-close-button lg:hidden"><X size={20} /></button>
+            <button onClick={onClose} aria-label={t('Close navigation menu')} className="sidebar-close-button lg:hidden"><X size={20} /></button>
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto scrollbar-hide py-3 px-3 space-y-0.5">
@@ -68,16 +68,16 @@ export default function StudentSidebar({ open, onClose, collapsed = false, onTog
                   <ChevronDown size={16} className={`${collapsed ? 'lg:hidden' : ''} transition-transform ${academicOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {academicOpen && <div className="sidebar-subnav ml-3 border-l pl-2">
-                  {item.children.map(({ to, icon: Icon, label }) => (
+                  {item.children.map(({ to, icon: ChildIcon = BookOpen, label }) => (
                     <NavLink key={to} to={to} title={label} aria-label={label} onClick={onClose} className={({ isActive }) => `sidebar-link text-sm ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${isActive ? 'active' : ''}`}>
-                      <Icon size={16} />
+                      <ChildIcon size={16} />
                       <span className={`flex-1 ${collapsed ? 'lg:hidden' : ''}`}>{label}</span>
                     </NavLink>
                   ))}
                 </div>}
               </div>
             )
-            const { to, icon: Icon, label } = item
+            const { to, icon: Icon = LayoutDashboard, label } = item
             return (
             <NavLink key={to} to={to} title={label} aria-label={label === t('notifications') && unreadCount > 0 ? `${label}, ${unreadCount} unread` : label} onClick={onClose} className={({ isActive }) => `sidebar-link ${collapsed ? 'lg:justify-center lg:px-2' : ''} ${isActive ? 'active' : ''}`}>
               <Icon size={18} />
@@ -95,7 +95,7 @@ export default function StudentSidebar({ open, onClose, collapsed = false, onTog
             aria-hidden="true"
             className="pointer-events-none absolute -right-2 bottom-0 z-[-1] h-24 w-24 object-contain opacity-20"
           />
-          {liteMode && <div title="Lite Mode Active" className={`flex items-center gap-2 py-1.5 text-yellow-300 text-xs ${collapsed ? 'lg:justify-center lg:px-2' : 'px-4'}`}><Zap size={13} /><span className={collapsed ? 'lg:hidden' : ''}>Lite Mode Active</span></div>}
+          {liteMode && <div title={t('Lite Mode Active')} className={`flex items-center gap-2 py-1.5 text-yellow-300 text-xs ${collapsed ? 'lg:justify-center lg:px-2' : 'px-4'}`}><Zap size={13} /><span className={collapsed ? 'lg:hidden' : ''}>{t('Lite Mode Active')}</span></div>}
           <SidebarUserProfile
             name={user?.name}
             subtitle={user?.roll_no || user?.email?.split('@')[0] || 'Student'}
