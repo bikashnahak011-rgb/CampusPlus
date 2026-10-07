@@ -976,13 +976,14 @@ export default function StudentDashboard() {
 
           ) : (
 
-            <div className="space-y-2">
+            <div className="dashboard-stagger-list dashboard-notifications-list space-y-2">
 
-              {myNotifs.map(n => (
+              {myNotifs.map((n, index) => (
 
                 <div
                   key={n.id}
-                  className={`p-2.5 rounded-xl text-xs cursor-pointer hover:bg-gray-50 ${
+                  style={{ animationDelay: `${index * 70}ms` }}
+                  className={`dashboard-stagger-item p-2.5 rounded-xl text-xs cursor-pointer hover:bg-gray-50 ${
                     !n.read
                       ? 'bg-blue-50/50'
                       : ''
@@ -1021,13 +1022,14 @@ export default function StudentDashboard() {
             {t('upcomingEvents')}
           </h3>
 
-          <div className="space-y-2">
+          <div className="dashboard-stagger-list dashboard-events-list space-y-2">
 
-            {academicData.events.length === 0 ? <p className="py-3 text-xs text-gray-500">{t('noUpcomingEvents')}</p> : academicData.events.map(e => (
+            {academicData.events.length === 0 ? <p className="py-3 text-xs text-gray-500">{t('noUpcomingEvents')}</p> : academicData.events.map((e, index) => (
 
               <div
                 key={e.id}
-                className="flex gap-2 items-start"
+                style={{ animationDelay: `${index * 70}ms` }}
+                className="dashboard-stagger-item flex gap-2 items-start"
               >
 
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">

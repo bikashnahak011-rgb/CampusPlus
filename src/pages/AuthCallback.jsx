@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { getAdminHomePath } from '../lib/adminRoles'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
-  const { user, loading } = useAuth()
+  const { user, loading, signOut } = useAuth()
   const [error, setError] = useState('')
+  const rejectedStudentLink = useRef(false)
+  const isStudentEmailLink = new URLSearchParams(window.location.search).get('flow') === 'student-email-link'
 
   useEffect(() => {
     console.log('AUTH CALLBACK PAGE')
@@ -19,6 +21,7 @@ export default function AuthCallback() {
 
     // Authentication finished but no user
     if (!user) {
+      if (rejectedStudentLink.current) return
       console.error('No authenticated user found')
       setError('Authentication failed. No verified user session was found.')
       return
@@ -26,6 +29,17 @@ export default function AuthCallback() {
 
     if (user.is_active === false) {
       setError('This account is disabled. Contact your main administrator for help.')
+      return
+    }
+
+    if (isStudentEmailLink && user.role !== 'student') {
+      if (!rejectedStudentLink.current) {
+        rejectedStudentLink.current = true
+        setError(user.profileEmailMismatch
+          ? 'The verified email does not match the email on the campus student record. Contact an administrator to update the record.'
+          : 'This email is not linked to an active student account. Use the email registered with your campus.')
+        signOut()
+      }
       return
     }
 
@@ -56,7 +70,7 @@ export default function AuthCallback() {
       navigate('/student/profile', { replace: true })
     }
 
-  }, [loading, user, navigate])
+  }, [loading, user, navigate, isStudentEmailLink, signOut])
 
   // Error
   if (error) {

@@ -269,6 +269,11 @@ CREATE POLICY "admin_role_manage_rooms" ON public.rooms
 -- Complaints are limited by category/location for specialist administrators.
 DROP POLICY IF EXISTS "student_complaints" ON public.complaints;
 DROP POLICY IF EXISTS "admin_complaints" ON public.complaints;
+DROP POLICY IF EXISTS "student_complaints_select" ON public.complaints;
+DROP POLICY IF EXISTS "student_complaints_insert" ON public.complaints;
+DROP POLICY IF EXISTS "admin_complaints_select" ON public.complaints;
+DROP POLICY IF EXISTS "admin_complaints_insert" ON public.complaints;
+DROP POLICY IF EXISTS "admin_complaints_update" ON public.complaints;
 DROP POLICY IF EXISTS "role_scoped_complaints" ON public.complaints;
 CREATE POLICY "student_complaints" ON public.complaints
   FOR ALL TO authenticated

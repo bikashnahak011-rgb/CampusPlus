@@ -1,13 +1,24 @@
 -- Secure and enable the live complaint workflow after schema.sql has been applied.
 
+ALTER TABLE public.complaints
+  ADD COLUMN IF NOT EXISTS student_identifier TEXT,
+  ADD COLUMN IF NOT EXISTS submission_method TEXT NOT NULL DEFAULT 'Student App';
+ALTER TABLE public.complaints DROP CONSTRAINT IF EXISTS complaints_status_check;
+ALTER TABLE public.complaints
+  ADD CONSTRAINT complaints_status_check
+  CHECK (status IN ('Pending', 'Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed'));
+
 DROP POLICY IF EXISTS "student_complaints" ON public.complaints;
 DROP POLICY IF EXISTS "admin_complaints" ON public.complaints;
+DROP POLICY IF EXISTS "admin_complaints_insert" ON public.complaints;
 CREATE POLICY "student_complaints_select" ON public.complaints
   FOR SELECT USING (student_id = auth.uid());
 CREATE POLICY "student_complaints_insert" ON public.complaints
   FOR INSERT WITH CHECK (student_id = auth.uid() AND status = 'Submitted');
 CREATE POLICY "admin_complaints_select" ON public.complaints
   FOR SELECT USING (public.is_admin());
+CREATE POLICY "admin_complaints_insert" ON public.complaints
+  FOR INSERT WITH CHECK (public.is_admin());
 CREATE POLICY "admin_complaints_update" ON public.complaints
   FOR UPDATE
   USING (public.is_admin())
@@ -36,25 +47,40 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO public.complaint_updates (complaint_id, status, note, updated_by)
-    VALUES (NEW.id, NEW.status, 'Complaint submitted by student', NEW.student_id);
+    VALUES (
+      NEW.id,
+      NEW.status,
+      CASE WHEN NEW.submission_method = 'Help Desk Assisted'
+        THEN 'Help Desk Assisted request submitted by campus staff'
+        ELSE 'Complaint submitted by student'
+      END,
+      NEW.student_id
+    );
 
-    INSERT INTO public.notifications (user_id, title, message, type, link)
-    VALUES (
-      NEW.student_id,
-      'Complaint Submitted',
-      'Your complaint ' || NEW.id || ' has been submitted.',
-      'success',
-      '/student/complaints'
-    );
+    IF NEW.student_id IS NOT NULL THEN
+      INSERT INTO public.notifications (user_id, title, message, type, link)
+      VALUES (
+        NEW.student_id,
+        CASE WHEN NEW.submission_method = 'Help Desk Assisted' THEN 'Help Desk Request Received' ELSE 'Complaint Submitted' END,
+        CASE WHEN NEW.submission_method = 'Help Desk Assisted'
+          THEN 'Your Help Desk request ' || NEW.id || ' has been submitted.'
+          ELSE 'Your complaint ' || NEW.id || ' has been submitted.'
+        END,
+        'success',
+        '/student/complaints'
+      );
+    END IF;
   ELSIF OLD.status IS DISTINCT FROM NEW.status THEN
-    INSERT INTO public.notifications (user_id, title, message, type, link)
-    VALUES (
-      NEW.student_id,
-      'Complaint ' || NEW.status,
-      'Your complaint ' || NEW.id || ' is now: ' || NEW.status,
-      CASE WHEN NEW.status IN ('Resolved', 'Closed') THEN 'success' ELSE 'info' END,
-      '/student/complaints'
-    );
+    IF NEW.student_id IS NOT NULL THEN
+      INSERT INTO public.notifications (user_id, title, message, type, link)
+      VALUES (
+        NEW.student_id,
+        'Complaint ' || NEW.status,
+        'Your complaint ' || NEW.id || ' is now: ' || NEW.status,
+        CASE WHEN NEW.status IN ('Resolved', 'Closed') THEN 'success' ELSE 'info' END,
+        '/student/complaints'
+      );
+    END IF;
   END IF;
 
   RETURN NEW;
@@ -82,7 +108,7 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  IF p_status IS NULL OR p_status NOT IN ('Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed') THEN
+  IF p_status IS NULL OR p_status NOT IN ('Pending', 'Submitted', 'Assigned', 'In Progress', 'Resolved', 'Closed') THEN
     RAISE EXCEPTION 'Invalid complaint status.' USING ERRCODE = '22023';
   END IF;
 

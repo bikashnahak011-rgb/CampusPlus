@@ -45,6 +45,7 @@ const ICONS_BY_PATH = {
   'career-management': BriefcaseBusiness,
   'ai-insights': Brain,
   'academic-resources': BookOpen,
+  'help-desk': ClipboardList,
   syllabus: BookOpen,
   timetable: Calendar,
   pyq: BookOpen,

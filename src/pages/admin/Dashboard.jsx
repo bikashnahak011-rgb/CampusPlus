@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, MessageSquareWarning, ClipboardList, Clock, TrendingUp, AlertCircle, ChevronRight } from 'lucide-react'
+import { Users, MessageSquareWarning, ClipboardList, Clock, TrendingUp, AlertCircle, ChevronRight, Calendar } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -10,6 +10,7 @@ import { StatusBadge } from '../../components/ui/States'
 import DashboardHero from '../../components/DashboardHero'
 import DemoDataBanner from '../../components/DemoDataBanner'
 import { ADMIN_ROLE_LABELS } from '../../lib/adminRoles'
+import { DEMO_ACADEMIC_RESOURCES, DEMO_EVENTS, DEMO_SUBJECTS, DEMO_TIMETABLE } from '../../data/demoData'
 import studentsArt from '../../assets/3d-academic/people.png'
 import requestsArt from '../../assets/3d-academic/requests.png'
 import complaintsArt from '../../assets/3d-academic/messages.png'
@@ -78,7 +79,9 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {user?.admin_role === 'main_administrator' && <AcademicResourcesSummary />}
+      {user?.admin_role === 'main_administrator' && <AcademicResourcesSummary isDemo={user.isDemo} />}
+
+      {user?.admin_role === 'main_administrator' && user.isDemo && <StudentDashboardDemoSummary />}
 
       {highPriority.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
@@ -150,13 +153,70 @@ export default function AdminDashboard() {
   )
 }
 
-function AcademicResourcesSummary() {
+function StudentDashboardDemoSummary() {
+  const attendance = DEMO_SUBJECTS.reduce(
+    (summary, subject) => ({
+      total: summary.total + subject.total,
+      present: summary.present + subject.present,
+    }),
+    { total: 0, present: 0 },
+  )
+  const attendanceRate = attendance.total
+    ? Math.round((attendance.present / attendance.total) * 100)
+    : 0
+  const upcomingEvents = DEMO_EVENTS
+
+  const metrics = [
+    { label: 'Average attendance', value: `${attendanceRate}%` },
+    { label: 'Subjects', value: DEMO_SUBJECTS.length },
+    { label: 'Weekly classes', value: DEMO_TIMETABLE.length },
+    { label: 'Upcoming events', value: upcomingEvents.length },
+  ]
+
+  return (
+    <section className="card">
+      <div className="mb-4">
+        <h2 className="font-semibold text-gray-900">Student dashboard sample data</h2>
+        <p className="mt-1 text-xs text-gray-500">Academic records from the student demo dashboard</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {metrics.map(({ label, value }) => (
+          <div key={label} className="rounded-xl bg-violet-50 p-3">
+            <p className="text-2xl font-bold text-violet-800">{value}</p>
+            <p className="mt-1 text-xs text-gray-600">{label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 border-t border-gray-100 pt-4">
+        <h3 className="mb-3 text-sm font-medium text-gray-800">Upcoming campus events</h3>
+        {upcomingEvents.length ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {upcomingEvents.slice(0, 4).map(event => (
+              <div key={event.id} className="flex items-start gap-2 rounded-xl bg-gray-50 p-3">
+                <Calendar size={16} className="mt-0.5 shrink-0 text-violet-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{event.title}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(event.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : <p className="text-sm text-gray-500">No upcoming demo events.</p>}
+      </div>
+    </section>
+  )
+}
+
+function AcademicResourcesSummary({ isDemo }) {
   const navigate = useNavigate()
   const [counts, setCounts] = useState(null)
-  const [error, setError] = useState(supabase ? '' : 'Supabase is not configured.')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let active = true
+    if (isDemo) return () => { active = false }
     if (!supabase) return () => { active = false }
     const loadCounts = async () => {
       const [syllabus, pyq, materials, timetable] = await Promise.all([
@@ -172,7 +232,16 @@ function AcademicResourcesSummary() {
     }
     loadCounts()
     return () => { active = false }
-  }, [])
+  }, [isDemo])
+
+  const demoCounts = [
+    DEMO_ACADEMIC_RESOURCES.filter(resource => resource.resource_type === 'syllabus').length,
+    DEMO_ACADEMIC_RESOURCES.filter(resource => resource.resource_type === 'pyq').length,
+    DEMO_ACADEMIC_RESOURCES.filter(resource => resource.resource_type === 'class_material').length,
+    DEMO_TIMETABLE.length,
+  ]
+  const visibleCounts = isDemo ? demoCounts : counts
+  const visibleError = isDemo ? '' : error || (supabase ? '' : 'Supabase is not configured.')
 
   return (
     <section className="card">
@@ -180,7 +249,7 @@ function AcademicResourcesSummary() {
         <div><h2 className="font-semibold text-gray-900">Academic Resources</h2><p className="mt-1 text-xs text-gray-500">Published and pending campus resources</p></div>
         <button onClick={() => navigate('/admin/academic-resources')} className="text-xs font-medium text-violet-700 hover:underline">Manage resources <ChevronRight size={14} className="inline" /></button>
       </div>
-      {error ? <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : counts ? (
+      {visibleError ? <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{visibleError}</p> : visibleCounts ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: 'Total Syllabus', art: notebookArt },
@@ -189,7 +258,7 @@ function AcademicResourcesSummary() {
             { label: 'Total Timetable Entries', art: calendarArt },
           ].map(({ label, art }, index) => (
             <div key={label} className="dashboard-academic-count-card rounded-xl bg-violet-50 p-3">
-              <p className="text-2xl font-bold text-violet-800">{counts[index]}</p>
+              <p className="text-2xl font-bold text-violet-800">{visibleCounts[index]}</p>
               <p className="mt-1 text-xs text-gray-600">{label}</p>
               <img src={art} alt="" aria-hidden="true" />
             </div>

@@ -53,6 +53,9 @@ Open **http://localhost:5173**
 12. Run or re-run `supabase/academic_resources.sql` to add Academic Resources (including faculty assignment PDFs), faculty subject permissions, timetable management, the private storage bucket, and RLS policies
 13. Run `supabase/mess_orders.sql` after `admin_roles.sql` to enable student meal reservations and live order tracking for Mess Management.
 13. Deploy the FastAPI backend as a separate HTTPS service. Set its `SUPABASE_URL`, server-only `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS`, and `POE_API_KEY` (plus optional `POE_MODEL` and `POE_TIMEOUT_SECONDS`) in the backend service settings. Keep the Poe key on the backend only. Add the Resend email settings described in `backend/README.md` if email delivery is enabled.
+
+**Campus Help Desk / Offline Fallback:** Staff with Main Administrator access can open `/admin/help-desk` to submit assisted student requests. If the device loses connectivity, offline requests are kept in that staff browser's local storage and automatically synced to the existing `complaints` table when connectivity returns. No separate database is used. Apply `schema.sql`, `complaints_realtime.sql`, and `admin_roles.sql` as listed above; offline requests remain on the device until synchronization succeeds.
+
 14. Set these frontend environment variables in Vercel Project Settings → Environment Variables:
 
 ```env

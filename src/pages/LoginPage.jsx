@@ -240,9 +240,13 @@ export default function LoginPage() {
     try {
       const result = await sendStudentSignInLink(email)
       if (result?.error) {
-        setError(result.error.message || 'Unable to send a secure sign-in link.')
+        if (result.error.message === 'User not found') {
+          setResetNotice('If that email belongs to an active student account, a secure sign-in link will be sent. Check your inbox and spam folder.')
+        } else {
+          setError(result.error.message || 'Unable to send a secure sign-in link.')
+        }
       } else {
-        setResetNotice(`A secure sign-in link was requested for ${email.trim()}. Check your inbox and spam folder, then open it to continue.`)
+        setResetNotice('If that email belongs to an active student account, a secure sign-in link will be sent. Check your inbox and spam folder.')
       }
     } catch (linkError) {
       setError(linkError?.message || 'Unable to send a secure sign-in link. Please try again.')
@@ -669,9 +673,9 @@ export default function LoginPage() {
                 type="button"
                 onClick={handleStudentEmailLink}
                 disabled={loading}
-                className="mt-3 w-full rounded-xl border border-violet-200 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-60"
+                className="login-student-link mt-3 w-full rounded-xl border border-violet-200 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-60"
               >
-                New student? Email me a secure sign-in link
+                Registered student? Email me a secure sign-in link
               </button>
             )}
 
@@ -713,7 +717,7 @@ export default function LoginPage() {
 
               ) : (
 
-                <>
+              <span className="google-btn-content">
                   <svg
                     width="18"
                     height="18"
@@ -744,8 +748,9 @@ export default function LoginPage() {
                   </svg>
 
                   Continue with Google
+                  <span className="google-recommended-badge">Recommended</span>
 
-                </>
+                </span>
 
               )}
 

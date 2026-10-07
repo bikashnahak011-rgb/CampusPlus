@@ -142,13 +142,24 @@ CREATE TABLE IF NOT EXISTS complaints (
   location TEXT NOT NULL,
   description TEXT NOT NULL,
   priority TEXT DEFAULT 'Medium' CHECK (priority IN ('Low','Medium','High')),
-  status TEXT DEFAULT 'Submitted' CHECK (status IN ('Submitted','Assigned','In Progress','Resolved','Closed')),
+  status TEXT DEFAULT 'Submitted' CHECK (status IN ('Pending','Submitted','Assigned','In Progress','Resolved','Closed')),
   department TEXT,
   assigned_to TEXT,
   ai_category TEXT,
+  student_identifier TEXT,
+  submission_method TEXT NOT NULL DEFAULT 'Student App',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.complaints
+  ADD COLUMN IF NOT EXISTS student_identifier TEXT,
+  ADD COLUMN IF NOT EXISTS submission_method TEXT NOT NULL DEFAULT 'Student App';
+
+ALTER TABLE public.complaints DROP CONSTRAINT IF EXISTS complaints_status_check;
+ALTER TABLE public.complaints
+  ADD CONSTRAINT complaints_status_check
+  CHECK (status IN ('Pending','Submitted','Assigned','In Progress','Resolved','Closed'));
 
 CREATE TABLE IF NOT EXISTS complaint_updates (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,

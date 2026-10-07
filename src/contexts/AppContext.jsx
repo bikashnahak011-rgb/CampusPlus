@@ -709,6 +709,76 @@ export function AppProvider({ children }) {
     [addNotif, user]
   )
 
+  const submitAssistedComplaint = useCallback(
+    async (data) => {
+      if (!user || user.role !== 'admin') {
+        throw new Error('Only signed-in campus staff can submit a help desk request.')
+      }
+
+      const id = data.requestId || `CMP-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+      const createdAt = data.createdAt || new Date().toISOString()
+      const complaint = {
+        id,
+        student_id: null,
+        student_identifier: data.studentIdentifier.trim(),
+        student_name: data.studentName.trim(),
+        category: data.requestType,
+        location: data.hostelDepartment.trim(),
+        description: data.description.trim(),
+        priority: 'Medium',
+        status: 'Pending',
+        department: data.hostelDepartment.trim(),
+        assigned_to: null,
+        submission_method: 'Help Desk Assisted',
+        created_at: createdAt,
+        updated_at: createdAt,
+        updates: [{
+          status: 'Pending',
+          note: 'Help Desk Assisted request submitted by campus staff.',
+          time: createdAt,
+        }],
+      }
+
+      if (!user.isDemo) {
+        if (!supabase) throw new Error('Help Desk requests require a configured campus connection.')
+        const complaintRow = {
+          id: complaint.id,
+          student_id: complaint.student_id,
+          student_identifier: complaint.student_identifier,
+          student_name: complaint.student_name,
+          category: complaint.category,
+          location: complaint.location,
+          description: complaint.description,
+          priority: complaint.priority,
+          status: complaint.status,
+          department: complaint.department,
+          assigned_to: complaint.assigned_to,
+          submission_method: complaint.submission_method,
+          created_at: complaint.created_at,
+          updated_at: complaint.updated_at,
+        }
+        const query = supabase.from('complaints')
+        const { error } = data.requestId
+          ? await query.upsert(complaintRow, { onConflict: 'id', ignoreDuplicates: true })
+          : await query.insert(complaintRow)
+        if (error) throw new Error(`Help Desk request could not be saved: ${error.message}`)
+        setLiveComplaints(previous => ({
+          userId: user.id,
+          items: previous.userId === user.id
+            ? [complaint, ...previous.items.filter(item => item.id !== id)]
+            : [complaint],
+        }))
+      } else {
+        setComplaints(previous => previous.some(item => item.id === id)
+          ? previous
+          : [complaint, ...previous])
+      }
+
+      return id
+    },
+    [user]
+  )
+
   const updateComplaint = useCallback(
     async (
       id,
@@ -1289,6 +1359,7 @@ export function AppProvider({ children }) {
           ? liveComplaints.userId === user.id ? liveComplaints.items : []
           : complaints,
         submitComplaint,
+        submitAssistedComplaint,
         updateComplaint,
 
         // Requests

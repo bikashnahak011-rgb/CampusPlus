@@ -208,6 +208,22 @@ export function AuthProvider({ children }) {
 
       const verifiedMainAdministrator = isMainAdministratorEmail(authUser.email)
         && Boolean(authUser.email_confirmed_at || authUser.confirmed_at)
+      const emailMatchesProfile = String(data?.email || '').trim().toLowerCase()
+        === String(authUser.email || '').trim().toLowerCase()
+      if (!emailMatchesProfile) {
+        setUser({
+          ...authUser,
+          ...data,
+          role: null,
+          admin_role: null,
+          is_active: data?.is_active !== false,
+          profileComplete: false,
+          profileEmailMismatch: true,
+          isDemo: false,
+        })
+        return
+      }
+
       const role = verifiedMainAdministrator
         ? 'admin'
         : data?.role === 'admin' ? 'admin' : data?.role === 'student' ? 'student' : null
@@ -383,8 +399,8 @@ export function AuthProvider({ children }) {
     return supabase.auth.signInWithOtp({
       email: normalizedEmail,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/auth/callback?flow=student-email-link`,
+        shouldCreateUser: false,
       },
     })
   }

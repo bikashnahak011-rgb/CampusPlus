@@ -76,6 +76,7 @@ const AdminExamResults = lazy(() => import('./pages/admin/ExamResults'))
 const AdminCareerManagement = lazy(() => import('./pages/admin/CareerManagement'))
 const AdminComplaints = lazy(() => import('./pages/admin/Complaints'))
 const AdminRequests = lazy(() => import('./pages/admin/Requests'))
+const AdminHelpDesk = lazy(() => import('./pages/admin/HelpDesk'))
 const AdminHostel = lazy(() => import('./pages/admin/Hostel'))
 const AdminRoomAllocation = lazy(() => import('./pages/admin/RoomAllocation'))
 const AdminMess = lazy(() => import('./pages/admin/Mess'))
@@ -602,6 +603,11 @@ export default function App() {
                 <Route
                   path="requests"
                   element={<AdminRequests />}
+                />
+
+                <Route
+                  path="help-desk"
+                  element={<AdminHelpDesk />}
                 />
 
                 <Route
