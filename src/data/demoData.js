@@ -197,6 +197,25 @@ export const DEMO_HOSTEL_BLOCKS = [
   { block: 'D', rooms: 90, occupied: 74 },
 ]
 
+export const DEMO_HOSTEL_ROOMS = [
+  { id: 'demo-a-101', block: 'A', room_number: '101', floor: 1, capacity: 3 },
+  { id: 'demo-a-105', block: 'A', room_number: '105', floor: 1, capacity: 3 },
+  { id: 'demo-a-203', block: 'A', room_number: '203', floor: 2, capacity: 3 },
+  { id: 'demo-a-301', block: 'A', room_number: '301', floor: 3, capacity: 3 },
+  { id: 'demo-a-302', block: 'A', room_number: '302', floor: 3, capacity: 3 },
+  { id: 'demo-b-102', block: 'B', room_number: '102', floor: 1, capacity: 3 },
+  { id: 'demo-b-105', block: 'B', room_number: '105', floor: 1, capacity: 3 },
+  { id: 'demo-b-202', block: 'B', room_number: '202', floor: 2, capacity: 3 },
+  { id: 'demo-b-204', block: 'B', room_number: '204', floor: 2, capacity: 3 },
+  { id: 'demo-b-301', block: 'B', room_number: '301', floor: 3, capacity: 3 },
+  { id: 'demo-c-102', block: 'C', room_number: '102', floor: 1, capacity: 3 },
+  { id: 'demo-c-103', block: 'C', room_number: '103', floor: 1, capacity: 3 },
+  { id: 'demo-c-201', block: 'C', room_number: '201', floor: 2, capacity: 3 },
+  { id: 'demo-c-202', block: 'C', room_number: '202', floor: 2, capacity: 3 },
+  { id: 'demo-d-101', block: 'D', room_number: '101', floor: 1, capacity: 3 },
+  { id: 'demo-d-205', block: 'D', room_number: '205', floor: 2, capacity: 3 },
+]
+
 export const DEMO_EXAM_RESULTS = [
   { id: 'result-001', student_id: 'stu-001', result_type: 'SGPA', result_value: 8.6, academic_year: '2025-2026', semester: 6, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },
   { id: 'result-002', student_id: 'stu-001', result_type: 'CGPA', result_value: 8.4, academic_year: '2025-2026', semester: 6, published: true, published_at: new Date(Date.now() - 3 * 86400000).toISOString() },

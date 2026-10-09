@@ -1030,15 +1030,15 @@
   perspective: 900px;
 }
 
-.internal-app .dashboard-student-character {
+.internal-app .dashboard-admin-image {
   position: absolute;
   z-index: 2;
-  right: 1%;
-  top: 0;
-  bottom: auto;
-  width: 95%;
-  height: 130%;
-  overflow: visible;
+  right: 11%;
+  bottom: -10%;
+  width: auto;
+  height: 125%;
+  max-width: 100%;
+  object-fit: contain;
   filter: drop-shadow(0 14px 13px rgba(76, 54, 112, 0.16));
   transform-origin: 50% 100%;
   animation: character-bob 5s ease-in-out infinite;
@@ -3017,11 +3017,14 @@
     opacity: 0.82;
   }
 
-  .internal-app .dashboard-student-character {
+  .internal-app .dashboard-admin-image {
+    right: 10%;
+    bottom: -10%;
+    height: 130%;
+  }
+
+  .internal-app .dashboard-hero:not(.dashboard-hero--student) .dashboard-hero-object--bulb {
     right: 0;
-    top: 0;
-    width: 94%;
-    height: 120%;
   }
 
   .internal-app .dashboard-student-image {
@@ -3113,10 +3116,9 @@
     opacity: 0.58;
   }
 
-  .internal-app .dashboard-student-character {
-    right: -7%;
-    top: 0;
-    width: 100%;
+  .internal-app .dashboard-admin-image {
+    right: 10%;
+    bottom: -9%;
     height: 125%;
   }
 
@@ -3162,7 +3164,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .internal-app .dashboard-hero-art,
-  .internal-app .dashboard-student-character,
+  .internal-app .dashboard-admin-image,
   .internal-app .dashboard-student-image,
   .internal-app .dashboard-hero-spark,
   .internal-app .dashboard-hero-object {

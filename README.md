@@ -17,8 +17,8 @@ Open **http://localhost:5173**
 ### Demo Credentials
 | Role | Email | Password |
 |------|-------|----------|
-| Student | `student@campusone.demo` | `demo123` |
-| Admin | `admin@campusone.demo` | `demo123` |
+| Student | `student@demo.com` | `student123` |
+| Admin | `admin@demo.com` | `admin123` |
 
 > Demo accounts are available only in local development. Production sign-in requires Supabase; live campus records also require the database migrations and backend below.
 

@@ -1,4 +1,10 @@
-﻿import { DEMO_MESS_MENU, DEMO_SUBJECTS } from '../data/demoData.js'
+import {
+  DEMO_MESS_MENU,
+  DEMO_STUDENT,
+  DEMO_SUBJECTS,
+  getDemoAttendance,
+  getDemoTimetable,
+} from '../data/demoData.js'
 import { requestBackend } from './backendApi.js'
 
 const KEYWORDS = {
@@ -186,6 +192,7 @@ export function getCampusAssistantReply(message, user = {}) {
 
 export function getCampusWebsiteHelp(message, user = {}) {
   const text = String(message || '').trim().toLowerCase()
+  const isKeywordPrompt = /^(leave|mess|gate ?pass)$/.test(text)
   const asksHowTo = /\b(how\s+(?:do|can|should|to|does\s+(?:this|the portal|the website)|is\s+(?:this|the portal|the website) used)|where\s+(?:do|can|is|are|should)|which\s+(?:page|menu|section)|navigate|find|open|use|add|edit|update|submit|apply|show me|help me|can i|what page|what is the page for)\b/.test(text)
   if (!text) return 'Ask me how to use any student or admin page, or ask about your live campus records.'
   if (/\b(hello+|h+i+|hey+|good morning|good afternoon|good evening)\b/.test(text)) {
@@ -223,7 +230,7 @@ export function getCampusWebsiteHelp(message, user = {}) {
       ? 'Open Admin â†’ Food Complaints to review food-related issues. The Mess Manager sees food complaints; the Main Administrator can review all complaints.'
       : `Food complaints are available to the Mess Manager and Main Administrator. Your role can access ${pages}.`
     if (/mess|menu|meal|feedback|food/.test(text)) {
-      if (!asksHowTo && !/edit|update|publish|manage|feedback/.test(text)) return null
+      if (!asksHowTo && !isKeywordPrompt && !/edit|update|publish|manage|feedback/.test(text)) return null
       return ['main_administrator', 'mess_manager'].includes(user.admin_role)
         ? 'Open Admin â†’ Mess to edit the weekly menu and review feedback. Todayâ€™s Menu opens the menu view; Meal Feedback shows student ratings.'
         : `Mess management is available to the Mess Manager and Main Administrator. Your role can access ${pages}.`
@@ -273,7 +280,7 @@ export function getCampusWebsiteHelp(message, user = {}) {
   if (/document|certificate|transcript|bonafide|study certificate|character certificate|request/.test(text)) return 'Open Student â†’ Documents â†’ New Request, select the document type, enter why you need it, and submit. Track its status on the Documents page.'
   if (/attendance|attendence|present|absent|percentage|shortage|proxy/.test(text)) return 'Open Student â†’ Attendance for subject-wise records. If it says â€œNo data,â€ ask your faculty to publish attendance and check that your student profile is linked to the correct account.'
   if (/timetable|time table|class|classes|lecture|schedule|period|classroom|room for class/.test(text)) return 'Open Student â†’ Timetable and select a weekday. Classes appear when your profileâ€™s department, semester, and section match the published timetable.'
-  if (/mess|menu|meal|food|breakfast|lunch|dinner/.test(text)) return asksHowTo || /page|section|feature/.test(text) ? 'Open Student â†’ Mess to view the weekly menu and submit meal feedback. Menu details are live campus data, so ask me â€œWhat is todayâ€™s menu?â€ to check the published menu.' : null
+  if (/mess|menu|meal|food|breakfast|lunch|dinner/.test(text)) return asksHowTo || isKeywordPrompt || /page|section|feature/.test(text) ? 'Open Student â†’ Mess to view the weekly menu and submit meal feedback. Menu details are live campus data, so ask me â€œWhat is todayâ€™s menu?â€ to check the published menu.' : null
   if (/fee|fees|payment|due|dues|scholarship|tuition|fine|receipt/.test(text)) return 'Open Student â†’ Fees & Dues to view posted charges and payment status. Online payment is not connected in this portal yet; use your campusâ€™s official payment channel.'
   if (/hostel|room|warden|block|accommodation|dorm|residence/.test(text)) return 'Open Student â†’ Hostel for your assigned block, room, and published warden details. If an assignment is missing, check Student â†’ Profile and contact the hostel office.'
   if (/notification|notice|announcement|event|circular|alert/.test(text)) return 'Open the bell in the top header or Student â†’ Notifications. Published campus notices are in the Notices tab.'
@@ -290,16 +297,111 @@ export function getCampusWebsiteHelp(message, user = {}) {
   return null
 }
 
+function getDemoCampusDataReply(message, user) {
+  const text = String(message || '').trim().toLowerCase()
+  const role = user.role === 'admin' ? user.admin_role : 'student'
+  const sampleNote = 'Sample demo data — these examples are not live campus records.'
+  const respond = details => `${sampleNote}\n\n${details}`
+
+  if (role === 'main_administrator' && /\b(overview|summary|dashboard|campus status|how many students|student count)\b/.test(text)) {
+    return respond('Campus overview: 428 students across 6 departments, 24 faculty members, 12 open complaints (3 high priority), 7 requests awaiting review, 86% average attendance, and 18 fee items pending.')
+  }
+
+  if (role === 'hostel_management' && /\b(overview|summary|dashboard|hostel status|occupancy|rooms|maintenance summary)\b/.test(text)) {
+    return respond('Hostel overview: 186 of 210 beds are occupied, 24 beds are available, and 6 maintenance tasks are open (2 urgent). Sample cases: H-204, Block A Room 203 — washbasin leak (High); H-198, Block B Room 116 — cupboard hinge repair (Medium); H-193, Block A Room 108 — corridor light (Low).')
+  }
+
+  if (role === 'mess_manager' && /\b(overview|summary|dashboard|mess status|feedback summary|meal ratings)\b/.test(text)) {
+    return respond('Mess overview: 312 meals served in the sample day, 4.2/5 average feedback from 38 ratings, and 3 food-related complaints to review. Sample feedback: breakfast variety 4/5, lunch quality 4/5, dinner temperature 3/5.')
+  }
+
+  if (role === 'faculty' && /\b(overview|summary|dashboard|class status|attendance summary|my students)\b/.test(text)) {
+    const subjects = getDemoAttendance(user)
+    const average = Math.round(subjects.reduce((sum, subject) => sum + subject.present / subject.total * 100, 0) / subjects.length)
+    return respond(`Academic snapshot: ${subjects.length} sample subjects, ${average}% average attendance, and 2 assignments awaiting review. Sample attendance: ${subjects.map(subject => `${subject.name} ${Math.round(subject.present / subject.total * 100)}% (${subject.present}/${subject.total})`).join('; ')}.`)
+  }
+
+  if (role === 'account_examination' && /\b(overview|summary|dashboard|finance summary|fees summary|payment status|examination summary)\b/.test(text)) {
+    return respond('Accounts & Examination overview: 18 sample fee items need follow-up, 42 payments were recorded this week, and 6 examination result groups are ready for review. Example fee records: CS2021047 — ₹15,000 pending; ME2022031 — paid; EC2021118 — ₹4,500 pending.')
+  }
+
+  if (role === 'student' && /\b(attendance|attendence|present|absent|percentage|shortage)\b/.test(text)) {
+    const subjects = getDemoAttendance(user)
+    const average = Math.round(subjects.reduce((sum, subject) => sum + subject.present / subject.total * 100, 0) / subjects.length)
+    const belowThreshold = subjects.filter(subject => subject.present / subject.total < 0.75)
+    const name = user.name || DEMO_STUDENT.name
+    return respond(`${name}'s sample attendance is ${average}% overall. ${subjects.map(subject => `${subject.name}: ${Math.round(subject.present / subject.total * 100)}% (${subject.present}/${subject.total})`).join('; ')}.${belowThreshold.length ? ` Check with your faculty about ${belowThreshold.map(subject => subject.name).join(' and ')}.` : ''}`)
+  }
+
+  if (role === 'student' && /\b(timetable|time table|class schedule|today'?s classes|next class)\b/.test(text)) {
+    const timetable = getDemoTimetable(user)
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+    const todaysClasses = timetable.filter(entry => entry.day.toLowerCase() === today.toLowerCase())
+    const entries = todaysClasses.length ? todaysClasses : timetable.slice(0, 3)
+    return respond(`${todaysClasses.length ? `Sample classes for ${today}` : 'Sample timetable entries'}: ${entries.map(entry => `${entry.time} ${entry.subject} in ${entry.room} (${entry.faculty})`).join('; ')}.`)
+  }
+
+  if (role === 'student' && /\b(my )?(hostel|room|warden|block|accommodation)\b/.test(text)) {
+    return respond(`${user.name || DEMO_STUDENT.name}'s sample room assignment is Hostel Block ${user.hostel_block || DEMO_STUDENT.hostel_block}, Room ${user.room_number || DEMO_STUDENT.room_number}. The sample warden desk is open 9:00 AM–5:00 PM; contact the hostel office for urgent maintenance.`)
+  }
+
+  if (role === 'student' && /\b(my )?(fee|fees|payment|dues|invoice)\b/.test(text)) {
+    return respond('Sample fee account: ₹15,000 pending for the current term; last sample payment ₹25,000 recorded on 12 August. This is a demonstration only—check Fees in the portal for your actual account.')
+  }
+
+  if (role === 'student' && /\b(gate pass|gatepass|leave|outing|request status|my request)\b/.test(text)) {
+    return respond('Sample requests: GP-104, Saturday outing — Approved; LV-087, one-day leave — Pending warden review; GP-099, evening pass — Returned for a destination update. For a real request, open Student → Leave & Gate Pass.')
+  }
+
+  if (role === 'main_administrator' && /\b(complaint|complaints|issues|maintenance)\b/.test(text) && /\b(show|list|open|pending|summary|many|status|current|urgent|high)\b/.test(text)) {
+    return respond('Open sample complaints: C-2408, Block A Room 203 — water leak (High, Hostel Maintenance); C-2405, dining hall — meal temperature (Medium, Mess Committee); C-2399, Library 2F — lights flickering (High, Electrical Maintenance). 9 additional sample complaints are marked In Progress or Pending.')
+  }
+
+  if (role === 'main_administrator' && /\b(request|requests|approval|approvals|leave|gate pass)\b/.test(text) && /\b(show|list|open|pending|summary|many|status|current|queue)\b/.test(text)) {
+    return respond('Sample approval queue: 4 leave requests, 2 gate passes, and 1 document request await review. Example: LV-087 — one-day leave (Warden Review); GP-104 — Saturday outing (Approved); DOC-061 — bonafide certificate (Pending Admin Review).')
+  }
+
+  if (role === 'mess_manager' && /\b(feedback|rating|food complaint|food issue)\b/.test(text) && /\b(show|list|open|pending|summary|many|status|current|review)\b/.test(text)) {
+    return respond('Sample mess feedback: MF-038, dinner served warm — 3/5; MF-037, good lunch variety — 4/5; MF-036, breakfast on time — 5/5. Sample food complaints: MC-014 stale bread (High) and MC-012 limited vegan option (Medium).')
+  }
+
+  if (role === 'hostel_management' && /\b(maintenance|complaint|repair|work order)\b/.test(text) && /\b(show|list|open|pending|summary|many|status|current|urgent)\b/.test(text)) {
+    return respond('Sample maintenance queue: H-204 Block A Room 203 washbasin leak (High); H-198 Block B Room 116 cupboard hinge (Medium); H-193 Block A corridor light (Low); H-188 Block C Room 302 window latch (Medium).')
+  }
+
+  if (role === 'faculty' && /\b(assignment|assignments|submission|submissions|class|classes)\b/.test(text) && /\b(show|list|open|pending|summary|many|status|current|review|today)\b/.test(text)) {
+    return respond('Sample academic queue: DSA Assignment 1 — 28 submissions, 6 awaiting review (due 20 Oct); DBMS SQL Lab — 24 submissions, 3 awaiting review (due 23 Oct); Networks Routing — 19 submissions, due 27 Oct. Sample classes include Programming in Python at 09:00 in CS-101.')
+  }
+
+  if (role === 'account_examination' && /\b(fee|fees|payment|payments|dues|result|results|exam|examination)\b/.test(text) && /\b(show|list|pending|summary|many|status|current|records|review)\b/.test(text)) {
+    return respond('Sample account queue: CS2021047 — ₹15,000 pending; ME2022031 — paid; EC2021118 — ₹4,500 pending. Sample examination queue: 6 result groups ready for review, with 2 awaiting final verification.')
+  }
+
+  if (role === 'student' && /\b(mess|menu|meal|food|breakfast|lunch|dinner)\b/.test(text) && /\b(today|menu|what|show|week|breakfast|lunch|dinner)\b/.test(text)) {
+    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+    const menu = DEMO_MESS_MENU[today]
+    const weekly = /\b(week|weekly)\b/.test(text)
+    const menuText = weekly
+      ? Object.entries(DEMO_MESS_MENU).map(([day, meals]) => `${day}: breakfast ${meals.breakfast}; lunch ${meals.lunch}; dinner ${meals.dinner}`).join('\n')
+      : `${today}'s sample menu: Breakfast — ${menu?.breakfast || 'Not available'}; Lunch — ${menu?.lunch || 'Not available'}; Dinner — ${menu?.dinner || 'Not available'}.`
+    return respond(`${menuText}\n\nCheck the Mess page for the published menu.`)
+  }
+
+  return null
+}
+
 export async function askCampusAssistant(message, user = {}, { signal, history = [] } = {}) {
   const prompt = String(message || '').trim()
   if (!prompt) return 'Type a question about using NexCampus or your campus records.'
 
   if (user.isDemo) {
-    return 'Sign in with your campus account to use Campus AI.'
+    const demoDataReply = getDemoCampusDataReply(prompt, user)
+    if (demoDataReply) return demoDataReply
   }
 
   const websiteHelp = getCampusWebsiteHelp(prompt, user)
   if (websiteHelp) return websiteHelp
+  if (user.isDemo) return getCampusAssistantReply(prompt, user)
 
   try {
     const result = await requestBackend('ai/ask', {

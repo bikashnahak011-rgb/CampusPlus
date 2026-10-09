@@ -12,6 +12,7 @@ const QUICK = {
   mess_manager: ['How do I update the mess menu?', 'Where do I review meal feedback?', 'How do I view food complaints?', 'What is today’s menu?'],
   account_examination: ['How do I review fees?', 'Where are exam results?', 'How do I view payments?', 'Where can I see reports?'],
 }
+const QUICK_KEYWORDS = ['Leave', 'Mess', 'Gate Pass']
 
 function greetingFor(role) {
   return role === 'admin'
@@ -55,9 +56,10 @@ export default function AIAssistant() {
   const setLoading = value => setPendingRequest({ userId: user?.id, loading: value })
   const bottomRef = useRef(null)
   const requestController = useRef(null)
-  const quickQuestions = user?.role === 'admin'
+  const roleQuestions = user?.role === 'admin'
     ? QUICK[user.admin_role] || QUICK.admin
     : QUICK.student
+  const quickQuestions = [...roleQuestions, ...QUICK_KEYWORDS]
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
   useEffect(() => () => requestController.current?.abort(), [])
